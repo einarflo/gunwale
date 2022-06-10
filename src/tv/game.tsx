@@ -1,0 +1,191 @@
+import axios, { AxiosRequestConfig } from "axios";
+import { useEffect, useState } from "react";
+import styled from "styled-components";
+import CurrentScores from "./currentScores";
+import Alternatives from "./gameAlts";
+import GamePlayers from "./gamePlayers";
+import Podium from "./podium";
+import QuestionText from "./questionText";
+
+interface TvViewProps {
+  id: String;
+  stopGame: () => void
+}
+
+export interface Question {
+  number_in_line: String,
+  alt1: String,
+  alt2: String,
+  alt3: String,
+  alt4: String,
+  text: String,
+  correct: String,
+  status: String,
+  score: String,
+  time: number,
+}
+
+export interface Player {
+  name: String,
+  score: String
+}
+
+const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
+
+  const [questions, setQuestions] = useState<Array<Question>>([]);
+  const [currentQ, setCurrentQ] = useState(0); 
+  
+  const [loading, setLoading] = useState(false);
+  
+  const [started, setStarted] = useState(false);
+  const [showScoreBoard, setShowScoreBoard] = useState(false);
+    
+  // Get all questions for the current game Id
+  const getQuestionsForGameId = (id: String) => {
+    axios.get(`https://www.dogetek.no/api/api.php/game_question/${id}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      .then(res => {
+        if (res.data) {
+          setQuestions(res.data);
+      }})
+      .catch(err => {
+        console.log("Error when getting questions for game with id ", id);
+      });
+  }
+
+  // Next question
+  const next = () => {
+    showQuestion(currentQ +1);
+    setCurrentQ(currentQ +1);
+    // set timestamp for next q start
+    
+    setShowScoreBoard(false);
+  }
+
+  // Show score board
+  const showCurrentScores = () => {
+    setShowScoreBoard(true)
+  }
+
+  // When start button is cliked
+  const startGame = () => {
+    setGameStatus("started");
+    setStarted(true);
+    showQuestion(0);
+  }
+
+  // End game
+  const onStopGame = () => {
+    setGameStatus("stopped");
+    setStarted(false);
+    stopGame();
+  }
+
+  const setGameStatus = (status: String) => {
+    axios.put(`https://www.dogetek.no/api/api.php/game/${id}/`, {
+      status: status,
+    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log("Something fishy is going on");
+    });
+  }
+
+  const setGameQuestion = (q: number, time: ) => {
+    axios.put(`https://www.dogetek.no/api/api.php/game/${id}/`, {
+      currentquestion: q,
+      starttime:
+    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log("Something fishy is going on");
+    });
+  }
+
+  const showQuestion = (q: number) => {
+    setLoading(true);
+
+    // Do API call setting the current Q and time for start
+    setGameQuestion(q, DateTime.now())
+
+    const holla = setTimeout(() => {
+      setLoading(false);
+      clearTimeout(holla);
+    }, 3000);
+  }
+
+  useEffect(() => {
+    getQuestionsForGameId(id)
+  }, [id]);
+
+  // Show list of players that have joined the game
+  if (!started) {
+    return <GamePlayers startGame={startGame} stopGame={onStopGame} id={id}/>
+  }
+
+  // Show the question with countdown bar
+  if (loading && questions.length >= currentQ) {
+    return <QuestionText question={questions[currentQ]?.text}/>
+  }
+
+  if (showScoreBoard && questions.length >= currentQ) {
+    return <CurrentScores id={id} next={next} stop={stopGame}/>
+  }
+
+  if (questions.length >= currentQ) {
+    return <Alternatives question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores}/>
+  }
+
+  return <Podium finish={onStopGame} id={id}/>
+}
+
+export const Tvrapper = styled.div`
+    height: 100vh;
+    width: 100vw;
+    background: rgb(28,0,65);
+    background: linear-gradient(180deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
+`;
+
+export const Start = styled.div`
+    position: absolute;
+    bottom: 2%;
+    right: 2%;
+    font-size: 1rem;
+    padding: 10px;
+    background:  #ffffff;
+    border-radius: 10px;
+    width: fit-content;
+    cursor: pointer;
+    font-weight: bold;
+    color: black;
+    opacity: 80%;
+`;
+
+export const Stop = styled.div`
+    position: absolute;
+    bottom: 2%;
+    left: 2%;
+    font-size: 1rem;
+    padding: 10px;
+    background:  #000000;
+    border-radius: 10px;
+    width: fit-content;
+    cursor: pointer;
+    font-weight: bold;
+    color:white;
+    opacity: 35%;
+`;
+
+export const Logo = styled.img`
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 400px;
+    min-width: 250px;
+`;
+
+export default TVGamePlayView;
