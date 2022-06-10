@@ -92,10 +92,10 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
     });
   }
 
-  const setGameQuestion = (q: number, time: ) => {
+  const setGameQuestion = (q: number, time: '') => {
     axios.put(`https://www.dogetek.no/api/api.php/game/${id}/`, {
       currentquestion: q,
-      starttime:
+      starttime: time,
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
     .then(res => {
       console.log(res);
@@ -109,7 +109,7 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
     setLoading(true);
 
     // Do API call setting the current Q and time for start
-    setGameQuestion(q, DateTime.now())
+    setGameQuestion(q, '')
 
     const holla = setTimeout(() => {
       setLoading(false);
