@@ -1,18 +1,18 @@
-import { Logo, Player, Start, Stop, Tvrapper } from "./game";
+import { CurrentQuestionCount, Logo, Player, Start, Stop, Tvrapper } from "./game";
 import logo from '../images/gunwale-logo-white.png';
 import styled from "styled-components";
 import { useEffect, useState } from "react";
 import axios, { AxiosRequestConfig } from "axios";
 import { Spinner } from "./selectGame";
 
-
 interface CurrentScoresProps {
-  id: String;
-  next: () => void
-  stop: () => void
+  id: String,
+  currentQuestionCount: string,
+  next: () => void,
+  stop: () => void,
 }
 
-const CurrentScores = ({ id, next, stop }: CurrentScoresProps) => {
+const CurrentScores = ({ id, next, stop, currentQuestionCount }: CurrentScoresProps) => {
   const [players, setPlayers] = useState<Array<Player>>([]);
   const [loading, setLoading] = useState(false);
 
@@ -43,11 +43,16 @@ const CurrentScores = ({ id, next, stop }: CurrentScoresProps) => {
     
   }
 
+
+  // Leader should cover sreen with banner from side to side
+  // Should display what question were currently at
+
   return (
     <Tvrapper>
       <Logo src={logo}/>
+      <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>
       <ContentPlayers>
-        <Header>Current leaderboard</Header>
+        <Header>Scoreboard</Header>
         { players?.length === 0 ? 
             <div>No players ...</div>
           : 

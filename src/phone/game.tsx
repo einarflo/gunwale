@@ -3,25 +3,26 @@ import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Question } from "../tv/game";
 import Alts from "./alts";
-import Waiting from "./waiting";
+import Result from "./result";
+import logo from '../images/gunwale-logo-white.png';
+import { Logo } from "../Splash";
+//import Waiting from "./waiting";
 
 interface Game {
-    userId: String,
     username: String,
     gamepin: String,
     logout: () => void
 }
 
-
-
-const PhoneGameView = ({ userId, username, gamepin, logout }: Game) => {
+const PhoneGameView = ({ username, gamepin, logout }: Game) => {
 
   // Maybe get user from session storage? and some way to reset it
   const [points, setPoints] = useState(0);
   const [currentQ, setCurrentQ] = useState(0);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [answered, setAnswered] = useState(false);
+  const [gameEnded, setGameEnded] = useState(false);
+  const [answered, setAnswered] = useState(true);
   const [questions, setQuestions] = useState<Array<Question>>([]);
+  const [userId, setUserId] = useState('');
 
 
   // Get all questions for the current game Id
@@ -36,12 +37,24 @@ const PhoneGameView = ({ userId, username, gamepin, logout }: Game) => {
     });
   }
 
-  useEffect(() => {
-    getQuestionsForGameId(gamepin)
-  }, [gamepin]);
+  const getUser = (username: String) => {
+    if (username && username.length > 1) {
+      axios.get(`https://www.dogetek.no/api/api.php/game_players/${username}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      .then(res => {
+        if (res.data && (res.data[0]["name"] === username)) {
+          setUserId(res.data[0]["id"]);
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
+    }
+  }
 
-  
-    
+  useEffect(() => {
+    getQuestionsForGameId(gamepin);
+    getUser(username);
+  }, [gamepin, username]);
 
   const setAnswer = () => {
     setAnswered(true);
@@ -63,20 +76,25 @@ const PhoneGameView = ({ userId, username, gamepin, logout }: Game) => {
 
 
     // Waiting for game to start
-  if (!gameStarted) {
-    return <Waiting points={points} username={username} gameStarted={() => setGameStarted(true)} gamepin={gamepin} />
-  }
+  //if (!gameStarted) {
+    //return <Waiting points={points} username={username} gameStarted={() => setGameStarted(true)} gamepin={gamepin} />
+  //}
 
-  // 
-  if (!answered) {
+  // Show the questions alternativs 
+  if (!answered && !gameEnded) {
     return <Alts question={questions[currentQ]} points={points} username={username} userId={userId} setPoints={(p) => setPoints(p)} answered={setAnswer} gamepin={gamepin}/>
   }
 
+  if (answered && !gameEnded) {
+    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} username={username} gamepin={gamepin} gameFinished={() => setGameEnded(true)}/>
+  }
+
   return(
-    <GameWrapper>
-        <Header onClick={logout}>
+    <GameWrapper onClick={() => setGameEnded(false)}>
+        <Header>
             <Username>{username}</Username>
-            <Points>0</Points>
+            <Points>{points}</Points>
+            <Logo src={logo}/>
         </Header>
     </GameWrapper>
   )
@@ -85,7 +103,6 @@ const PhoneGameView = ({ userId, username, gamepin, logout }: Game) => {
 export const GameWrapper = styled.div`
   height: 100vh;
   width: 100vw;
-  
   background: rgb(28,0,65);
   background: linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%); 
 `;

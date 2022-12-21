@@ -30,7 +30,7 @@ const App = () => {
   const setUser = (username: String) => {
     setLoading(true);
     if (username && username.length > 1) {
-      axios.get(`https://www.dogetek.no/api/api.php/game_players/${username}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      axios.get(`https://www.dogetek.no/api/api.php/game_players/${username}/?checkUser=true`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
       .then(res => {
         if (JSON.stringify(res.data).length < 10) {
           setError(false);
@@ -74,6 +74,7 @@ const App = () => {
       axios.get(`https://www.dogetek.no/api/api.php/game/${pin}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
       .then(res => {
         if (JSON.stringify(res.data).length > 10) {
+          // TODO: Set user id 
           setGamePin(pin);
           setError(false);
           setLoading(false);
@@ -113,7 +114,7 @@ const App = () => {
   if (!username) {
     return <Username error={error} loading={loading} setName={(user) => setUser(user || "")} />;
   }
-  return <PhoneGameView userId={'47'} username={username} gamepin={gamePin} logout={() => {
+  return <PhoneGameView username={username} gamepin={gamePin} logout={() => {
     setUsername(undefined)
     setGamePin(undefined)
   }} />;

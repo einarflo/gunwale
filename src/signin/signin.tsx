@@ -35,13 +35,18 @@ const Signin = ({ toGameMode, setLoggedInUser }: SiginProps) => {
     });
   };
 
+  //select color - maybe 5 circles?
+  // diffent power ups for each color, maybe some sort of name?
+
+  // Should be an upgrade getting black with gold letters
+
   return (
     <LoginWrapper>
         <Content>
             <Logo src={logo} />
             {error && <Error>Something has gone wrong. Maybe try another password?</Error>}
             <FormInput placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsernameInput(e.target.value)} />
-            <FormInput placeholder="Password" type="password" onChange={(e: { target: { value: String; }; })  => setPassword(e.target.value)} onKeyPress={(e: { key: string; target: HTMLTextAreaElement; })  => {
+            <FormInput placeholder="Password" type="password" onChange={(e: { target: { value: String; }; })  => setPassword(e.target.value)} onKeyPress={(e: any)  => {
               if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
                 handleLogin()
               }

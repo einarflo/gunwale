@@ -1,15 +1,16 @@
-import { Logo, Question, Start, Stop, Tvrapper } from "./game";
+import { CurrentQuestionCount, Logo, Question, Start, Stop, Tvrapper } from "./game";
 import logo from '../images/gunwale-logo-white.png';
 import styled from "styled-components";
 import { useEffect, useState } from "react";
 
 interface AlternativesProps {
   question: Question,
+  currentQuestionCount: string,
   nextQuestion: () => void,
   stopGame: () => void
 }
 
-const Alternatives = ({ question, nextQuestion, stopGame }: AlternativesProps) => {
+const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }: AlternativesProps) => {
   const [showAnswers, setShowAnswers] = useState(false);
   const [altTimeLeft, setAltTimeLeft] = useState(20); 
 
@@ -31,6 +32,7 @@ const Alternatives = ({ question, nextQuestion, stopGame }: AlternativesProps) =
       console.log(altTimeLeft)
       if (altTimeLeft < 2) {
         setShowAnswers(true);
+        // Do something so players can see if it is correct
       }
     }, (1000));
 
@@ -40,6 +42,7 @@ const Alternatives = ({ question, nextQuestion, stopGame }: AlternativesProps) =
   return (
     <Tvrapper>
       <Logo src={logo}/>
+      <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>
       <ContentQuestions>
         <ContentQuestionText>{question?.text}</ContentQuestionText>
       </ContentQuestions>

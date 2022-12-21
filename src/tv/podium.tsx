@@ -30,6 +30,8 @@ const Podium = ({ id, finish }: PodiumProps) => {
         });
   }, [id])
 
+  // Do a call to set game over
+
   if (loading) {
     <Tvrapper>
       <Logo src={logo}/>

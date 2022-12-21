@@ -12,12 +12,15 @@ const OptionButton = ({ description, select, colour }: OptionProps) => {
 }
 
 const Option = styled.div`
-  height: 70px;
+  height: 55px;
   width: 100vw - 40px;
   background-color: ${props => (props.color)};
   border-radius: 20px;
   margin: 20px;
   padding: 20px;
+  color: white;
+  font-size: 1.5em;
+  line-height: 2;
 `;
 
 export default OptionButton

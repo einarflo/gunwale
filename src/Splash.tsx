@@ -16,7 +16,7 @@ const SplashScreenWrapper = styled.div`
   background: linear-gradient(180deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
 `;
 
-const Logo = styled.img`
+export const Logo = styled.img`
   width: 30vw;
   max-width: 400px;
   min-width: 250px;

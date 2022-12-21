@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import styled from "styled-components";
 import logo from '../images/gunwale-logo-white.png';
 import { Logo, Player, Start, Stop, Tvrapper } from "./game";
+import QRCode from "react-qr-code";
 
 interface GamePlayersProps {
   id: String;
@@ -38,6 +39,14 @@ const GamePlayers = ({ id, startGame, stopGame}: GamePlayersProps) => {
           : 
             players?.map(player => <PlayerName>{player.name}</PlayerName>)}
       </ContentPlayers>
+      <Footer>
+        <QRCode
+        size={256}
+        style={{ height: "auto", maxWidth: "100px", width: "100px", border: '6px solid white', borderRadius: '4px' }}
+        value={'https://gunwale.dogetek.no/?gameid='+id}
+        viewBox={`0 0 256 256`}
+        />
+      </Footer>
       <Footer>Join game at gunwale.dogetek.no</Footer>
       <Start onClick={startGame}>Start</Start>
       <Stop onClick={stopGame}>Stop</Stop>

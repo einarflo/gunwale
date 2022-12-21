@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import logo from '../images/gunwale-logo.png';
 
@@ -9,19 +9,45 @@ interface GamePinProps {
     toCreatorMode: () => void
 }
 
+interface InputProps {
+    value?: string,
+    disabled?: true
+}
+
+
+
 const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
     const [gamePin, setGamePin] = useState<String | undefined>("");
+    const [inputProps, setinputProps] = useState<InputProps>({});
+
+
+    useEffect(() => {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i=0;i<vars.length;i++) {
+            var pair = vars[i].split("=");
+            if(pair[0] === 'gameid'){
+                setGamePin(pair[1])
+                setinputProps({
+                    disabled: true,
+                    value: pair[1]
+                })
+            }
+        }
+    }, [])
+
+    
 
     return(
     <GamePinWrapper>
         <Content>
-            <Logo src={logo} />
+            <Logo src={logo} onClick={()  => window.location.replace('http://gunwale.dogetek.no/')}/>
             {
                 loading ? <Spinner /> :
                 <>
                     {error && <Error>Wrong game pin. Try another pls?</Error>}
-                    <FormInput placeholder="Game pin" type={"number"} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value)} />
-                    <LogginButton onClick={() => setPin(gamePin)}> Start</LogginButton>
+                    <FormInput placeholder="Game pin" type={"number"} {...inputProps} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value)} />
+                    <LogginButton onClick={() => setPin(gamePin)}>Start</LogginButton>
                 </>
             }
         </Content>

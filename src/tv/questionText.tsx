@@ -1,15 +1,17 @@
-import { Logo, Tvrapper } from "./game";
+import { CurrentQuestionCount, Logo, Tvrapper } from "./game";
 import logo from '../images/gunwale-logo-white.png';
 import styled, { keyframes } from "styled-components";
 
 interface QuestionTextProps {
-  question: String | undefined;
+  question: String | undefined,
+  currentQuestionCount: string,
 }
 
-const QuestionText = ({ question }: QuestionTextProps) => {
+const QuestionText = ({ question, currentQuestionCount }: QuestionTextProps) => {
   return (
     <Tvrapper>
       <Logo src={logo}/>
+      <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>
       <QuestionTextWrapper>
         <Question>{question}</Question>
         <LoadingBar/>

@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { useEffect, useState } from "react";
-import styled from "styled-components";
+import moment from "moment";
+import { useCallback, useEffect, useState } from "react";
+import styled, { keyframes } from "styled-components";
 import CurrentScores from "./currentScores";
 import Alternatives from "./gameAlts";
 import GamePlayers from "./gamePlayers";
@@ -68,34 +69,37 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
 
   // When start button is cliked
   const startGame = () => {
-    setGameStatus("started");
+    setGameQuestion(0, moment().add(3, 'seconds').format('HH:mm:ss'));
     setStarted(true);
     showQuestion(0);
   }
 
   // End game
   const onStopGame = () => {
-    setGameStatus("stopped");
+    setGameStatus("finished");
     setStarted(false);
     stopGame();
   }
 
-  const setGameStatus = (status: String) => {
+  const setGameStatus = useCallback((status: String) => {
     axios.put(`https://www.dogetek.no/api/api.php/game/${id}/`, {
       status: status,
+      currentquestion: "",
+      starttime: "",
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
     .then(res => {
       console.log(res);
     })
-    .catch(err => {
+    .catch(() => {
       console.log("Something fishy is going on");
     });
-  }
+  },[id])
 
-  const setGameQuestion = (q: number, time: '') => {
+  const setGameQuestion = (q: number, time: string) => {
     axios.put(`https://www.dogetek.no/api/api.php/game/${id}/`, {
       currentquestion: q,
       starttime: time,
+      status: "started"
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
     .then(res => {
       console.log(res);
@@ -109,17 +113,22 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
     setLoading(true);
 
     // Do API call setting the current Q and time for start
-    setGameQuestion(q, '')
+    if (questions.length > q) {
+      setGameQuestion(q, moment().add(4, 'seconds').format('HH:mm:ss'))
+      
+      const holla = setTimeout(() => {
+        setLoading(false);
+        clearTimeout(holla);
+      }, 3000);
+    }
 
-    const holla = setTimeout(() => {
-      setLoading(false);
-      clearTimeout(holla);
-    }, 3000);
+   
   }
 
   useEffect(() => {
     getQuestionsForGameId(id)
-  }, [id]);
+    setGameStatus("created");
+  }, [id, setGameStatus]);
 
   // Show list of players that have joined the game
   if (!started) {
@@ -127,32 +136,60 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
   }
 
   // Show the question with countdown bar
-  if (loading && questions.length >= currentQ) {
-    return <QuestionText question={questions[currentQ]?.text}/>
+  if (loading && questions.length > currentQ) {
+    return <QuestionText question={questions[currentQ]?.text} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
   }
 
   if (showScoreBoard && questions.length >= currentQ) {
-    return <CurrentScores id={id} next={next} stop={stopGame}/>
+    return <CurrentScores id={id} next={next} stop={stopGame} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
   }
 
-  if (questions.length >= currentQ) {
-    return <Alternatives question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores}/>
+  if (questions.length > currentQ) {
+    return <Alternatives question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
   }
 
   return <Podium finish={onStopGame} id={id}/>
 }
+
+const backgroundAnimation = keyframes`
+    0% {background-position: 0% 50%}
+    50% {background-position: 100% 50%}
+    100% {background-position: 0% 50%}
+`;
 
 export const Tvrapper = styled.div`
     height: 100vh;
     width: 100vw;
     background: rgb(28,0,65);
     background: linear-gradient(180deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
+    background: linear-gradient(-45deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
+    //background: linear-gradient(-45deg, #EE7752, #E73C7E, #23A6D5, #23D5AB);
+    background-size: 400% 400%;
+    animation-name: ${backgroundAnimation};
+    animation-duration: 15s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease;
 `;
 
 export const Start = styled.div`
     position: absolute;
     bottom: 2%;
     right: 2%;
+    font-size: 1rem;
+    padding: 10px;
+    background:  #ffffff;
+    border-radius: 10px;
+    width: fit-content;
+    cursor: pointer;
+    font-weight: bold;
+    color: black;
+    opacity: 80%;
+`;
+
+export const CurrentQuestionCount = styled.div`
+    position: absolute;
+    top: 2%;
+    left: 2%;
     font-size: 1rem;
     padding: 10px;
     background:  #ffffff;
