@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import logo from '../images/gunwale-logo-white.png';
+import logo from '../images/gw-logo.png';
 import { Logo, Player, Start, Stop, Tvrapper } from "./game";
 import QRCode from "react-qr-code";
 
@@ -86,6 +86,7 @@ const Pin = styled.div`
     left: 50%;
     margin: auto;
     margin-bottom: 30px;
+    font-family: "Soopafresh";
 `;
 
 const PlayerName = styled.div`

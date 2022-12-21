@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import logo from '../images/gunwale-logo.png';
+import logo from '../images/gw-logo.png';
 
 interface GamePinProps {
     error: boolean,
@@ -40,30 +40,38 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
 
     return(
     <GamePinWrapper>
+        <Background />
         <Content>
             <Logo src={logo} onClick={()  => window.location.replace('http://gunwale.dogetek.no/')}/>
             {
                 loading ? <Spinner /> :
                 <>
                     {error && <Error>Wrong game pin. Try another pls?</Error>}
-                    <FormInput placeholder="Game pin" type={"number"} {...inputProps} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value)} />
-                    <LogginButton onClick={() => setPin(gamePin)}>Start</LogginButton>
+                    <GamepinFormInput placeholder="GAME PIN" type={"number"} {...inputProps} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value)} />
+                    <GamepinLogginButton onClick={() => setPin(gamePin)}>PLAY!</GamepinLogginButton>
                 </>
             }
         </Content>
-        <Footer>Make your own Gunwale <div onClick={toCreatorMode} style={{ color: "#1c0041", textDecoration: "underline"}}>here</div>.</Footer>
+        <Footer>... or create your own Gunwale&nbsp;<div onClick={toCreatorMode} style={{ color: "#1c0041", textDecoration: "underline", fontFamily: "Soopafresh", cursor: "pointer" }}>here</div></Footer>
     </GamePinWrapper>)
 }
 
 const GamePinWrapper = styled.div`
     height: 100vh;
     width: 100vw;
-    background: #ffffff;
+`;
+
+const Background = styled.div`
+    height: 100vh;
+    width: 100vw;
+    background-image: linear-gradient(180deg, #203046 0%, #030006 100%);
+    transform: skewY(-5deg) translate(0%, -13%);
 `;
 
 const Logo = styled.img`
     max-width: 400px;
     width: -webkit-fill-available;
+    padding-bottom: 40px;
 `;
 
 const Content = styled.div`
@@ -79,40 +87,41 @@ const Error = styled.div`
     text-align: center;
     padding-bottom: 20px;
     padding-top: 20px;
-    color: #000000;
+    color: #ffffff;
     margin-left: auto;
     margin-right: auto;
     max-width: 25vw;
     min-width: 300px;
     width: -webkit-fill-available;
+    font-family : 'Soopafresh';
 `;
 
-const FormInput = styled.input`
-    font-family : 'Avenir';
+export const GamepinFormInput = styled.input`
+    font-family : 'Soopafresh';
     text-align: center;
     display: block;
     width: 100%;
     padding: .375rem .75rem;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     line-height: 1.5;
     background-clip: padding-box;
         
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
     max-width: 500px;
     margin: auto;
-    border: 3px solid rgb(28,0,65);
+    border: 0px solid rgb(28,0,65);
     margin-bottom: 20px;
-    border-radius: 8px;
+    border-radius: 3px;
     width: -webkit-fill-available;
 `;
 
-const LogginButton = styled.div`
+export const GamepinLogginButton = styled.div`
+    font-family : 'Soopafresh';
     text-align: center;
     display: block;
     width: 100%;
     padding: .375rem .75rem;
-    font-size: 1.2rem;
-    font-weight: bold;
+    font-size: 1.5rem;
     line-height: 1.5;
     color: white;
     background-clip: padding-box;
@@ -121,18 +130,14 @@ const LogginButton = styled.div`
     margin: auto;
     margin-bottom: 30px;
       
-    background: rgb(28,0,65);
-    background: linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
-    box-shadow: 0 4px 8px 1px rgba(0, 0, 0, 0.4);
+    background: #B45151;
        
-    border-radius: 8px;
-      
-    font-family : 'Avenir';
     cursor: pointer;
     width: -webkit-fill-available;
 `;
 
 const Footer = styled.div`
+    display: block;
     position: absolute;
     bottom: 0;
     left: 50%;
@@ -140,8 +145,16 @@ const Footer = styled.div`
     min-width: 300px;
     max-width: 80vw;
     color: black;
-    font-size: 1rem;
+    font-size: 1.2rem;
     text-align: center;
+    font-family: "Soopafresh";
+    @media (min-width: 1112px) {
+        display: flex;
+
+
+        font-size: 1.7rem;
+        text-align: right;
+    }
 `;
 
 const rotate = keyframes`

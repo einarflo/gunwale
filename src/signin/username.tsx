@@ -1,6 +1,7 @@
 import { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import logo from '../images/gunwale-logo.png';
+import logo from '../images/gw-logo.png';
+import { GamepinFormInput, GamepinLogginButton } from "./gamepin";
 
 interface UsernameProps {
     error: boolean,
@@ -18,8 +19,8 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
                 loading ? <Spinner/> :
                 <>
                     {error && <Error>Allready taken. Try another pls?</Error>}
-                    <FormInput placeholder="Select username" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value)} />
-                    <LogginButton onClick={() => setName(username)}> Start</LogginButton>
+                    <GamepinFormInput placeholder="USERNAME" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value)} />
+                    <GamepinLogginButton onClick={() => setName(username)}>GO!</GamepinLogginButton>
                 </>
             }
             
@@ -31,11 +32,15 @@ const GamePinWrapper = styled.div`
     height: 100vh;
     width: 100vw;
     background: #ffffff;
+    background-image: linear-gradient(180deg, #203046 0%, #030006 100%);
+
 `;
 
 const Logo = styled.img`
     max-width: 400px;
     width: -webkit-fill-available;
+    padding-bottom: 40px;
+
 `;
 
 const Content = styled.div`
@@ -51,12 +56,13 @@ const Error = styled.div`
     text-align: center;
     padding-bottom: 20px;
     padding-top: 20px;
-    color: #000000;
+    color: #ffffff;
     margin-left: auto;
     margin-right: auto;
     max-width: 25vw;
     min-width: 300px;
     width: -webkit-fill-available;
+    font-family : 'Soopafresh';
 `;
 
 const FormInput = styled.input`

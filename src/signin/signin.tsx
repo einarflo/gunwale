@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import logo from '../images/gunwale-logo.png';
+import logo from '../images/INTRADOGE.png';
+import gwlogo from '../images/gw-logo.png';
 import axios from 'axios';
 
 interface SiginProps {
@@ -42,19 +43,29 @@ const Signin = ({ toGameMode, setLoggedInUser }: SiginProps) => {
 
   return (
     <LoginWrapper>
-        <Content>
-            <Logo src={logo} />
-            {error && <Error>Something has gone wrong. Maybe try another password?</Error>}
-            <FormInput placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsernameInput(e.target.value)} />
-            <FormInput placeholder="Password" type="password" onChange={(e: { target: { value: String; }; })  => setPassword(e.target.value)} onKeyPress={(e: any)  => {
-              if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
-                handleLogin()
-              }
-            }} />
-            <LogginButton onClick={() => handleLogin()}>Sign in</LogginButton>
-            <Error><div onClick={toGameMode} style={{ color: "#1c0041", textDecoration: "underline"}}>Game mode</div></Error>
-        </Content>
-        <Footer>Sign in using your <a href="https://www.dogetek.no/intraDoge" style={{ color: "#1c0041" }}>Intradoge</a> user credentials. By signing in you accept that data is stored and managed by Dogetek.</Footer>
+        <LeftSide>
+          <ContentLeft>
+              <Logo src={logo} style={{ paddingBottom: "30px" }}/>
+              {error && <Error>Something has gone wrong. Maybe try another password?</Error>}
+              <FormInput placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsernameInput(e.target.value)} />
+              <FormInput placeholder="Password" type="password" onChange={(e: { target: { value: String; }; })  => setPassword(e.target.value)} onKeyPress={(e: any)  => {
+                if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
+                  handleLogin()
+                }
+              }} />
+              <LogginButton onClick={() => handleLogin()}>SIGN IN</LogginButton>
+              <Error>Sign in using your <a href='https://www.dogetek.no/intraDoge/'>Intradoge</a> user credentials. By signing in you accept that data is stored and managed by Dogetek</Error>
+
+              <Error><div onClick={toGameMode} style={{ color: "#1c0041", textDecoration: "underline", cursor: "pointer"}}>Back to game mode</div></Error>
+            </ContentLeft>
+        </LeftSide>
+        <RightSide>
+          <ContentRight>
+            <Logo src={gwlogo} />
+
+          </ContentRight>
+
+        </RightSide>
     </LoginWrapper>
   );
 }
@@ -63,20 +74,53 @@ const LoginWrapper = styled.div`
     height: 100vh;
     width: 100vw;
     background: #ffffff;
+    display: flex;
 `;
 
 const Logo = styled.img`
-    max-width: 400px;
+    max-width: 500px;
     width: -webkit-fill-available;
 `;
 
-const Content = styled.div`
+const ContentLeft = styled.div`
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: 25%;
     transform: translate(-50%, -50%);
     min-width: 300px;
     max-width: 80vw;
+    @media (max-width: 1160px) {
+      left: 50%;
+    }
+`;
+
+const ContentRight = styled.div`
+    position: absolute;
+    top: 50%;
+    left: 75%;
+    transform: translate(-50%, -50%);
+    min-width: 300px;
+    max-width: 80vw;
+    @media (max-width: 1160px) {
+      left: 50%;
+    }
+`;
+
+const LeftSide = styled.div`
+  width: 50%;
+  @media (max-width: 1160px) {
+    width: 100;
+  }
+  
+`;
+
+const RightSide = styled.div`
+  width: 50%;
+  background-image: linear-gradient(180deg, #203046 0%, #030006 100%);
+  @media (max-width: 1160px) {
+    display: none;
+    width: 0;
+  }
 `;
 
 const Error = styled.div`
@@ -104,20 +148,18 @@ const FormInput = styled.input`
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
     max-width: 500px;
     margin: auto;
-    border: 3px solid rgb(28,0,65);
+    border: 1px solid #ced4da;
     margin-bottom: 20px;
-    border-radius: 8px;
+    border-radius: 0.25rem;
     width: -webkit-fill-available;
 `;
 
-const LogginButton = styled.div`
+const LogginButton = styled.button`
     text-align: center;
     display: block;
     width: 100%;
     padding: .375rem .75rem;
-    font-size: 1.2rem;
-    font-weight: bold;
-    line-height: 1.5;
+    font-size: 1rem;
     color: white;
     background-clip: padding-box;
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
@@ -125,27 +167,18 @@ const LogginButton = styled.div`
     margin: auto;
     margin-bottom: 30px;
       
-    background: rgb(28,0,65);
-    background: linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
-    box-shadow: 0 4px 8px 1px rgba(0, 0, 0, 0.4);
+    background: #05222f;
        
-    border-radius: 8px;
+    border-radius: 0px;
       
-    font-family : 'Avenir';
+    font-family : 'Lato', 'Helvetica', 'Arial', 'sans-serif';
     cursor: pointer;
     width: -webkit-fill-available;
-`;
-
-const Footer = styled.div`
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    min-width: 300px;
-    max-width: 80vw;
-    color: #00000080;
-    font-size: 1rem;
-    text-align: center;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    padding: 0.375rem 0.75rem;
+    font-weight: 400;
 `;
 
 export default Signin;

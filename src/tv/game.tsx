@@ -164,6 +164,7 @@ export const Tvrapper = styled.div`
     background: linear-gradient(180deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
     background: linear-gradient(-45deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
     //background: linear-gradient(-45deg, #EE7752, #E73C7E, #23A6D5, #23D5AB);
+    background: linear-gradient(-45deg, #203046 0%, #030006 100%);
     background-size: 400% 400%;
     animation-name: ${backgroundAnimation};
     animation-duration: 15s;

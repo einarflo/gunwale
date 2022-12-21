@@ -95,7 +95,7 @@ const App = () => {
 
 
   // Just the splash screen
-  if (showSplashScreen) {
+  if (showSplashScreen && false) {
     return <Splash />;
   }
 
