@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import logo from '../images/gunwale-logo.png';
+import logo from '../images/gw-logo-dark.png';
 import TVGamePlayView from "./game";
 
 interface CreateViewProps {

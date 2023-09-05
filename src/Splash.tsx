@@ -1,5 +1,5 @@
 import styled, { keyframes } from 'styled-components';
-import logo from './images/gunwale-logo-white.png';
+import logo from './images/gw-logo.png';
 
 const Splash = () => {
   return (

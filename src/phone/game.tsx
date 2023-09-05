@@ -4,7 +4,7 @@ import styled, { keyframes } from "styled-components";
 import { Question } from "../tv/game";
 import Alts from "./alts";
 import Result from "./result";
-import logo from '../images/gunwale-logo-white.png';
+import logo from '../images/gw-logo.png';
 import { Logo } from "../Splash";
 //import Waiting from "./waiting";
 
@@ -72,7 +72,10 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
 
     // sabotere (bytte rekkefølge, )
 
-    // streak?
+    // streak? Kanskje man kan unlocke sabotasje når man får høy streak- som på COD?
+
+    // Bette poeng? eller Geare poenge? eller kjøpe flere poeng (f. eks 10% ekstra poeng)
+    // KJøpe lotto, og ha trekning på skjermen: Tall mellom 1-15 kanskje 1000 poeng i premie 
 
 
     // Waiting for game to start
@@ -80,7 +83,14 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
     //return <Waiting points={points} username={username} gameStarted={() => setGameStarted(true)} gamepin={gamepin} />
   //}
 
-  // Show the questions alternativs 
+  // view score when timer ends
+
+  // some background music
+
+
+  // KJøpe lotte
+
+  // Show the questions alternatives and if the answer is correct
   if (!answered && !gameEnded) {
     return <Alts question={questions[currentQ]} points={points} username={username} userId={userId} setPoints={(p) => setPoints(p)} answered={setAnswer} gamepin={gamepin}/>
   }

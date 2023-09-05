@@ -13,22 +13,29 @@ $key = $request[1];
 // retrieve the table and key from the path
 $table = preg_replace('/[^a-z0-9_]+/i','',array_shift($request));
 //$key = array_shift($request)+0;
- //echo $key;
-print_r($columns);
+//echo $key;
 // escape the columns and values from the input object
-$columns = preg_replace('/[^a-z0-9_]+/i','',array_keys($input));
-$values = array_map(function ($value) use ($link) {
-  if ($value===null) return null;
-  return mysqli_real_escape_string($link,(string)$value);
-},array_values($input));
- 
-// build the SET part of the SQL command
 
 $set = '';
-for ($i=0;$i<count($columns);$i++) {
-  $set.=($i>0?',':'').'`'.$columns[$i].'`=';
-  $set.=($values[$i]===null?'NULL':'"'.$values[$i].'"');
+
+if ($input!==null) {
+    $columns = preg_replace('/[^a-z0-9_]+/i','',array_keys($input));
+    print_r($columns);
+    $values = array_map(function ($value) use ($link) {
+        if ($value===null) return null;
+        return mysqli_real_escape_string($link,(string)$value);
+    },array_values($input));
+
+    // build the SET part of the SQL command
+
+
+    for ($i=0;$i<count($columns);$i++) {
+        $set.=($i>0?',':'').'`'.$columns[$i].'`=';
+        $set.=($values[$i]===null?'NULL':'"'.$values[$i].'"');
+    }
+
 }
+
  
 // create SQL based on HTTP method
 switch ($method) {
@@ -75,16 +82,16 @@ switch ($method) {
     $sql = "insert into `$table` set $set"; echo $sql; break;
   case 'DELETE':
     exit("nope");
-    $sql = "delete `$table` where id=$key"; break;
+    //$sql = "delete `$table` where id=$key"; break;
 }
  
-// excecute SQL statement
-$result = mysqli_query($link,$sql);
+// execute SQL statement
+$result = mysqli_query($link, $sql);
  
 // die if SQL statement failed
 if (!$result) {
   http_response_code(404);
-  die(mysqli_error());
+  die(mysqli_error($link));
 }
  
 // print results, insert id or affected row count

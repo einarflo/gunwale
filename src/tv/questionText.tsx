@@ -1,5 +1,5 @@
 import { CurrentQuestionCount, Logo, Tvrapper } from "./game";
-import logo from '../images/gunwale-logo-white.png';
+import logo from '../images/gw-logo.png';
 import styled, { keyframes } from "styled-components";
 
 interface QuestionTextProps {

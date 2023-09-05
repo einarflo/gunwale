@@ -53,33 +53,41 @@ const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, game
 
 
 
-  // return a random quote
-  const quotes = [
-    'The best is yet to come.',
-    'No pressure, no diamonds.',
-    'And so the adventure begins.',
-    'When nothing goes right, go left.'
-  ]
+
   
   return(
     <GameWrapper>
         <Header>
             <Username>{username}</Username>
-            <Points>???</Points>
+            <Points>{points}</Points>
         </Header>
-        <Text>{quotes[Number((Math.random() * 3).toFixed(0))]}</Text>
+        <Text>{getQuote()}</Text>
         <MobileSpinner/>
     </GameWrapper>
   );
     
 }
-const Text = styled.div`
+
+export const getQuote = () => {
+  return quotes[Number((Math.random() * 3).toFixed(0))];
+}
+
+  // return a random quote
+const quotes = [
+  'The best is yet to come.',
+  'No pressure, no diamonds.',
+  'And so the adventure begins.',
+  'When nothing goes right, go left.'
+]
+
+export const Text = styled.div`
   height: 200px;
   position: relative;
   margin: 20px;
   font-size: 2rem;
   color: white;
   text-align: center;
+  font-family: "Soopafresh";
 `;
 
 export default Result;

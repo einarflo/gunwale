@@ -7,6 +7,13 @@ import Username from './signin/username';
 import PhoneGameView from './phone/game';
 import TVView from './tv/selectGame';
 
+const appHeight = () => {
+  const doc = document.documentElement
+  doc.style.setProperty(' — app-height', `${window.innerHeight}px`)
+ }
+ window.addEventListener('resize', appHeight)
+ appHeight()
+
 
 const App = () => {
 

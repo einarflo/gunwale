@@ -1,5 +1,5 @@
 import { Logo, Player, Start, Tvrapper } from "./game";
-import logo from '../images/gunwale-logo-white.png';
+import logo from '../images/gw-logo.png';
 import styled from "styled-components";
 import { useEffect, useState } from "react";
 import axios, { AxiosRequestConfig } from "axios";

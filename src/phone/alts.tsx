@@ -1,10 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import axios from "axios"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import styled, { keyframes } from "styled-components"
 import { Question } from "../tv/game"
-import { GameWrapper, Header, Points, Username } from "./game"
+import { GameWrapper, Header, Points, Username, MobileSpinner } from "./game"
 import OptionButton from "./option"
+import { Text } from "./result"
 
 interface AltsProps {
   userId: String
@@ -17,9 +18,23 @@ interface AltsProps {
 }
 
 const Alts = ({ userId, username, points, setPoints, answered, gamepin, question }: AltsProps) => {
-  const [roundPoints, setRoundPoints] = useState(points);
+  const [roundPoints, setRoundPoints] = useState(0);
   const [score, setScore] = useState(1000);
 
+  const scoreRef = useRef(score);
+  scoreRef.current = score;
+
+  const roundPointsRef = useRef(roundPoints);
+  roundPointsRef.current = roundPoints;
+
+  const [answerSelected, setAnswerSelected] = useState(false);
+  const [showCorrect, setShowCorrect] = useState(false);
+  const [answeredCorrectly, setAnsweredCorrectly] = useState(false);
+
+  const answerSelectedRef = useRef(answerSelected);
+  answerSelectedRef.current = answerSelected;
+
+  // POST points to server 
   const setUserPoints = (points: number) => {
     axios.put(`https://www.dogetek.no/api/api.php/game_players/${userId}/`, {
       score: points.toString(),
@@ -32,54 +47,86 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
     });
   }
 
+  // Points counter
   useEffect(() => {
+    // Maks 1000 poeng - fordelt på antall sekunder - delt opp i 100 (pga. 10 ms)
+    const subtract = 1000 / question.time / 100
     const countdown = setInterval(() => {
-      // Minimum score 15
+      // Minimum score 115
       if (score > 115) {
-        setScore(score - 1)
+        setScore(scoreRef.current - subtract)
       }
     }, (10));
 
     return () => clearInterval(countdown)
   }, [score])
 
-  let timeout: NodeJS.Timer;
-
-  useEffect(() => {
-    let secondsPassed = 0;
-    timeout = setInterval(() => {
-      console.log('secondsPassed >= question.time', secondsPassed, question.time, secondsPassed >= question.time)
-
-      if (!isNaN(question.time) && secondsPassed >= (question.time - 1)) {
-        // end round by answering wrong
-        selectOption('0');
-      }
-      secondsPassed = secondsPassed + 1;
-    }, (1000));
-
-    return () => clearInterval(timeout)
+  useEffect(() =>{
+    setTimeout(() => {
+      questionTimeEnd();
+    }, (question.time * 1000))
   }, [])
 
-
-  useEffect(() => {
-    setRoundPoints(points);
-  }, [points])
-
-  const selectOption = (answer: string) => {
-    // stop timer with question time timeout
-    clearInterval(timeout)
-
-    if (answer === question?.correct) {
-      setPoints(roundPoints + score);
-      setUserPoints(roundPoints + score);
+  const questionTimeEnd = () => {
+    if (!answerSelectedRef.current) {
+      selectOption('0');
     }
-    else {
-      setPoints(roundPoints);
-      setUserPoints(roundPoints);
 
-    }
-    answered();
+    // show correct answer
+    setShowCorrect(true);
+
+    // move on after 3 sec
+    setTimeout(() => {
+      // Set points in app
+      setPoints(points + roundPointsRef.current);
+      answered();
+    }, 5000)
   }
+  
+  // User clicks alternative
+  const selectOption = (answer: string) => {
+    // Show loader while waiting for timeout
+    setAnswerSelected(true);
+
+    setAnsweredCorrectly(answer === question?.correct);
+
+    // If it is correct 
+    if (answer === question?.correct) {
+      // POST new point score to server
+      setUserPoints(points + score);
+      // Set the state
+      setRoundPoints(score)
+    }
+  }
+
+  // Waiting for result to be revealed 
+  if (answerSelected && !showCorrect) {
+    return (
+    <GameWrapper>
+        <Header>
+            <Username>{username}</Username>
+            <Points>{points}</Points>
+        </Header>
+        <Text>Fingers crossed</Text>
+        <MobileSpinner/>
+    </GameWrapper>);
+  }
+
+  // Showing the result for 3 seconds
+  if (answerSelected && showCorrect) {
+    return (
+    <GameWrapper>
+        <Header>
+            <Username>{username}</Username>
+            <Points>{points + roundPoints}</Points>
+        </Header>
+        <Text>{answeredCorrectly ? 'Correct' : 'Nope!'}</Text>
+        <Text>You got {answeredCorrectly ? roundPoints : 0} points</Text>
+    </GameWrapper>);
+
+  }
+
+  // Showing alternatives
   return(
     <GameWrapper>
       <Header>

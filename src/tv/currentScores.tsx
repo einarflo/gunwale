@@ -1,5 +1,5 @@
 import { CurrentQuestionCount, Logo, Player, Start, Stop, Tvrapper } from "./game";
-import logo from '../images/gunwale-logo-white.png';
+import logo from '../images/gw-logo.png';
 import styled from "styled-components";
 import { useEffect, useState } from "react";
 import axios, { AxiosRequestConfig } from "axios";
@@ -99,6 +99,8 @@ const Header = styled.div`
     left: 50%;
     margin: auto;
     margin-bottom: 30px;
+    font-family: "Soopafresh";
+    letter-spacing: 2px;
 `;
 
 export default CurrentScores;
