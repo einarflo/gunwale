@@ -30,10 +30,10 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
 
 const GamePinWrapper = styled.div`
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
     background: #ffffff;
     background-image: linear-gradient(180deg, #203046 0%, #030006 100%);
-
 `;
 
 const Logo = styled.img`
@@ -63,51 +63,6 @@ const Error = styled.div`
     min-width: 300px;
     width: -webkit-fill-available;
     font-family : 'Soopafresh';
-`;
-
-const FormInput = styled.input`
-    font-family : 'Avenir';
-    text-align: center;
-    display: block;
-    width: 100%;
-    padding: .375rem .75rem;
-    font-size: 1.2rem;
-    line-height: 1.5;
-    background-clip: padding-box;
-        
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
-    max-width: 500px;
-    margin: auto;
-    border: 3px solid rgb(28,0,65);
-    margin-bottom: 20px;
-    border-radius: 8px;
-    width: -webkit-fill-available;
-`;
-
-const LogginButton = styled.div`
-    text-align: center;
-    display: block;
-    width: 100%;
-    padding: .375rem .75rem;
-    font-size: 1.2rem;
-    font-weight: bold;
-    line-height: 1.5;
-    color: white;
-    background-clip: padding-box;
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
-    max-width: 500px;
-    margin: auto;
-    margin-bottom: 30px;
-      
-    background: rgb(28,0,65);
-    background: linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
-    box-shadow: 0 4px 8px 1px rgba(0, 0, 0, 0.4);
-       
-    border-radius: 8px;
-      
-    font-family : 'Avenir';
-    cursor: pointer;
-    width: -webkit-fill-available;
 `;
 
 const rotate = keyframes`

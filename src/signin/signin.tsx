@@ -72,6 +72,7 @@ const Signin = ({ toGameMode, setLoggedInUser }: SiginProps) => {
 
 const LoginWrapper = styled.div`
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
     background: #ffffff;
     display: flex;

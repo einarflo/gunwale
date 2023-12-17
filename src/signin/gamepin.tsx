@@ -5,21 +5,12 @@ import logo from '../images/gw-logo.png';
 interface GamePinProps {
     error: boolean,
     loading: boolean,
-    setPin: (pin: String | undefined) => void,
+    setPin: (pin: string | undefined) => void,
     toCreatorMode: () => void
 }
 
-interface InputProps {
-    value?: string,
-    disabled?: true
-}
-
-
-
 const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
-    const [gamePin, setGamePin] = useState<String | undefined>("");
-    const [inputProps, setinputProps] = useState<InputProps>({});
-
+    const [gamePin, setGamePin] = useState<string>("");
 
     useEffect(() => {
         var query = window.location.search.substring(1);
@@ -28,15 +19,9 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
             var pair = vars[i].split("=");
             if(pair[0] === 'gameid'){
                 setGamePin(pair[1])
-                setinputProps({
-                    disabled: true,
-                    value: pair[1]
-                })
             }
         }
     }, [])
-
-    
 
     return(
     <GamePinWrapper>
@@ -47,7 +32,11 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
                 loading ? <Spinner /> :
                 <>
                     {error && <Error>Wrong game pin. Try another pls?</Error>}
-                    <GamepinFormInput placeholder="GAME PIN" type={"number"} {...inputProps} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value)} />
+                    <GamepinFormInput autoFocus={false} tabIndex={0} placeholder="GAME PIN" type={"number"} value={gamePin} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
+                        if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
+                            setPin(gamePin)
+                        }
+                    }}/>
                     <GamepinLogginButton onClick={() => setPin(gamePin)}>PLAY!</GamepinLogginButton>
                 </>
             }
@@ -59,12 +48,12 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
 const GamePinWrapper = styled.div`
     height: 100vh;
     width: 100vw;
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
+    height: 100dvh;
 `;
 
 const Background = styled.div`
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
     background-image: linear-gradient(180deg, #203046 0%, #030006 100%);
     transform: skewY(-5deg) translate(0%, -13%);

@@ -105,6 +105,7 @@ const Error = styled.div`
 
 const SigninScreenWrapper = styled.div`
         height: 100vh;
+        height: 100dvh;
         width: 100vw;
         font-family : 'Avenir';
         background: #ffffff;

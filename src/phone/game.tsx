@@ -112,6 +112,7 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
 
 export const GameWrapper = styled.div`
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   background: rgb(28,0,65);
   background: linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%); 

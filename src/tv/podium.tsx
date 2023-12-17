@@ -73,6 +73,7 @@ const ContentPlayers = styled.div`
     transform: translate(-50%, -50%);
     min-width: 300px;
     max-width: 80vw;
+    font-family: "Coll";
 `;
 
 const ScoreEntry = styled.div`
@@ -88,6 +89,7 @@ const ScoreEntry = styled.div`
   margin-right: auto;
   margin-left: auto;
   left: 50%;
+  font-family: "Coll";
 `;
 
 const Header = styled.div`
@@ -101,6 +103,7 @@ const Header = styled.div`
     left: 50%;
     margin: auto;
     margin-bottom: 30px;
+    font-family: "Coll";
 `;
 
 export default Podium;

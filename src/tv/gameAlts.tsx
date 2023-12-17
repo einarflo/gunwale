@@ -48,16 +48,34 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }
       </ContentQuestions>
       { altTimeLeft > 0 && <Timer>{altTimeLeft}</Timer> }
       <Alts>
-        <Q>{option(question?.alt1, 1, "green", showAnswers && question?.correct === '1')}</Q>
-        <Q>{option(question?.alt2, 2, "blue", showAnswers && question?.correct === '2')}</Q>
-        <Q>{option(question?.alt3, 3, "red", showAnswers && question?.correct === '3')}</Q>
-        <Q>{option(question?.alt4, 4, "purple", showAnswers && question?.correct === '4')}</Q>
+        <AltsContainer>
+        <Top>
+          <Q>{option(question?.alt1, 1, "green", showAnswers && question?.correct === '1')}</Q>
+          <Q>{option(question?.alt2, 2, "blue", showAnswers && question?.correct === '2')}</Q>
+        </Top>
+        <Bot>
+          <Q>{option(question?.alt3, 3, "red", showAnswers && question?.correct === '3')}</Q>
+          <Q>{option(question?.alt4, 4, "purple", showAnswers && question?.correct === '4')}</Q>
+        </Bot>
+        </AltsContainer>
       </Alts>
       <Start onClick={nextQuestion}>Next</Start>
       <Stop onClick={stopGame}>Stop</Stop>
     </Tvrapper>
   )
 }
+
+export const AltsContainer = styled.div`
+ 
+`;
+
+export const Top = styled.div`
+ display: flex;
+`;
+
+export const Bot = styled.div`
+ display: flex;
+`;
 
 const Q = styled.div`
 overflow: hidden;
@@ -67,9 +85,8 @@ text-align: center;
 display: flex;
 justify-content: center;
 align-items: center;
+width: 100%;
 `;
-
-
 
 const Timer = styled.div`
   background: #ffffff;
@@ -95,7 +112,7 @@ const QText = styled.div`
 
 const Option = styled.div`
   height: 120px;
-  width: 50%;
+  width: 100%;
   float:left;
 `;
 
@@ -114,6 +131,7 @@ const ContentQuestionText = styled.div`
   font-size: 3rem;
   color: white;
   text-align: center;
+  font-family: "Coll";
 `;
 
 const Alts = styled.div`

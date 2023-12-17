@@ -108,7 +108,7 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
             <Username>{username}</Username>
             <Points>{points}</Points>
         </Header>
-        <Text>Fingers crossed</Text>
+        <Text>Waiting for your score</Text>
         <MobileSpinner/>
     </GameWrapper>);
   }
@@ -116,7 +116,7 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
   // Showing the result for 3 seconds
   if (answerSelected && showCorrect) {
     return (
-    <GameWrapper>
+    <GameWrapper style={{ background: answeredCorrectly ? 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(0,164,67,1) 0%, rgba(34,214,135,1) 100%)' : 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(255,39,39,1) 0%, rgba(247,89,89,1) 100%)' }}>
         <Header>
             <Username>{username}</Username>
             <Points>{points + roundPoints}</Points>

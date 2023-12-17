@@ -104,6 +104,7 @@ const TVView = ({ username, logout }: CreateViewProps) => {
 
 const GameSelectionWrapper = styled.div`
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   
   #background: rgb(28,0,65);
@@ -113,6 +114,7 @@ const GameSelectionWrapper = styled.div`
 
 const SideBarNav = styled.div`
   height: 100vh;
+  height: 100dvh;
   width: 260px;
   background: #ffffff;
   border-right: 2px solid #2d387050;
