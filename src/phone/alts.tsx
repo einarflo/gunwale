@@ -63,6 +63,7 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
 
   useEffect(() =>{
     setTimeout(() => {
+      // COMMENT OUT FOR DEBUG
       questionTimeEnd();
     }, (question.time * 1000))
   }, [])
@@ -139,12 +140,16 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
         <PowerUp>Stop time</PowerUp>
         <PowerUp>Cut losses</PowerUp>
       </PowerUpContainer>
-      <div>
+      <AltsContainer>
+      <Top>
         <OptionButton description={question?.alt1} select={() => selectOption('1')} colour="green" />
         <OptionButton description={question?.alt2} select={() => selectOption('2')} colour="blue" />
+      </Top>
+      <Bot>
         <OptionButton description={question?.alt3} select={() => selectOption('3')} colour="red" />
         <OptionButton description={question?.alt4} select={() => selectOption('4')} colour="purple" />
-      </div>
+        </Bot>
+      </AltsContainer>
 
     </GameWrapper>
   )
@@ -169,6 +174,19 @@ export const PowerUp = styled.div`
 export const PowerUpContainer = styled.div`
  display: flex;
  opacity: 30%;
+ justify-content: center;
+`;
+
+export const AltsContainer = styled.div`
+ 
+`;
+
+export const Top = styled.div`
+ display: flex;
+`;
+
+export const Bot = styled.div`
+ display: flex;
 `;
 
 const progressbar = keyframes`

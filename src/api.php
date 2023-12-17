@@ -62,6 +62,9 @@ switch ($method) {
     else if ($table == "games") {
         $sql = "select * from game WHERE created_by=". '"'. $key. '"' .";"; break;
     }
+    else if ($table == "game_list") {
+        $sql = "select game.id, game.name, game.description, game.status, COUNT(gq.id) as qcount from game LEFT JOIN game_question gq on game.id = gq.game_id WHERE game.created_by=". '"'. $key. '"' ." GROUP BY game.id ;"; break;
+    }
     else {
       $sql = "select * from `$table`".($key?" WHERE id=$key":''); break;
     }
@@ -71,8 +74,11 @@ switch ($method) {
         $sql = "update game set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
     }
     else if ($table == "game_players") {
-        $sql = "update game set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
+        $sql = "update game_players set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
     }
+    else if ($table == "game_question") {
+      $sql = "update game_question set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
+  }
     else {
         exit("nope");
     }
@@ -96,11 +102,11 @@ if (!$result) {
  
 // print results, insert id or affected row count
 if ($method == 'GET') {
-  if (!$key || ($table == "channel_posts" || $table == "game_question" || $table == "games" || $table == "game_players" || $table == "game_players_id")) echo '[';
+  if (!$key || ($table == "channel_posts" || $table == "game_question" || $table == "games" || $table == "game_list" || $table == "game_players" || $table == "game_players_id")) echo '[';
   for ($i=0;$i<mysqli_num_rows($result);$i++) {
     echo ($i>0?',':'').json_encode(mysqli_fetch_object($result));
   }
-  if (!$key || ($table == "channel_posts" || $table == "game_question" || $table == "games" || $table == "game_players" || $table == "game_players_id")) echo ']';
+  if (!$key || ($table == "channel_posts" || $table == "game_question" || $table == "games" || $table == "game_list" || $table == "game_players" || $table == "game_players_id")) echo ']';
 } elseif ($method == 'POST') {
   echo mysqli_insert_id($link);
 } else {

@@ -52,13 +52,15 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
                 </>
             }
         </Content>
-        <Footer>... or create your own Gunwale&nbsp;<div onClick={toCreatorMode} style={{ color: "#1c0041", textDecoration: "underline", fontFamily: "Soopafresh", cursor: "pointer" }}>here</div></Footer>
+        <Footer>... or create your own Gunwale&nbsp;<div onClick={toCreatorMode} style={{ color: "#1c0041", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div></Footer>
     </GamePinWrapper>)
 }
 
 const GamePinWrapper = styled.div`
     height: 100vh;
     width: 100vw;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
 `;
 
 const Background = styled.div`
@@ -138,23 +140,17 @@ export const GamepinLogginButton = styled.div`
 
 const Footer = styled.div`
     display: block;
-    position: absolute;
-    bottom: 0;
+    justify-content: center;
+    position: relative;
+    bottom: 5vh;
     left: 50%;
     transform: translate(-50%, -50%);
     min-width: 300px;
     max-width: 80vw;
     color: black;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     text-align: center;
-    font-family: "Soopafresh";
-    @media (min-width: 1112px) {
-        display: flex;
-
-
-        font-size: 1.7rem;
-        text-align: right;
-    }
+    font-family: "Coll";
 `;
 
 const rotate = keyframes`

@@ -14,6 +14,7 @@ interface TvViewProps {
 }
 
 export interface Question {
+  id: String;
   number_in_line: String,
   alt1: String,
   alt2: String,

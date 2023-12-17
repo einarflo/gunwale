@@ -48,16 +48,28 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }
       </ContentQuestions>
       { altTimeLeft > 0 && <Timer>{altTimeLeft}</Timer> }
       <Alts>
-        {option(question?.alt1, 1, "green", showAnswers && question?.correct === '1')}
-        {option(question?.alt2, 2, "blue", showAnswers && question?.correct === '2')}
-        {option(question?.alt3, 3, "red", showAnswers && question?.correct === '3')}
-        {option(question?.alt4, 4, "purple", showAnswers && question?.correct === '4')}
+        <Q>{option(question?.alt1, 1, "green", showAnswers && question?.correct === '1')}</Q>
+        <Q>{option(question?.alt2, 2, "blue", showAnswers && question?.correct === '2')}</Q>
+        <Q>{option(question?.alt3, 3, "red", showAnswers && question?.correct === '3')}</Q>
+        <Q>{option(question?.alt4, 4, "purple", showAnswers && question?.correct === '4')}</Q>
       </Alts>
       <Start onClick={nextQuestion}>Next</Start>
       <Stop onClick={stopGame}>Stop</Stop>
     </Tvrapper>
   )
 }
+
+const Q = styled.div`
+overflow: hidden;
+  
+font-family: "Coll";
+text-align: center;
+display: flex;
+justify-content: center;
+align-items: center;
+`;
+
+
 
 const Timer = styled.div`
   background: #ffffff;
@@ -110,6 +122,7 @@ const Alts = styled.div`
     left: 50%;
     transform: translate(-50%, -50%);
     width: 100%;
+    display: block;
 `;
 
 export default Alternatives;

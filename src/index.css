@@ -17,3 +17,9 @@ code {
   src: local("Soopafresh"),
    url("./soopafresh.ttf") format("truetype");
   }
+
+@font-face {
+  font-family: "Coll";
+  src: local("Coll"),
+  url("./coll.otf") format("truetype");
+}
