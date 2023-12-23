@@ -52,6 +52,10 @@ const App = () => {
         setLoading(false);
       });
     }
+    else {
+      setError(true);
+      setLoading(false);
+    }
   }
 
   // Insert player in DB and set username

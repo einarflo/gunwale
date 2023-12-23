@@ -1,29 +1,26 @@
-import axios from "axios";
-import { useState } from "react";
+import axios, { AxiosRequestConfig } from "axios";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 
-interface NewGameProps {
-    userid: String,
-    cancel: () => void,
+interface UpdateGameProps {
+    gameId: String | undefined
     edit: (id: String) => void
 }
 
-const NewGame = ({userid, cancel, edit}: NewGameProps) => {
+const UpdateGame = ({gameId = "", edit}: UpdateGameProps) => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [error, seterror] = useState(false);
 
      // Insert player in DB and set username
-  const insertQuestion = (name: String, description: String) => {
-    axios.post(`https://www.dogetek.no/api/api.php/game/`, {
+  const updateGame = (name: String, description: String) => {
+    axios.put(`https://www.dogetek.no/api/api.php/game/${gameId}/`, {
       name: name,
-      description: description,
-      created_by: userid,
-      status: "created"
+      description: description
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
       .then(res => {
         console.log(res);
-        edit(res.data)
+        edit(gameId)
       })
       .catch(err => {
         console.log("Something fishy is going on");
@@ -31,21 +28,38 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
       });
   }
 
+  const getGame = () => {
+    axios.get(`https://www.dogetek.no/api/api.php/game/${gameId}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      .then(res => {
+        if (res.data) {
+          setDescription(res.data.description);
+          setName(res.data.name);
+      }})
+      .catch(err => {
+        console.log("Error when getting question with id ", gameId);
+      });
+  }
+
+  useEffect(() => {
+    getGame();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId]);
+
     return (
         <>
-        <Heading>Create a new quiz</Heading>
-            <NameInput placeholder="Name" onChange={(e) => setName(e.target.value)} />
-            <DescriptionInput placeholder="Description" onChange={(e) => setDescription(e.target.value)} />
+        <Heading>Update quiz</Heading>
+            <NameInput placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+            <DescriptionInput placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
           <Actions>
-            <Create onClick={() => insertQuestion(name, description)}>Create quiz</Create>
-            <Cancel onClick={cancel}>Cancel</Cancel>
+            <Create onClick={() => updateGame(name, description)}>Update</Create>
+            <Cancel onClick={() => edit(gameId)}>Cancel</Cancel>
             { error && "Something went wrong, please try again!" }
           </Actions>
           </>
     );
 };
 
-export default NewGame;
+export default UpdateGame;
 
 const NameInput = styled.input`
 background: #ffffff;

@@ -6,6 +6,8 @@ import TVGamePlayView from "./game";
 import Home from "./home";
 import NewGame from "./createGame";
 import EditGame from "./editGame";
+import EditQuestion from "./editQuestion";
+import UpdateGame from "./updateGameName";
 
 interface CreateViewProps {
     username: String,
@@ -28,11 +30,12 @@ const TVView = ({ username, logout }: CreateViewProps) => {
   const [page, setPage] = useState("home");
   const [userId, setUserId] = useState(25);
   const [editId, setEditId] = useState<String | undefined>(undefined);
+  const [questionId, setQuestionId] = useState<String | undefined>(undefined);
 
   useEffect(() => {
     getUserInfo()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [editId]);
 
   const getUserInfo = () => {
     axios.get(`https://www.dogetek.no/api/api.php/users/${username}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
@@ -84,7 +87,7 @@ const TVView = ({ username, logout }: CreateViewProps) => {
     <GameSelectionWrapper>
       <SideBarNav>
         <Logo src={logo}></Logo>
-        <NavItem onClick={() => setPage("home")}>Home</NavItem>
+        <NavItem onClick={() => { setPage("home"); setQuestionId(undefined); setEditId(undefined);}}>Home</NavItem>
         <NavItem onClick={() => setPage("library")}>Library</NavItem>
         <NavItem onClick={() => setPage("discover")}>Discover</NavItem>
         <NavItem onClick={() => setPage("settings")}>Settings</NavItem>
@@ -96,7 +99,9 @@ const TVView = ({ username, logout }: CreateViewProps) => {
         </Header>
         { page === "home" && <Home games={games} error={error} edit={(id: String) => {setEditId(id); setPage("edit")}} loading={loading} username={username} newGame={() => setPage("newgame")} discover={() => {}} setPlayGames={setPlayGames}/> }
         { page === "newgame" && <NewGame userid={String(userId)} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => setPage("home")} /> }
-        { page === "edit" && editId && <EditGame gameId={editId} edit={() => {}} cancel={() => setPage("home")} /> }
+        { page === "edit" && editId && <EditGame gameId={editId} edit={(id: String) => {setQuestionId(id); setPage("question")}} update={(id: String) => {setEditId(id); setPage("update")}} cancel={() => {setPage("home"); setEditId(undefined);}} /> }
+        { page === "question" && questionId && <EditQuestion gameId={editId} questionId={questionId} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => {setPage("home"); setQuestionId(undefined);}} /> }
+        { page === "update" && editId && <UpdateGame gameId={editId} edit={(id: String) => {setEditId(id); setPage("edit")}} /> }
         </Content>
     </GameSelectionWrapper>)
 }
@@ -115,10 +120,10 @@ const GameSelectionWrapper = styled.div`
 const SideBarNav = styled.div`
   height: 100vh;
   height: 100dvh;
-  width: 260px;
+  
   background: #ffffff;
   border-right: 2px solid #2d387050;
-`;
+`; //width: 260px;
 
 const NavItem = styled.div`
   font-weight: normal;

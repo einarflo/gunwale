@@ -7,6 +7,7 @@ interface EditGameProps {
   gameId: String;
   cancel: () => void;
   edit: (id: String) => void;
+  update: (id: String) => void;
 }
 
 export interface GameItem {
@@ -16,49 +17,38 @@ export interface GameItem {
   status: String;
 }
 
-const EditGame = ({ gameId, cancel, edit }: EditGameProps) => {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [alternatives, setAlternatives] = useState(["", "", "", ""]);
-  const [correctAlternative, setCorrectAlternative] = useState<Number>();
+const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
   const [error, setError] = useState(false);
   const [game, setGame] = useState<GameItem>();
-
-
-  const [editName, setEditName] = useState<String>("");
-  const [ediAlt1, setAlt1] = useState<String>("");
-  const [ediAlt2, setAlt2] = useState<String>("");
-  const [ediAlt3, setAlt3] = useState<String>("");
-  const [ediAlt4, setAlt4] = useState<String>("");
 
   useEffect(() => {
     getQuestionsForGameId(gameId);
     getGame(gameId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
-
   
   const [questions, setQuestions] = useState<Array<Question>>([]);
-  const [currentQ, setCurrentQ] = useState<String>("");
 
-  const insertQuestion = (
-    name: string,
-    description: string,
-    alternatives: string[],
-    correctAlternative: Number = 1
+  const newQuestion = (
   ) => {
     axios
       .post(`https://www.dogetek.no/api/api.php/game_question/`, {
-        name: name,
-        description: description,
+        text: "",
         game_id: gameId,
+        score: "1000",
+        description: "",
+        number_in_line: questions.length + 1,
         status: "created",
-        alternatives: alternatives,
-        correctAlternative: correctAlternative,
+        time: "10",
+        correct: "1",
+        alt1: "",
+        alt2: "",
+        alt3: "",
+        alt4: ""
       })
       .then((res) => {
         console.log(res);
-        edit(res.data.id);
+        edit(res.data);
       })
       .catch((err) => {
         console.log("Something fishy is going on");
@@ -90,23 +80,47 @@ const EditGame = ({ gameId, cancel, edit }: EditGameProps) => {
         });
     }
 
-  const handleAlternativeChange = (index: number, value: string) => {
-    const updatedAlternatives = [...alternatives];
-    updatedAlternatives[index] = value;
-    setAlternatives(updatedAlternatives);
-  };
+    const deleteGame = () => {
+      axios.put(`https://www.dogetek.no/api/api.php/game/${gameId}/`, {
+        deleted: "1"
+      }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+        .then(res => {
+          console.log(res);
+          cancel()
+        })
+        .catch(err => {
+          console.log("Something fishy is going on");
+        });
+    }
 
-  const handleCorrectAlternativeChange = (index: number) => {
-    setCorrectAlternative(index);
-  };
+    // Get game info
+    const resetGame = (id: String) => {
+      axios.put(`https://www.dogetek.no/api/api.php/clear_game_players/${id}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+        .then(res => {
+          if (res.data) {
+            alert("Cleared");
+        }})
+        .catch(err => {
+          console.log("Error when getting questions for game with id ", id);
+        });
+    }
 
   return (
     <>
     <Heading>{game?.name}</Heading>
+    <Desc>{game?.description}</Desc>
+    <QuizActions>
+      <Play onClick={newQuestion}>Add question</Play>
+      <Home onClick={() => update(gameId)}>Edit</Home>
+      <Home onClick={() => resetGame(gameId)}>Reset</Home>
+      <Delete onClick={() => deleteGame()}>Delete</Delete>
+      {error && <div style={{ color: "red", padding: "10px" }}>Det har oppstått en feil...</div>}
+    </QuizActions>
+    <Recent>Questions</Recent>
     <Container>
       <QuestionsList>
           {questions.map((question, index) => (
-            <QuestionContainer key={index} onClick={() => setCurrentQ(question.id)}>
+            <QuestionContainer key={index} onClick={() => edit(question.id)}>
               <QuestionText>{question.text}</QuestionText>
               <QuestionDescription style={{ fontWeight: question.correct === "1" ? "bold" : "" }}>A: {question.alt1}</QuestionDescription>
               <QuestionDescription style={{ fontWeight: question.correct === "2" ? "bold" : "" }}>B: {question.alt2}</QuestionDescription>
@@ -116,41 +130,6 @@ const EditGame = ({ gameId, cancel, edit }: EditGameProps) => {
             </QuestionContainer>
           ))}
         </QuestionsList>
-      <Form>
-        <TextInput
-          placeholder="Question text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <AlternativesHeading>Alternatives:</AlternativesHeading>
-        {alternatives.map((alternative, index) => (
-          <AlternativeContainer key={index}>
-            <TextInput
-              type="text"
-              placeholder={`Alternative ${index + 1}`}
-              value={alternative}
-              onChange={(e) => handleAlternativeChange(index, e.target.value)}
-            />
-            <RadioButton
-              type="radio"
-              name="correctAlternative"
-              checked={correctAlternative === index}
-              onChange={() => handleCorrectAlternativeChange(index)}
-            />
-          </AlternativeContainer>
-        ))}
-        <Actions>
-          <CreateButton
-            onClick={() =>
-              insertQuestion(name, description, alternatives, correctAlternative)
-            }
-          >
-            Save
-          </CreateButton>
-          <CancelButton onClick={cancel}>Delete</CancelButton>
-        </Actions>
-        {error && <ErrorMessage>Something went wrong, please try again!</ErrorMessage>}
-      </Form>
     </Container>
     </>
   );
@@ -161,18 +140,8 @@ export default EditGame;
 const Container = styled.div`
   display: flex;
   margin: 10px;
-`;
+  margin-top: 0px;
 
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #f8f8f8;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-  margin: 16px;
-  height: 100%;
 `;
 
 const Heading = styled.div`
@@ -181,90 +150,53 @@ const Heading = styled.div`
   color: #05212f;
   font-family: sans-serif;
   padding: 31px;
+  padding-bottom: 0px;
   font-family: "Coll";
 `;
 
-const TextInput = styled.input`
-  background: #ffffff;
-  border: 2px solid #2d3870;
-  margin: 8px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 600px;
-  height: 30px;
-  color: #2d3870;
-  font-family: "Coll";
-  font-size: 1rem;
-`;
-
-const AlternativesHeading = styled.div`
+const Recent = styled.div`
   font-size: 1.5rem;
+  color: #05212f70;
+  font-family: sans-serif;
+  padding-left: 31px;
+  padding-bottom: 0px;
+  font-family: "Coll";
+`;
+
+const Desc = styled.div`
+  font-size: 1rem;
+  #font-weight: bold;
   color: #05212f;
   font-family: sans-serif;
-  padding: 16px;
+  padding: 31px;
+  padding-top: 0px;
+
+  font-family: "Coll";
 `;
 
-const AlternativeContainer = styled.div`
+const QuizActions = styled.div`
   display: flex;
-  align-items: center;
-`;
-
-const RadioButton = styled.input`
-  margin: 0 8px;
-`;
-
-const Actions = styled.div`
-  display: flex;
-  padding-top: 16px;
-`;
-
-const CreateButton = styled.button`
-  background: #2d3870;
-  border: none;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  font-weight: bold;
-  cursor: pointer;
-  color: white;
-  margin-right: 20px;
-`;
-
-const CancelButton = styled.button`
-  background: #ffffff;
-  border: 2px solid #2d3870;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  font-weight: bold;
-  cursor: pointer;
-  color: #2d3870;
-`;
-
-const ErrorMessage = styled.div`
-  color: red;
-  padding: 16px;
+  padding: 31px;
+  padding-top: 5px;
 `;
 
 const QuestionsList = styled.div`
-  margin-top: 20px;
-  width: 50%;
-`;
-
-const QuestionsHeading = styled.div`
-  font-size: 1.5rem;
-  color: #05212f;
-  font-family: sans-serif;
-  padding: 16px;
+  margin-top: 0px;
+  width: 80%;
+  max-width: 1000px;
+  padding: 21px;
 `;
 
 const QuestionContainer = styled.div`
-  background: #f8f8f8;
+  
   border-radius: 8px;
+  border: 2px solid #2d3870;
   padding: 16px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
   margin-bottom: 16px;
   cursor: pointer;
+  &:hover {
+    border: 2px solid #2d387050;
+  }
 `;
 
 const QuestionText = styled.div`
@@ -281,4 +213,69 @@ const QuestionDescription = styled.div`
 const QuestionMeta = styled.div`
   color: #2d3870;
   text-align: right;
+`;
+
+const Play = styled.div`
+  background: #2d3870;
+  margin: 0px;
+  border-radius: 5px;
+  padding: 8px;
+  width: 120px;
+  height: 30px;
+  font-weight: bold;
+cursor: pointer;
+  color: white;
+  border: 2px solid #2d3870;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  &:hover {
+    border: 2px solid #2d387050;
+    background: #2d387050;
+  }
+`;
+
+const Home = styled.div`
+  background: #ffffff;
+  border: 2px solid #2d3870;
+  margin: 0px;
+  margin-right: 20px;
+  border-radius: 5px;
+  padding: 8px;
+  width: 120px;
+  height: 30px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #2d3870;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover {
+    border: 2px solid #2d387050;
+  }
+`;
+
+const Delete = styled.div`
+  background: #fc0349;
+  margin: 0px;
+  border-radius: 5px;
+  padding: 8px;
+  width: 120px;
+  height: 30px;
+  font-weight: bold;
+cursor: pointer;
+  color: white;
+  border: 2px solid #fc034970;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  &:hover {
+    border: 2px solid #fc034950;
+    background: #fc034950;
+  }
 `;

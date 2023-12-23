@@ -11,7 +11,7 @@ interface GameListItemProps {
 const GameListItem = ({game, onClick, edit}: GameListItemProps) => {
     return (
         <GameInst >
-            <Top>
+            <Top onClick={() => edit(game.id)}>
                 <GameName>{game.name}</GameName>
                 <Count>{game.qcount} question{ game.qcount !== '1' && 's' }</Count>
             </Top>
@@ -19,7 +19,7 @@ const GameListItem = ({game, onClick, edit}: GameListItemProps) => {
                 <GameDesc>{game.description}</GameDesc>
                 <Buttons>
                     
-                    <Edit onClick={() => edit(game.id)}>Edit</Edit>
+                    <Edit onClick={() => edit(game.id)}>Info</Edit>
                     <Start onClick={onClick}>Start</Start>
                 </Buttons>
             </Bottom>
@@ -90,6 +90,7 @@ const GameDesc = styled.div`
 
 const Top = styled.div`
     font-size: 1rem;
+    cursor: pointer;
 `;
 const Bottom = styled.div`
     font-size: 1rem;

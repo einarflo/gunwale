@@ -20,7 +20,7 @@ $set = '';
 
 if ($input!==null) {
     $columns = preg_replace('/[^a-z0-9_]+/i','',array_keys($input));
-    print_r($columns);
+    //print_r($columns);
     $values = array_map(function ($value) use ($link) {
         if ($value===null) return null;
         return mysqli_real_escape_string($link,(string)$value);
@@ -51,7 +51,10 @@ switch ($method) {
       $sql = "select * from `$table`".($key?" WHERE channel_id=$key":''); break;
     }
     else if ($table == "game_question") {
-      $sql = "select * from `$table`".($key?" WHERE game_id=$key":''); break;
+      $sql = "select * from `$table`".($key?" WHERE deleted is null and game_id=$key":''); break;
+    }
+    else if ($table == "game_question_by_id") {
+        $sql = "select * from game_question ".($key?" WHERE id=$key":''); break;
     }
     else if ($table == "game_players") {
         $sql = "select * from `$table` WHERE name=". '"'. $key. '"' .";"; break;
@@ -60,10 +63,10 @@ switch ($method) {
         $sql = "select * from game_players WHERE game_id=". '"'. $key. '"' .";"; break;
     }
     else if ($table == "games") {
-        $sql = "select * from game WHERE created_by=". '"'. $key. '"' .";"; break;
+        $sql = "select * from game WHERE deleted is null and created_by=". '"'. $key. '"' .";"; break;
     }
     else if ($table == "game_list") {
-        $sql = "select game.id, game.name, game.description, game.status, COUNT(gq.id) as qcount from game LEFT JOIN game_question gq on game.id = gq.game_id WHERE game.created_by=". '"'. $key. '"' ." GROUP BY game.id ;"; break;
+        $sql = "select game.id, game.name, game.description, game.status, COUNT(gq.id) as qcount from game LEFT JOIN game_question gq on game.id = gq.game_id WHERE gq.deleted is null and game.deleted is null and game.created_by=". '"'. $key. '"' ." GROUP BY game.id ;"; break;
     }
     else {
       $sql = "select * from `$table`".($key?" WHERE id=$key":''); break;
@@ -76,6 +79,9 @@ switch ($method) {
     else if ($table == "game_players") {
         $sql = "update game_players set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
     }
+    else if ($table == "clear_game_players") {
+      $sql = "delete from game_players WHERE game_id=". $key .";"; echo $sql; break;
+    }
     else if ($table == "game_question") {
       $sql = "update game_question set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
   }
@@ -85,7 +91,8 @@ switch ($method) {
     //$sql = "update `$table` set $set where id=$key"; break;
   case 'POST':
     //exit("nope");
-    $sql = "insert into `$table` set $set"; echo $sql; break;
+    $sql = "insert into `$table` set $set"; //echo $sql; 
+    break;
   case 'DELETE':
     exit("nope");
     //$sql = "delete `$table` where id=$key"; break;

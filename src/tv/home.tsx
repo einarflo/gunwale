@@ -21,7 +21,7 @@ const Home = ({username, games, newGame, discover, loading, setPlayGames, error,
             <New onClick={newGame}>+ New quiz</New>
             <Discover onClick={discover}>Discover</Discover>
           </Actions>
-          <Recent>Recently played</Recent>
+          <Recent>Your games</Recent>
           <RecentItems>
           { loading ? 
               <Spinner/> 
@@ -59,6 +59,10 @@ cursor: pointer;
   align-items: center;
   justify-content: center;
   margin-right: 20px;
+  &:hover {
+    border: 2px solid #2d387050;
+    background: #2d387050;
+  }
 `;
 
 const Discover = styled.div`
@@ -76,6 +80,9 @@ const Discover = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  &:hover {
+    border: 2px solid #2d387050;
+  }
 `;
 
 const Actions = styled.div`
