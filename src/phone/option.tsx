@@ -3,15 +3,16 @@ import styled from "styled-components";
 interface OptionProps {
     description: String,
     select: () => void,
-    colour: string
+    colour: string,
+    hide: boolean
 }
 
-const OptionButton = ({ description, select, colour }: OptionProps) => {
+const OptionButton = ({ description, select, colour, hide }: OptionProps) => {
     return(
-    <Option onClick={select} color={colour}>{description}</Option>)
+    <Option hide={hide} onClick={select} color={colour}>{description}</Option>)
 }
 
-const Option = styled.div`
+const Option = styled.div.attrs((props: {hide: boolean}) => props)`
   height: 155px;
   width: 100%;
   background-color: ${props => (props.color)};
@@ -22,6 +23,7 @@ const Option = styled.div`
   font-size: 2em;
   line-height: 1;
   overflow: hidden;
+  opacity: ${props => (props.hide ? '30%' : '100%')};
   
   font-family: "Coll";
   text-align: center;

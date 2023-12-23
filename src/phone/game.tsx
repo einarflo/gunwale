@@ -24,6 +24,10 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
   const [questions, setQuestions] = useState<Array<Question>>([]);
   const [userId, setUserId] = useState('');
 
+  const [fiftyfifty, setFiftyfifty] = useState(false);
+  //const [stopTime, setStoptime] = useState(false);
+
+
 
   // Get all questions for the current game Id
   const getQuestionsForGameId = (id: String) => {
@@ -92,11 +96,11 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
 
   // Show the questions alternatives and if the answer is correct
   if (!answered && !gameEnded) {
-    return <Alts question={questions[currentQ]} points={points} username={username} userId={userId} setPoints={(p) => setPoints(p)} answered={setAnswer} gamepin={gamepin}/>
+    return <Alts question={questions[currentQ]} points={points} username={username} userId={userId} setPoints={(p) => setPoints(p)} answered={setAnswer} gamepin={gamepin} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)}/>
   }
 
   if (answered && !gameEnded) {
-    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} username={username} gamepin={gamepin} gameFinished={() => setGameEnded(true)}/>
+    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} username={username} gamepin={gamepin} gameFinished={() => setGameEnded(true)} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} />
   }
 
   return(

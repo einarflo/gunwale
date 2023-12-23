@@ -11,9 +11,12 @@ interface ResultProps {
   nextQuestionStarted: () => void
   gameFinished: () => void
   gamepin: String
+  fif: boolean;
+  buyfif: () => void
+  setPoints: (points: number) => void
 }
 
-const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, gameFinished }: ResultProps) => {
+const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, gameFinished, fif, buyfif, setPoints }: ResultProps) => {
   
   const countdown = useCallback((startTime: string) => {
     const countdownTimer = setInterval(() => {
@@ -23,6 +26,13 @@ const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, game
       }
     }, (500));
   }, [nextQuestionStarted])
+
+  const purchaseFifityFifty = () => {
+    if (!fif) {
+      setPoints(points-250);
+      buyfif();
+    }
+  }
 
 
   useEffect(() => {
@@ -62,6 +72,21 @@ const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, game
             <Points>{points}</Points>
         </Header>
         <Text>{getQuote()}</Text>
+        <BuyTop>
+          <PowerUp onClick={purchaseFifityFifty}>
+            <Desc>50/50</Desc>
+            { fif ?
+              <Has>Unlocked</Has>
+              : 
+              <Price>250</Price>
+            }
+            
+          </PowerUp>
+          <PowerUp onClick={() => {}}>
+            <Desc>Stop time</Desc>
+            <Price>200</Price>
+          </PowerUp>
+        </BuyTop>
         <MobileSpinner/>
     </GameWrapper>
   );
@@ -72,12 +97,69 @@ export const getQuote = () => {
   return quotes[Number((Math.random() * 3).toFixed(0))];
 }
 
+const PowerUp = styled.div`
+  height: 55px;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 20px;
+  margin: 10px;
+  padding: 10px;
+  color: black;
+  
+  line-height: 1;
+  overflow: hidden;
+  
+  font-family: "Coll";
+  text-align: center;
+  display: flex;
+  justify-content: center;
+ align-items: center;
+ flex-direction: column;
+`;//white-space: nowrap;background-color: ${props => (props.color)};
+
+export const Desc = styled.div`
+ display: flex;
+ font-size: 1.5em;
+`;
+
+export const Price = styled.div`
+ display: flex;
+ margin-top: 5px;
+ background: #000000;
+  border-radius: 20px;
+  color: white;
+  padding: 5px;
+  font-size: 1em;
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+`;
+
+export const Has = styled.div`
+ display: flex;
+ margin-top: 5px;
+ background: #0aab15;
+  border-radius: 20px;
+  color: black;
+  padding: 5px;
+  font-size: 1em;
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+`;
+
+export const BuyTop = styled.div`
+ display: flex;
+`;
+
   // return a random quote
 const quotes = [
   'The best is yet to come.',
   'No pressure, no diamonds.',
   'And so the adventure begins.',
   'When nothing goes right, go left.'
+  // Waiting on game master
+  // Buy some upgrades?
 ]
 
 export const Text = styled.div`

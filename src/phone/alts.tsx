@@ -15,9 +15,11 @@ interface AltsProps {
   answered: () => void
   gamepin: String,
   question: Question
+  fif: boolean;
+  buyfif: () => void
 }
 
-const Alts = ({ userId, username, points, setPoints, answered, gamepin, question }: AltsProps) => {
+const Alts = ({ userId, username, points, setPoints, answered, gamepin, question, fif, buyfif }: AltsProps) => {
   const [roundPoints, setRoundPoints] = useState(0);
   const [score, setScore] = useState(1000);
 
@@ -33,6 +35,8 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
 
   const answerSelectedRef = useRef(answerSelected);
   answerSelectedRef.current = answerSelected;
+
+  const [hide, setHide] = useState<String[]>([]);
 
   // POST points to server 
   const setUserPoints = (points: number) => {
@@ -83,6 +87,20 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
       answered();
     }, 5000)
   }
+
+  const usfif = () => {
+    if (fif) {
+      buyfif();
+      const opt = getRadomOption();
+      setHide(options.filter(option => !(option === question?.correct || option === opt)))
+    }
+  }
+
+  const getRadomOption = () => {
+    return options.filter(option => !(option === question?.correct))[Number((Math.random() * 3).toFixed(0))];
+  }
+
+  const options = ["1", "2", "3", "4"];
   
   // User clicks alternative
   const selectOption = (answer: string) => {
@@ -136,18 +154,18 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
       </Header>
       <TimeBar time={(question.time).toString()}/>
       <PowerUpContainer>
-        <PowerUp>50/50</PowerUp>
+        <PowerUp has={fif} onClick={() => usfif()}>50/50</PowerUp>
         <PowerUp>Stop time</PowerUp>
         <PowerUp>Cut losses</PowerUp>
       </PowerUpContainer>
       <AltsContainer>
       <Top>
-        <OptionButton description={question?.alt1} select={() => selectOption('1')} colour="green" />
-        <OptionButton description={question?.alt2} select={() => selectOption('2')} colour="blue" />
+        <OptionButton hide={hide.includes("1")} description={question?.alt1} select={() => selectOption('1')} colour="green" />
+        <OptionButton hide={hide.includes("2")} description={question?.alt2} select={() => selectOption('2')} colour="blue" />
       </Top>
       <Bot>
-        <OptionButton description={question?.alt3} select={() => selectOption('3')} colour="red" />
-        <OptionButton description={question?.alt4} select={() => selectOption('4')} colour="purple" />
+        <OptionButton hide={hide.includes("3")} description={question?.alt3} select={() => selectOption('3')} colour="red" />
+        <OptionButton hide={hide.includes("4")} description={question?.alt4} select={() => selectOption('4')} colour="purple" />
         </Bot>
       </AltsContainer>
 
@@ -155,7 +173,7 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
   )
 }
 
-export const PowerUp = styled.div`
+export const PowerUp = styled.div.attrs((props: {has: boolean}) => props)`
   background: white;
   width: 20%;
   margin: 20px;
@@ -169,11 +187,12 @@ export const PowerUp = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: ${props => props.has ? '100%' : '30%'};
 `;
 
 export const PowerUpContainer = styled.div`
  display: flex;
- opacity: 30%;
+ 
  justify-content: center;
 `;
 
