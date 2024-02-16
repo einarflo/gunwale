@@ -17,9 +17,11 @@ interface AltsProps {
   question: Question
   fif: boolean;
   buyfif: () => void
+  stop: boolean;
+  buyStop: () => void
 }
 
-const Alts = ({ userId, username, points, setPoints, answered, gamepin, question, fif, buyfif }: AltsProps) => {
+const Alts = ({ userId, username, points, setPoints, answered, gamepin, question, fif, buyfif, stop, buyStop }: AltsProps) => {
   const [roundPoints, setRoundPoints] = useState(0);
   const [score, setScore] = useState(1000);
 
@@ -37,6 +39,8 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
   answerSelectedRef.current = answerSelected;
 
   const [hide, setHide] = useState<String[]>([]);
+  const [stopTime, setStopTime] = useState(false);
+
 
   // POST points to server 
   const setUserPoints = (points: number) => {
@@ -57,7 +61,7 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
     const subtract = 1000 / question.time / 100
     const countdown = setInterval(() => {
       // Minimum score 115
-      if (score > 115) {
+      if (score > 115 && !stopTime) {
         setScore(scoreRef.current - subtract)
       }
     }, (10));
@@ -86,6 +90,13 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
       setPoints(points + roundPointsRef.current);
       answered();
     }, 5000)
+  }
+
+  const usStop = () => {
+    if (stop) {
+      buyStop();
+      setStopTime(true);
+    }
   }
 
   const usfif = () => {
@@ -152,10 +163,10 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
         <Username>{username}</Username>
         <Points>{points}</Points>
       </Header>
-      <TimeBar time={(question.time).toString()}/>
+      <TimeBar time={(question.time).toString()} stop={stopTime}/>
       <PowerUpContainer>
         <PowerUp has={fif} onClick={() => usfif()}>50/50</PowerUp>
-        <PowerUp>Stop time</PowerUp>
+        <PowerUp has={stop} onClick={() => usStop()}>Stop time</PowerUp>
         <PowerUp>Cut losses</PowerUp>
       </PowerUpContainer>
       <AltsContainer>
@@ -213,7 +224,7 @@ const progressbar = keyframes`
     0% { width: 100vw; }
 `;
 
-const TimeBar = styled.div.attrs((props: {time: string}) => props)`
+const TimeBar = styled.div.attrs((props: {time: string, stop: boolean}) => props)`
   background: #ffffff60;
   padding: 10px;
   left: 50%;
@@ -221,6 +232,7 @@ const TimeBar = styled.div.attrs((props: {time: string}) => props)`
   animation: ${progressbar} ${props => props.time}s linear;
   animation-fill-mode:both;
   -webkit-animation: ${progressbar} ${props => props.time}s linear;
+  opacity: ${props => props.stop ? '0%' : '100%'}
 `;
 
 export default Alts;

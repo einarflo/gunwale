@@ -14,9 +14,11 @@ interface ResultProps {
   fif: boolean;
   buyfif: () => void
   setPoints: (points: number) => void
+  stop: boolean;
+  buyStop: () => void
 }
 
-const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, gameFinished, fif, buyfif, setPoints }: ResultProps) => {
+const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, gameFinished, fif, buyfif, setPoints, buyStop, stop }: ResultProps) => {
   
   const countdown = useCallback((startTime: string) => {
     const countdownTimer = setInterval(() => {
@@ -34,6 +36,12 @@ const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, game
     }
   }
 
+  const purchaseStopTime = () => {
+    if (!stop) {
+      setPoints(points-200);
+      buyStop();
+    }
+  }
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -82,9 +90,14 @@ const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, game
             }
             
           </PowerUp>
-          <PowerUp onClick={() => {}}>
+          <PowerUp onClick={purchaseStopTime}>
             <Desc>Stop time</Desc>
-            <Price>200</Price>
+            { stop ?
+              <Has>Unlocked</Has>
+              : 
+              <Price>200</Price>
+            }
+            
           </PowerUp>
         </BuyTop>
         <MobileSpinner/>

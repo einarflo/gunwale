@@ -61,6 +61,10 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
     // set timestamp for next q start
     
     setShowScoreBoard(false);
+
+    if (currentQ === questions.length) {
+      setGameStatus("finished");
+    }
   }
 
   // Show score board
