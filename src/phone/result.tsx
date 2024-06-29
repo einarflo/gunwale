@@ -91,7 +91,7 @@ const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, game
             
           </PowerUp>
           <PowerUp onClick={purchaseStopTime}>
-            <Desc>Stop time</Desc>
+            <Desc>Full score</Desc>
             { stop ?
               <Has>Unlocked</Has>
               : 

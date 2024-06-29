@@ -166,7 +166,7 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
       <TimeBar time={(question.time).toString()} stop={stopTime}/>
       <PowerUpContainer>
         <PowerUp has={fif} onClick={() => usfif()}>50/50</PowerUp>
-        <PowerUp has={stop} onClick={() => usStop()}>Stop time</PowerUp>
+        <PowerUp has={stop} onClick={() => usStop()}>Full score</PowerUp>
         <PowerUp>Cut losses</PowerUp>
       </PowerUpContainer>
       <AltsContainer>
