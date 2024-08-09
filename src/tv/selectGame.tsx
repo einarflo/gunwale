@@ -8,6 +8,9 @@ import NewGame from "./createGame";
 import EditGame from "./editGame";
 import EditQuestion from "./editQuestion";
 import UpdateGame from "./updateGameName";
+import TopLeftLogo from "../components/TopLeftLogo";
+import ProfilePage from "./profilePage";
+import PrimaryButton from "../components/PrimaryButton";
 
 interface CreateViewProps {
     username: String,
@@ -85,26 +88,35 @@ const TVView = ({ username, logout }: CreateViewProps) => {
   // List of available games
   return(
     <GameSelectionWrapper>
-      <SideBarNav>
-        <Logo src={logo}></Logo>
-        <NavItem onClick={() => { setPage("home"); setQuestionId(undefined); setEditId(undefined);}}>Home</NavItem>
-        <NavItem onClick={() => setPage("library")}>Library</NavItem>
-        <NavItem onClick={() => setPage("discover")}>Discover</NavItem>
-        <NavItem onClick={() => setPage("settings")}>Settings</NavItem>
-      </SideBarNav>
+      
+      <Header>
+        <TopLeftLogo/>
+        <NavItem onClick={() => { setPage("home"); setQuestionId(undefined); setEditId(undefined);}}>home</NavItem>
+        <NavItem onClick={() => setPage("library")}>library</NavItem>
+        <NavItem onClick={() => setPage("discover")}>discover</NavItem>
+        <NavItem onClick={() => setPage("profile")}>profile</NavItem>
+        <JoinGameButton>
+          <PrimaryButton text="Join a game" click={logout}/>
+        </JoinGameButton>
+      </Header>
       <Content>
-        <Header>
-          <Username>{username}</Username>
-          <Logout onClick={logout}>Logout</Logout>
-        </Header>
+        
         { page === "home" && <Home games={games} error={error} edit={(id: String) => {setEditId(id); setPage("edit")}} loading={loading} username={username} newGame={() => setPage("newgame")} discover={() => {}} setPlayGames={setPlayGames}/> }
         { page === "newgame" && <NewGame userid={String(userId)} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => setPage("home")} /> }
         { page === "edit" && editId && <EditGame gameId={editId} edit={(id: String) => {setQuestionId(id); setPage("question")}} update={(id: String) => {setEditId(id); setPage("update")}} cancel={() => {setPage("home"); setEditId(undefined);}} /> }
         { page === "question" && questionId && <EditQuestion gameId={editId} questionId={questionId} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => {setPage("home"); setQuestionId(undefined);}} /> }
         { page === "update" && editId && <UpdateGame gameId={editId} edit={(id: String) => {setEditId(id); setPage("edit")}} /> }
+        { page === "profile" && editId && <ProfilePage username={username} logout={logout} /> }
         </Content>
     </GameSelectionWrapper>)
 }
+
+
+const JoinGameButton = styled.div`
+margin-right: 20px;
+margin-left: 20px;
+`;
+
 
 
 const GameSelectionWrapper = styled.div`
@@ -114,7 +126,7 @@ const GameSelectionWrapper = styled.div`
   
   #background: rgb(28,0,65);
   #background: linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%); 
-  display: flex;
+  display: block;
 `;
 
 const SideBarNav = styled.div`
@@ -128,10 +140,13 @@ const SideBarNav = styled.div`
 const NavItem = styled.div`
   font-weight: normal;
   font-family: "Coll";
-  padding-left: 45px;
+  //padding-left: 45px;
+  color: #9F9F9F;
   font-size: 1.3rem;
-  padding-bottom: 25px;
+  //padding-bottom: 25px;
   cursor: pointer;
+  margin-right: 20px;
+  margin-left: 20px;
 `;
 
 const Content = styled.div`
@@ -142,11 +157,12 @@ const Content = styled.div`
 
 const Header = styled.div`
   height: 82px;
-  width: calc(100vw - 260px);
+  width: 100vw;
   background: #ffffff;
   /* border-bottom: 2px solid #2d387050; */
   display: flex;
   align-items: center;
+  justify-content: end;
 `;
 
 const Logo = styled.img`

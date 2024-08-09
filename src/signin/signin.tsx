@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import logo from '../images/INTRADOGE.png';
-import gwlogo from '../images/gw-logo.png';
+import whiteLogo from '../images/tavl-white.png';
 import axios from 'axios';
+import { ErrorText, Footer, PrimaryButtonLocal as PrimaryButton, TextInputField } from './gamepin';
+import TopLeftLogo from '../components/TopLeftLogo';
 
 interface SiginProps {
   toGameMode: () => void
@@ -43,25 +44,25 @@ const Signin = ({ toGameMode, setLoggedInUser }: SiginProps) => {
 
   return (
     <LoginWrapper>
+      
         <LeftSide>
+        <TopLeftLogo />
           <ContentLeft>
-              <Logo src={logo} style={{ paddingBottom: "30px" }}/>
-              {error && <Error>Something has gone wrong. Maybe try another password?</Error>}
-              <FormInput placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsernameInput(e.target.value)} />
-              <FormInput placeholder="Password" type="password" onChange={(e: { target: { value: String; }; })  => setPassword(e.target.value)} onKeyPress={(e: any)  => {
+
+              {error && <ErrorText>Something has gone wrong. Maybe try another password?</ErrorText>}
+              <TextInputField placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsernameInput(e.target.value)} />
+              <TextInputField placeholder="Password" type="password" onChange={(e: { target: { value: String; }; })  => setPassword(e.target.value)} onKeyPress={(e: any)  => {
                 if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
                   handleLogin()
                 }
               }} />
-              <LogginButton onClick={() => handleLogin()}>SIGN IN</LogginButton>
-              <Error>Sign in using your <a href='https://www.dogetek.no/intraDoge/'>Intradoge</a> user credentials. By signing in you accept that data is stored and managed by Dogetek</Error>
-
-              <Error><div onClick={toGameMode} style={{ color: "#1c0041", textDecoration: "underline", cursor: "pointer"}}>Back to game mode</div></Error>
+              <PrimaryButton onClick={() => handleLogin()}>Sign in</PrimaryButton>
+              <Footer>or create a new user&nbsp;<div onClick={() => {}} style={{ color: "#9084FA", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
             </ContentLeft>
         </LeftSide>
         <RightSide>
           <ContentRight>
-            <Logo src={gwlogo} />
+            <Logo src={whiteLogo} />
 
           </ContentRight>
 
@@ -117,23 +118,11 @@ const LeftSide = styled.div`
 
 const RightSide = styled.div`
   width: 50%;
-  background-image: linear-gradient(180deg, #203046 0%, #030006 100%);
+  background-image: linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%);
   @media (max-width: 1160px) {
     display: none;
     width: 0;
   }
-`;
-
-const Error = styled.div`
-    text-align: center;
-    padding-bottom: 20px;
-    padding-top: 20px;
-    color: #000000;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 25vw;
-    min-width: 300px;
-    width: -webkit-fill-available;
 `;
 
 const FormInput = styled.input`

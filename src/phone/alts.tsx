@@ -6,6 +6,18 @@ import { Question } from "../tv/game"
 import { GameWrapper, Header, Points, Username, MobileSpinner } from "./game"
 import OptionButton from "./option"
 import { Text } from "./result"
+import { MobileNav } from "../landing"
+import TopLeftLogo from "../components/TopLeftLogo"
+import TopRightPoints from "../components/TopRightPoints"
+import { selectableColors } from "./waiting"
+import one from '../images/upgrades/1.png';
+import two from '../images/upgrades/2.png';
+import three from '../images/upgrades/3.png';
+import four from '../images/upgrades/4.png';
+import five from '../images/upgrades/5.png';
+import six from '../images/upgrades/6.png';
+import seven from '../images/upgrades/7.png';
+import eight from '../images/upgrades/8.png';
 
 interface AltsProps {
   userId: String
@@ -19,9 +31,10 @@ interface AltsProps {
   buyfif: () => void
   stop: boolean;
   buyStop: () => void
+  color: number;
 }
 
-const Alts = ({ userId, username, points, setPoints, answered, gamepin, question, fif, buyfif, stop, buyStop }: AltsProps) => {
+const Alts = ({ userId, username, points, setPoints, answered, gamepin, question, fif, buyfif, stop, buyStop, color }: AltsProps) => {
   const [roundPoints, setRoundPoints] = useState(0);
   const [score, setScore] = useState(1000);
 
@@ -133,11 +146,11 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
   if (answerSelected && !showCorrect) {
     return (
     <GameWrapper>
-        <Header>
-            <Username>{username}</Username>
-            <Points>{points}</Points>
-        </Header>
-        <Text>Waiting for your score</Text>
+        <MobileNav>
+          <TopLeftLogo />
+          <TopRightPoints username={username} points={points} color={selectableColors[color]}/>
+        </MobileNav>
+        <Text>Waiting for your score...</Text>
         <MobileSpinner/>
     </GameWrapper>);
   }
@@ -146,10 +159,10 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
   if (answerSelected && showCorrect) {
     return (
     <GameWrapper style={{ background: answeredCorrectly ? 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(0,164,67,1) 0%, rgba(34,214,135,1) 100%)' : 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(255,39,39,1) 0%, rgba(247,89,89,1) 100%)' }}>
-        <Header>
-            <Username>{username}</Username>
-            <Points>{points + roundPoints}</Points>
-        </Header>
+        <MobileNav>
+          <TopLeftLogo />
+          <TopRightPoints username={username} points={points} color={selectableColors[color]}/>
+        </MobileNav>
         <Text>{answeredCorrectly ? 'Correct' : 'Nope!'}</Text>
         <Text>You got {answeredCorrectly ? roundPoints : 0} points</Text>
     </GameWrapper>);
@@ -159,30 +172,40 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
   // Showing alternatives
   return(
     <GameWrapper>
-      <Header>
-        <Username>{username}</Username>
-        <Points>{points}</Points>
-      </Header>
-      <TimeBar time={(question.time).toString()} stop={stopTime}/>
+      <MobileNav>
+        <TopLeftLogo />
+        <TopRightPoints username={username} points={points} color={selectableColors[color]}/>
+      </MobileNav>
+      
       <PowerUpContainer>
-        <PowerUp has={fif} onClick={() => usfif()}>50/50</PowerUp>
-        <PowerUp has={stop} onClick={() => usStop()}>Full score</PowerUp>
-        <PowerUp>Cut losses</PowerUp>
+        <PowerUpIcon src={one} has={fif} onClick={() => usfif()}/>
+        <PowerUpIcon src={two} has={stop} onClick={() => usStop()}/>
+        <PowerUpIcon src={four} has={false} onClick={() => {}}/>
       </PowerUpContainer>
+      <TimeBar time={(question.time).toString()} stop={stopTime}/>
       <AltsContainer>
       <Top>
-        <OptionButton hide={hide.includes("1")} description={question?.alt1} select={() => selectOption('1')} colour="green" />
-        <OptionButton hide={hide.includes("2")} description={question?.alt2} select={() => selectOption('2')} colour="blue" />
+        <OptionButton hide={hide.includes("1")} description={question?.alt1} select={() => selectOption('1')} colour={selectableColors[0]} />
+        <OptionButton hide={hide.includes("2")} description={question?.alt2} select={() => selectOption('2')} colour={selectableColors[1]} />
       </Top>
       <Bot>
-        <OptionButton hide={hide.includes("3")} description={question?.alt3} select={() => selectOption('3')} colour="red" />
-        <OptionButton hide={hide.includes("4")} description={question?.alt4} select={() => selectOption('4')} colour="purple" />
+        <OptionButton hide={hide.includes("3")} description={question?.alt3} select={() => selectOption('3')} colour={selectableColors[2]} />
+        <OptionButton hide={hide.includes("4")} description={question?.alt4} select={() => selectOption('4')} colour={selectableColors[3]} />
         </Bot>
       </AltsContainer>
 
     </GameWrapper>
   )
 }
+
+export const PowerUpIcon = styled.img.attrs((props: {has: boolean}) => props)`
+  width: 20%;
+  margin: 20px;
+  padding: 10px;
+  right: 0;
+  cursor: pointer;
+  opacity: ${props => props.has ? '100%' : '30%'};
+`;
 
 export const PowerUp = styled.div.attrs((props: {has: boolean}) => props)`
   background: white;
@@ -203,12 +226,17 @@ export const PowerUp = styled.div.attrs((props: {has: boolean}) => props)`
 
 export const PowerUpContainer = styled.div`
  display: flex;
+ background: white;
+ margin: 10px;
+ border-radius: 15px;
  
  justify-content: center;
 `;
 
-export const AltsContainer = styled.div`
- 
+const AltsContainer = styled.div`
+  background: white;
+  margin: 10px;
+  border-radius: 15px;
 `;
 
 export const Top = styled.div`
@@ -221,12 +249,14 @@ export const Bot = styled.div`
 
 const progressbar = keyframes`
     100% { width: 0; }
-    0% { width: 100vw; }
+    0% { width: calc(100vw - 40px); }
 `;
 
 const TimeBar = styled.div.attrs((props: {time: string, stop: boolean}) => props)`
-  background: #ffffff60;
+  background: #ffffff;
   padding: 10px;
+  margin: 10px;
+  border-radius: 15px;
   left: 50%;
   height: 3px;
   animation: ${progressbar} ${props => props.time}s linear;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import logo from '../images/gw-logo.png';
+import TopLeftLogo from "../components/TopLeftLogo";
+import logo from '../images/tavl-logo.png';
 
 interface GamePinProps {
     error: boolean,
@@ -25,23 +26,26 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
 
     return(
     <GamePinWrapper>
-        <Background />
+        <TopLeftLogo />
         <Content>
-            <Logo src={logo} onClick={()  => window.location.replace('http://gunwale.dogetek.no/')}/>
+            
+            <Logo src={logo}/>
             {
                 loading ? <Spinner /> :
                 <>
-                    {error && <Error>Wrong game pin. Try another pls?</Error>}
-                    <GamepinFormInput autoFocus={false} tabIndex={0} placeholder="GAME PIN" type={"number"} value={gamePin} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
+                    {error && <ErrorText>Wrong game pin. Try another pls?</ErrorText>}
+                    <TextInputField autoFocus={false} tabIndex={0} placeholder="Game pin" type={"number"} value={gamePin} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
                         if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
                             setPin(gamePin)
                         }
                     }}/>
-                    <GamepinLogginButton onClick={() => setPin(gamePin)}>PLAY!</GamepinLogginButton>
+                    <PrimaryButtonLocal onClick={() => setPin(gamePin)}>PLAY</PrimaryButtonLocal>
+                    <Footer>or create a new game&nbsp;<div onClick={toCreatorMode} style={{ color: "#9084FA", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
                 </>
             }
+            
         </Content>
-        <Footer>... or create your own Gunwale&nbsp;<div onClick={toCreatorMode} style={{ color: "#1c0041", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div></Footer>
+        
     </GamePinWrapper>)
 }
 
@@ -51,19 +55,16 @@ const GamePinWrapper = styled.div`
     height: 100dvh;
 `;
 
-const Background = styled.div`
-    height: 100vh;
-    height: 100dvh;
-    width: 100vw;
-    background-image: linear-gradient(180deg, #203046 0%, #030006 100%);
-    transform: skewY(-5deg) translate(0%, -13%);
+
+export const Logo = styled.img`
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding-bottom: 40px;
+    height: 100px;
 `;
 
-const Logo = styled.img`
-    max-width: 400px;
-    width: -webkit-fill-available;
-    padding-bottom: 40px;
-`;
+
 
 const Content = styled.div`
     position: absolute;
@@ -74,21 +75,21 @@ const Content = styled.div`
     max-width: 80vw;
 `;
 
-const Error = styled.div`
+export const ErrorText = styled.div`
     text-align: center;
     padding-bottom: 20px;
     padding-top: 20px;
-    color: #ffffff;
+    color: #F13333;
     margin-left: auto;
     margin-right: auto;
     max-width: 25vw;
     min-width: 300px;
     width: -webkit-fill-available;
-    font-family : 'Soopafresh';
+    font-family : 'Coll';
 `;
 
-export const GamepinFormInput = styled.input`
-    font-family : 'Soopafresh';
+export const TextInputField = styled.input`
+    font-family : 'Coll';
     text-align: center;
     display: block;
     width: 100%;
@@ -96,23 +97,27 @@ export const GamepinFormInput = styled.input`
     font-size: 1.5rem;
     line-height: 1.5;
     background-clip: padding-box;
+    
         
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
     max-width: 500px;
     margin: auto;
     border: 0px solid rgb(28,0,65);
+    border-bottom: 1px solid #9F9F9F;
+    color: #9F9F9F;
     margin-bottom: 20px;
+    margin-top: 50px;
     border-radius: 3px;
     width: -webkit-fill-available;
 `;
 
-export const GamepinLogginButton = styled.div`
-    font-family : 'Soopafresh';
+export const PrimaryButtonLocal = styled.div`
+    font-family : 'Coll';
     text-align: center;
     display: block;
-    width: 100%;
+    width: 80%;
     padding: .375rem .75rem;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     line-height: 1.5;
     color: white;
     background-clip: padding-box;
@@ -120,24 +125,19 @@ export const GamepinLogginButton = styled.div`
     max-width: 500px;
     margin: auto;
     margin-bottom: 30px;
+    margin-top: 40px;
       
-    background: #B45151;
+    background: #9C8AFA;
        
     cursor: pointer;
-    width: -webkit-fill-available;
+    border-radius: 15px;
 `;
 
-const Footer = styled.div`
-    display: block;
+export const Footer = styled.div`
+    display: flex;
     justify-content: center;
-    position: relative;
-    bottom: 5vh;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    min-width: 300px;
-    max-width: 80vw;
     color: black;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     text-align: center;
     font-family: "Coll";
 `;

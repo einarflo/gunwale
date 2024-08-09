@@ -6,6 +6,7 @@ import GamePin from './signin/gamepin';
 import Username from './signin/username';
 import PhoneGameView from './phone/game';
 import TVView from './tv/selectGame';
+import LandingPage from './landing';
 
 const appHeight = () => {
   const doc = document.documentElement
@@ -28,6 +29,7 @@ const App = () => {
   const [loggedInUsername, setLoggedInUsername] = useState<String | undefined>();
   const [gamePin, setGamePin] = useState<String | undefined>();
   const [showSplashScreen, setShowSplashScreen] = useState(true);
+  const [showLandingPage, setShowLandingPage] = useState(true);
   const [TVMode, setTVMode] = useState(false);
 
   const [error, setError] = useState(false);
@@ -108,6 +110,10 @@ const App = () => {
   // Just the splash screen
   if (showSplashScreen && false) {
     return <Splash />;
+  }
+
+  if (showLandingPage) {
+    return <LandingPage toGameMode={() => {setTVMode(true); setShowLandingPage(false)}} toEditMode={() => {setShowLandingPage(false)}} />;
   }
 
   // TV Mode

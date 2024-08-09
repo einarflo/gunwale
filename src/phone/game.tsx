@@ -4,8 +4,12 @@ import styled, { keyframes } from "styled-components";
 import { Question } from "../tv/game";
 import Alts from "./alts";
 import Result from "./result";
-import logo from '../images/gw-logo.png';
+import whiteLogo from '../images/tavl-white.png';
 import { Logo } from "../Splash";
+import Waiting, { selectableColors } from "./waiting";
+import { MobileNav } from "../landing";
+import TopLeftLogo from "../components/TopLeftLogo";
+import TopRightPoints from "../components/TopRightPoints";
 //import Waiting from "./waiting";
 
 interface Game {
@@ -20,12 +24,15 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
   const [points, setPoints] = useState(0);
   const [currentQ, setCurrentQ] = useState(0);
   const [gameEnded, setGameEnded] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const [answered, setAnswered] = useState(true);
   const [questions, setQuestions] = useState<Array<Question>>([]);
   const [userId, setUserId] = useState('');
 
   const [fiftyfifty, setFiftyfifty] = useState(false);
   const [stop, setStoptime] = useState(false);
+
+  const [colorForUser, setColorForUser] = useState(0);
 
 
 
@@ -83,9 +90,9 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
 
 
     // Waiting for game to start
-  //if (!gameStarted) {
-    //return <Waiting points={points} username={username} gameStarted={() => setGameStarted(true)} gamepin={gamepin} />
-  //}
+  if (!gameStarted) {
+    return <Waiting points={points} userId={userId} username={username} gameStarted={() => setGameStarted(true)} gamepin={gamepin} colorForUser={colorForUser} setColorForUser={setColorForUser} />
+  }
 
   // view score when timer ends
 
@@ -96,20 +103,20 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
 
   // Show the questions alternatives and if the answer is correct
   if (!answered && !gameEnded) {
-    return <Alts question={questions[currentQ]} points={points} username={username} userId={userId} setPoints={(p) => setPoints(p)} answered={setAnswer} gamepin={gamepin} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)} stop={stop} buyStop={() => setStoptime(false)}/>
+    return <Alts question={questions[currentQ]} points={points} username={username} userId={userId} setPoints={(p) => setPoints(p)} answered={setAnswer} gamepin={gamepin} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)} stop={stop} buyStop={() => setStoptime(false)} color={colorForUser}/>
   }
 
   if (answered && !gameEnded) {
-    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} username={username} gamepin={gamepin} gameFinished={() => setGameEnded(true)} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} />
+    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} username={username} gamepin={gamepin} gameFinished={() => setGameEnded(true)} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser}/>
   }
 
   return(
     <GameWrapper onClick={() => setGameEnded(false)}>
-        <Header>
-            <Username>{username}</Username>
-            <Points>{points}</Points>
-            <Logo src={logo}/>
-        </Header>
+      <MobileNav>
+        <TopLeftLogo />
+        <TopRightPoints username={username} points={points} color={selectableColors[colorForUser]}/>
+      </MobileNav>
+      <Logo src={whiteLogo}/>
     </GameWrapper>
   )
 }
@@ -119,7 +126,7 @@ export const GameWrapper = styled.div`
   height: 100dvh;
   width: 100vw;
   background: rgb(28,0,65);
-  background: linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%); 
+  background-image: linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%);
 `;
 
 export const Header = styled.div`

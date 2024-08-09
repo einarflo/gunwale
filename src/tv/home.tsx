@@ -16,11 +16,14 @@ interface HomeProps {
 const Home = ({username, games, newGame, discover, loading, setPlayGames, error, edit}: HomeProps) => {
     return (
         <>
-        <Welcome>Welcome, {username}!</Welcome>
+        <Header>
+          <Welcome>Welcome, {username}!</Welcome>
           <Actions>
             <New onClick={newGame}>+ New quiz</New>
             <Discover onClick={discover}>Discover</Discover>
           </Actions>
+        </Header>
+        
           <Recent>Your games</Recent>
           <RecentItems>
           { loading ? 
@@ -37,6 +40,14 @@ const Home = ({username, games, newGame, discover, loading, setPlayGames, error,
 };
 
 export default Home;
+
+const Header = styled.div`
+    color: white;
+    font-family: "Coll";
+    padding: 30px;
+    background-image: linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%);
+  width: 100%;
+`;
 
 const RecentItems = styled.div`
   display: flex;
@@ -93,8 +104,6 @@ const Actions = styled.div`
 
 const Welcome = styled.div`
   font-size: 2.5rem;
-  #font-weight: bold;
-  color: #05212f;
   font-family: sans-serif;
   padding: 31px;
   font-family: "Coll";

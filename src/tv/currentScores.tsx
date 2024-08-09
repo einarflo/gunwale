@@ -1,9 +1,11 @@
 import { CurrentQuestionCount, Logo, Player, Start, Stop, Tvrapper } from "./game";
-import logo from '../images/gw-logo.png';
+import logo from '../images/tavl-white.png';
 import styled from "styled-components";
 import { useEffect, useState } from "react";
 import axios, { AxiosRequestConfig } from "axios";
 import { Spinner } from "./selectGame";
+import TopLeftLogo from "../components/TopLeftLogo";
+import { selectableColors } from "../phone/waiting";
 
 interface CurrentScoresProps {
   id: String,
@@ -33,7 +35,7 @@ const CurrentScores = ({ id, next, stop, currentQuestionCount }: CurrentScoresPr
 
   if (loading) {
     <Tvrapper>
-      <Logo src={logo}/>
+      <TopLeftLogo/>
       <ContentPlayers>
         <Spinner/> 
       </ContentPlayers>
@@ -49,20 +51,31 @@ const CurrentScores = ({ id, next, stop, currentQuestionCount }: CurrentScoresPr
 
   return (
     <Tvrapper>
-      <Logo src={logo}/>
+      <TopLeftLogo/>
       <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>
       <ContentPlayers>
         <Header>Scoreboard</Header>
         { players?.length === 0 ? 
             <div>No players ...</div>
           : 
-            players?.sort((a: Player, b: Player) => Number(b.score) - Number(a.score)).slice(0,5).map(player => <ScoreEntry>{player.name} - {player.score}</ScoreEntry>)}
+            players?.sort((a: Player, b: Player) => Number(b.score) - Number(a.score)).slice(0,5).map(player => <ScoreEntry hex={selectableColors[Number(player.admin) || 0]}><Name>{player.name}</Name><Score>{player.score}</Score></ScoreEntry>)}
       </ContentPlayers>
       <Start onClick={next}>Next</Start>
       <Stop onClick={stop}>Stop</Stop>
     </Tvrapper>
   )
 }
+
+const Name = styled.div`
+  padding: 5px;
+  overflow: hidden;
+  text-wrap: nowrap;
+  text-overflow: ellipsis;
+`;
+
+const Score = styled.div`
+padding: 5px;
+`;
 
 const ContentPlayers = styled.div`
     position: absolute;
@@ -74,7 +87,7 @@ const ContentPlayers = styled.div`
     font-family: "Coll";
 `;
 
-const ScoreEntry = styled.div`
+const ScoreEntry = styled.div.attrs((props: {hex: any}) => props)`
   height: 50px;
   margin: 20px;
   font-size: 2rem;
@@ -88,11 +101,16 @@ const ScoreEntry = styled.div`
   margin-left: auto;
   left: 50%;
   font-family: "Coll";
+  background-color: ${props => (props.hex || " #9C8AFA")};
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: space-between;
 `;
 
 const Header = styled.div`
     padding: 10px;
-    color: #ffffff60;
+    color: black;
     border-radius: 10px;
     width: fit-content;
     font-size: 3rem;
@@ -101,7 +119,7 @@ const Header = styled.div`
     left: 50%;
     margin: auto;
     margin-bottom: 30px;
-    font-family: "Soopafresh";
+    font-family: "Coll";
     letter-spacing: 2px;
 `;
 

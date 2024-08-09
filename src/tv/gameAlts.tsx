@@ -1,7 +1,9 @@
 import { CurrentQuestionCount, Logo, Question, Start, Stop, Tvrapper } from "./game";
-import logo from '../images/gw-logo.png';
+import logo from '../images/tavl-white.png';
 import styled from "styled-components";
 import { useEffect, useState } from "react";
+import TopLeftLogo from "../components/TopLeftLogo";
+import { selectableColors } from "../phone/waiting";
 
 interface AlternativesProps {
   question: Question,
@@ -41,7 +43,7 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }
   
   return (
     <Tvrapper>
-      <Logo src={logo}/>
+      <TopLeftLogo/>
       <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>
       <ContentQuestions>
         <ContentQuestionText>{question?.text}</ContentQuestionText>
@@ -50,12 +52,12 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }
       <Alts>
         <AltsContainer>
         <Top>
-          <Q>{option(question?.alt1, 1, "green", showAnswers && question?.correct === '1')}</Q>
-          <Q>{option(question?.alt2, 2, "blue", showAnswers && question?.correct === '2')}</Q>
+          <Q>{option(question?.alt1, 1, selectableColors[0], showAnswers && question?.correct === '1')}</Q>
+          <Q>{option(question?.alt2, 2, selectableColors[1], showAnswers && question?.correct === '2')}</Q>
         </Top>
         <Bot>
-          <Q>{option(question?.alt3, 3, "red", showAnswers && question?.correct === '3')}</Q>
-          <Q>{option(question?.alt4, 4, "purple", showAnswers && question?.correct === '4')}</Q>
+          <Q>{option(question?.alt3, 3, selectableColors[2], showAnswers && question?.correct === '3')}</Q>
+          <Q>{option(question?.alt4, 4, selectableColors[3], showAnswers && question?.correct === '4')}</Q>
         </Bot>
         </AltsContainer>
       </Alts>
@@ -65,7 +67,7 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }
   )
 }
 
-export const AltsContainer = styled.div`
+const AltsContainer = styled.div`
  
 `;
 
@@ -89,7 +91,7 @@ width: 100%;
 `;
 
 const Timer = styled.div`
-  background: #ffffff;
+  background: #9C8AFA;
   padding: 15px;
   border-radius: 40px;
   left: 2%;
@@ -97,6 +99,9 @@ const Timer = styled.div`
   width: fit-content;
   font-size: 2em;
   position: absolute;
+  color: white;
+  width: 40px;
+  text-align: center;
 `;
 
 const QText = styled.div`
@@ -118,19 +123,24 @@ const Option = styled.div`
 
 const ContentQuestions = styled.div`
   position: absolute;
-  top: 40%;
+  top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
-  min-width: 300px;
-  max-width: 80vw;
+  width: 75vw;
+  background: #6A71FA;
+  border-radius: 15px;
+  align-items: center;
 `;
 
 const ContentQuestionText = styled.div`
+  display: flex;
+  justify-content: center;
   height: 200px;
   position: relative;
   font-size: 3rem;
   color: white;
   text-align: center;
+  align-items: center;
   font-family: "Coll";
 `;
 

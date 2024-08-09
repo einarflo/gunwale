@@ -1,6 +1,7 @@
 import { CurrentQuestionCount, Logo, Tvrapper } from "./game";
-import logo from '../images/gw-logo.png';
+import logo from '../images/tavl-white.png';
 import styled, { keyframes } from "styled-components";
+import TopLeftLogo from "../components/TopLeftLogo";
 
 interface QuestionTextProps {
   question: String | undefined,
@@ -10,7 +11,7 @@ interface QuestionTextProps {
 const QuestionText = ({ question, currentQuestionCount }: QuestionTextProps) => {
   return (
     <Tvrapper>
-      <Logo src={logo}/>
+      <TopLeftLogo />
       <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>
       <QuestionTextWrapper>
         <Question>{question}</Question>
@@ -26,7 +27,7 @@ const progressbar = keyframes`
 `;
 
 const LoadingBar = styled.div`
-  background: #ffffff60;
+  background: #9C8AFA;
   padding: 10px;
   border-radius: 20px;
   left: 50%;
@@ -48,7 +49,8 @@ const Question = styled.div`
   position: relative;
   font-size: 4rem;
   text-align: center;
-  background: white;
+  background: #9C8AFA;
+  color: white;
   padding: 28px;
   border-radius: 20px;
   width: fit-content;

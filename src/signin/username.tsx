@@ -1,7 +1,8 @@
 import { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import logo from '../images/gw-logo.png';
-import { GamepinFormInput, GamepinLogginButton } from "./gamepin";
+import logo from '../images/tavl-logo.png';
+import { ErrorText, TextInputField, PrimaryButtonLocal as PrimaryButton, Logo } from "./gamepin";
+import TopLeftLogo from "../components/TopLeftLogo";
 
 interface UsernameProps {
     error: boolean,
@@ -13,14 +14,19 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
     const [username, setUsername] = useState<String | undefined>("");
     return(
     <GamePinWrapper>
+        <TopLeftLogo />
         <Content>
             <Logo src={logo} />
             {
                 loading ? <Spinner/> :
                 <>
-                    {error && <Error>Allready taken. Try another pls?</Error>}
-                    <GamepinFormInput placeholder="USERNAME" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value)} />
-                    <GamepinLogginButton onClick={() => setName(username)}>GO!</GamepinLogginButton>
+                    {error && <ErrorText>Allready taken. Try another pls?</ErrorText>}
+                    <TextInputField placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value)} onKeyPress={(e: any)  => {
+                        if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
+                            setName(username)
+                        }
+                    }}/>
+                    <PrimaryButton onClick={() => setName(username)}>GO!</PrimaryButton>
                 </>
             }
             
@@ -33,14 +39,6 @@ const GamePinWrapper = styled.div`
     height: 100dvh;
     width: 100vw;
     background: #ffffff;
-    background-image: linear-gradient(180deg, #203046 0%, #030006 100%);
-`;
-
-const Logo = styled.img`
-    max-width: 400px;
-    width: -webkit-fill-available;
-    padding-bottom: 40px;
-
 `;
 
 const Content = styled.div`
@@ -52,18 +50,6 @@ const Content = styled.div`
     max-width: 80vw;
 `;
 
-const Error = styled.div`
-    text-align: center;
-    padding-bottom: 20px;
-    padding-top: 20px;
-    color: #ffffff;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 25vw;
-    min-width: 300px;
-    width: -webkit-fill-available;
-    font-family : 'Soopafresh';
-`;
 
 const rotate = keyframes`
   from {

@@ -28,6 +28,7 @@ export interface Question {
 }
 
 export interface Player {
+  admin: String;
   name: String,
   score: String
 }
@@ -166,12 +167,13 @@ export const Tvrapper = styled.div`
     height: 100vh;
     height: 100dvh;
     width: 100vw;
-    background: rgb(28,0,65);
-    background: linear-gradient(180deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
-    background: linear-gradient(-45deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
+    background: white;
+    //background: rgb(28,0,65);
+    //background: linear-gradient(180deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
+    //background: linear-gradient(-45deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
     //background: linear-gradient(-45deg, #EE7752, #E73C7E, #23A6D5, #23D5AB);
-    background: linear-gradient(-45deg, #203046 0%, #030006 100%);
-    background-size: 400% 400%;
+    //background: linear-gradient(-45deg, #203046 0%, #030006 100%);
+    //background-size: 400% 400%;
     animation-name: ${backgroundAnimation};
     animation-duration: 15s;
     animation-iteration-count: infinite;
@@ -184,28 +186,26 @@ export const Start = styled.div`
     right: 2%;
     font-size: 1rem;
     padding: 10px;
-    background:  #ffffff;
+    background:  #6A71FA;
     border-radius: 10px;
     width: fit-content;
     cursor: pointer;
     font-weight: bold;
-    color: black;
-    opacity: 80%;
+    color: white;
 `;
 
 export const CurrentQuestionCount = styled.div`
     position: absolute;
     top: 2%;
-    left: 2%;
-    font-size: 1rem;
+    right: 2%;
+    font-size: 1.2rem;
     padding: 10px;
-    background:  #ffffff;
+    background:  #6A71FA;
     border-radius: 10px;
     width: fit-content;
     cursor: pointer;
     font-weight: bold;
-    color: black;
-    opacity: 80%;
+    color: white;
 `;
 
 export const Stop = styled.div`
@@ -214,7 +214,7 @@ export const Stop = styled.div`
     left: 2%;
     font-size: 1rem;
     padding: 10px;
-    background:  #000000;
+    background:  #6A71FA;
     border-radius: 10px;
     width: fit-content;
     cursor: pointer;
@@ -230,6 +230,7 @@ export const Logo = styled.img`
     transform: translate(-50%, -50%);
     max-width: 400px;
     min-width: 250px;
+    padding-top: 20px;
 `;
 
 export default TVGamePlayView;
