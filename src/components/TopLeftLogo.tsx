@@ -7,7 +7,7 @@ const TopLeftLogo = () => {
 
     const goHome = () => {
         //history.push("/home")
-        window.location.href = "/"
+        window.location.href = "/tavl/"
     }
 
     return (

@@ -146,11 +146,11 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
     return <QuestionText question={questions[currentQ]?.text} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
   }
 
-  if (showScoreBoard && questions.length >= currentQ) {
+  if (showScoreBoard && questions.length > currentQ+1) {
     return <CurrentScores id={id} next={next} stop={stopGame} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
   }
 
-  if (questions.length > currentQ) {
+  if (!showScoreBoard && questions.length > currentQ) {
     return <Alternatives question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
   }
 

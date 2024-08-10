@@ -25,6 +25,18 @@ const App = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    var query = window.location.search.substring(1);
+    var vars = query.split("&");
+    for (var i=0;i<vars.length;i++) {
+        var pair = vars[i].split("=");
+        if(pair[0] === 'gameid'){
+            setShowLandingPage(false)
+            setGamePin(pair[1])
+        }
+    }
+}, [])
+
   const [username, setUsername] = useState<String | undefined>();
   const [loggedInUsername, setLoggedInUsername] = useState<String | undefined>();
   const [gamePin, setGamePin] = useState<String | undefined>();

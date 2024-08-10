@@ -331,7 +331,6 @@ const UpgradeItemMobile = styled.div`
     display: flex;
     padding-left: 30px;
     padding-right: 30px;
-    width: 100%;
     animation: ${pulse} 0.5s ease-in;
     `;
 

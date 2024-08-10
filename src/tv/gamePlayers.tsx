@@ -39,7 +39,7 @@ const GamePlayers = ({ id, startGame, stopGame}: GamePlayersProps) => {
             <QRCode 
               size={512} 
               style={{ height: "auto", maxWidth: "200px", width: "200px", border: '6px solid white', borderRadius: '4px' }}
-              value={'https://gunwale.dogetek.no/?gameid='+id}
+              value={'https://www.dogetek.no/tavl/?gameid='+id}
               viewBox={`0 0 512 512`}
             />
             </QR>

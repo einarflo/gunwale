@@ -12,6 +12,25 @@ interface UsernameProps {
 
 const Username = ({ setName, loading, error }: UsernameProps) => {
     const [username, setUsername] = useState<String | undefined>("");
+    const [validationError, setValidationError] = useState<string | undefined>("");
+
+    const validateName = (input: any) => {
+            // Sjekk lengden på strengen
+    if (input && input.length > 50) {
+        setValidationError("Username too long!");
+        return false;
+    }
+
+    // Sjekk om strengen kun inneholder bokstaver og tall
+    const regex = /^[a-zA-Z0-9]*$/;
+    if (input && !regex.test(input)) {
+        setValidationError("Username contains special characters");
+        return false;
+    }
+
+    return true;
+    }
+
     return(
     <GamePinWrapper>
         <TopLeftLogo />
@@ -20,13 +39,22 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
             {
                 loading ? <Spinner/> :
                 <>
-                    {error && <ErrorText>Allready taken. Try another pls?</ErrorText>}
+                    {error && <ErrorText>Already taken. Try another pls?</ErrorText>}
+                    {validationError && <ErrorText>{validationError}</ErrorText>}
                     <TextInputField placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value)} onKeyPress={(e: any)  => {
                         if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
-                            setName(username)
+                            setValidationError("");
+                            if (validateName(username)) {
+                                setName(username)
+                            }
                         }
                     }}/>
-                    <PrimaryButton onClick={() => setName(username)}>GO!</PrimaryButton>
+                    <PrimaryButton onClick={() => {
+                        setValidationError("");
+                        if (validateName(username)) {
+                            setName(username)
+                        }
+                    }}>GO!</PrimaryButton>
                 </>
             }
             

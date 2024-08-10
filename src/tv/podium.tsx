@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { useEffect, useState } from "react";
 import axios, { AxiosRequestConfig } from "axios";
 import { Spinner } from "./selectGame";
+import TopLeftLogo from "../components/TopLeftLogo";
+import { selectableColors } from "../phone/waiting";
 
 
 interface PodiumProps {
@@ -34,7 +36,7 @@ const Podium = ({ id, finish }: PodiumProps) => {
 
   if (loading) {
     <Tvrapper>
-      <Logo src={logo}/>
+      <TopLeftLogo />
       <ContentPlayers>
         <Spinner/> 
       </ContentPlayers>
@@ -53,18 +55,29 @@ const Podium = ({ id, finish }: PodiumProps) => {
 
   return (
     <Tvrapper>
-      <Logo src={logo}/>
+      <TopLeftLogo />
       <ContentPlayers>
         <Header>{winnerSlogans[Number((Math.random() * 3).toFixed(0))]}</Header>
         { players?.length === 0 ? 
             <div>No players ...</div>
           : 
-            players?.sort((a: Player, b: Player) => Number(b.score) - Number(a.score)).slice(0,3).map(player => <ScoreEntry>{player.name} - {player.score}</ScoreEntry>)}
+            players?.sort((a: Player, b: Player) => Number(b.score) - Number(a.score)).slice(0,3).map(player => <ScoreEntry hex={selectableColors[Number(player.admin) || 0]}><Name>{player.name}</Name><Score>{player.score}</Score></ScoreEntry>)}
       </ContentPlayers>
       <Start onClick={finish}>Finish</Start>
     </Tvrapper>
   )
 }
+
+const Name = styled.div`
+  padding: 5px;
+  overflow: hidden;
+  text-wrap: nowrap;
+  text-overflow: ellipsis;
+`;
+
+const Score = styled.div`
+padding: 5px;
+`;
 
 const ContentPlayers = styled.div`
     position: absolute;
@@ -76,7 +89,7 @@ const ContentPlayers = styled.div`
     font-family: "Coll";
 `;
 
-const ScoreEntry = styled.div`
+const ScoreEntry = styled.div.attrs((props: {hex: any}) => props)`
   height: 50px;
   margin: 20px;
   font-size: 2rem;
@@ -90,11 +103,16 @@ const ScoreEntry = styled.div`
   margin-left: auto;
   left: 50%;
   font-family: "Coll";
+  background-color: ${props => (props.hex || " #9C8AFA")};
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: space-between;
 `;
 
 const Header = styled.div`
     padding: 10px;
-    color: #ffffff60;
+    color: #9C8AFA;
     border-radius: 10px;
     width: fit-content;
     font-size: 3rem;
