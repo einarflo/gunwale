@@ -11,6 +11,7 @@ import { MobileNav } from "../landing";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 //import Waiting from "./waiting";
+import { useWakeLock } from 'react-screen-wake-lock';
 
 interface Game {
     username: String,
@@ -33,6 +34,16 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
   const [stop, setStoptime] = useState(false);
 
   const [colorForUser, setColorForUser] = useState(0);
+
+  const { isSupported, released, request, release } = useWakeLock({
+
+    // TODO: Some indication to the user?
+
+    //onRequest: () => alert('Screen Wake Lock: requested!'),
+    //onError: () => alert('An error happened 💥'),
+    //onRelease: () => alert('Screen Wake Lock: released!'),
+
+  });
 
 
 
@@ -65,6 +76,9 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
   useEffect(() => {
     getQuestionsForGameId(gamepin);
     getUser(username);
+
+    // request wake lock
+    request();
   }, [gamepin, username]);
 
   const setAnswer = () => {
@@ -107,7 +121,7 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
   }
 
   if (answered && !gameEnded) {
-    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} username={username} gamepin={gamepin} gameFinished={() => setGameEnded(true)} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser}/>
+    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} username={username} gamepin={gamepin} gameFinished={() => {setGameEnded(true); release()}} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser}/>
   }
 
   return(
