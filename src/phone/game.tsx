@@ -15,11 +15,14 @@ import { useWakeLock } from 'react-screen-wake-lock';
 
 interface Game {
     username: String,
-    gamepin: String,
+    gameId: String,
+    gamePin: String,
+    userId: String,
+    gameInstanceId: String,
     logout: () => void
 }
 
-const PhoneGameView = ({ username, gamepin, logout }: Game) => {
+const PhoneGameView = ({ username, userId, gameId, gamePin, gameInstanceId, logout }: Game) => {
 
   // Maybe get user from session storage? and some way to reset it
   const [points, setPoints] = useState(0);
@@ -28,7 +31,7 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
   const [gameStarted, setGameStarted] = useState(false);
   const [answered, setAnswered] = useState(true);
   const [questions, setQuestions] = useState<Array<Question>>([]);
-  const [userId, setUserId] = useState('');
+  //const [userId, setUserId] = useState('');
 
   const [fiftyfifty, setFiftyfifty] = useState(false);
   const [stop, setStoptime] = useState(false);
@@ -59,6 +62,7 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
     });
   }
 
+  /*
   const getUser = (username: String) => {
     if (username && username.length > 1) {
       axios.get(`https://www.dogetek.no/api/api.php/game_players/${username}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
@@ -72,14 +76,15 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
       });
     }
   }
+  */
 
   useEffect(() => {
-    getQuestionsForGameId(gamepin);
-    getUser(username);
+    getQuestionsForGameId(gameId);
+    //getUser(username);
 
     // request wake lock
     request();
-  }, [gamepin, username]);
+  }, [gameId, username]);
 
   const setAnswer = () => {
     setAnswered(true);
@@ -105,7 +110,7 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
 
     // Waiting for game to start
   if (!gameStarted) {
-    return <Waiting points={points} userId={userId} username={username} gameStarted={() => setGameStarted(true)} gamepin={gamepin} colorForUser={colorForUser} setColorForUser={setColorForUser} />
+    return <Waiting points={points} userId={userId} username={username} gameStarted={() => setGameStarted(true)} gamepin={gamePin} colorForUser={colorForUser} setColorForUser={setColorForUser} />
   }
 
   // view score when timer ends
@@ -117,11 +122,11 @@ const PhoneGameView = ({ username, gamepin, logout }: Game) => {
 
   // Show the questions alternatives and if the answer is correct
   if (!answered && !gameEnded) {
-    return <Alts question={questions[currentQ]} points={points} username={username} userId={userId} setPoints={(p) => setPoints(p)} answered={setAnswer} gamepin={gamepin} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)} stop={stop} buyStop={() => setStoptime(false)} color={colorForUser}/>
+    return <Alts question={questions[currentQ]} points={points} username={username} userId={userId} setPoints={(p) => setPoints(p)} answered={setAnswer} gameId={gameId} gameInstanceId={gameInstanceId} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)} stop={stop} buyStop={() => setStoptime(false)} color={colorForUser}/>
   }
 
   if (answered && !gameEnded) {
-    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} username={username} gamepin={gamepin} gameFinished={() => {setGameEnded(true); release()}} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser}/>
+    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} username={username} gamepin={gamePin} gameFinished={() => {setGameEnded(true); release()}} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser}/>
   }
 
   return(

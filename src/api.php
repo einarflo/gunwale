@@ -59,8 +59,17 @@ switch ($method) {
     else if ($table == "game_players") {
         $sql = "select * from `$table` WHERE name=". '"'. $key. '"' .";"; break;
     }
+    else if ($table == "game_instance_players") {
+        $sql = "select * from `$table` WHERE game_instance_id=". '"'. $key. '"' .";"; break;
+    }
+    else if ($table == "game_instance") {
+        $sql = "select * from `$table` WHERE game_pin=". '"'. $key. '"' .";"; break;
+    }
     else if ($table == "game_players_id") {
         $sql = "select * from game_players WHERE game_id=". '"'. $key. '"' .";"; break;
+    }
+    else if ($table == "game_instance_players_id") {
+        $sql = "select * from game_instance_players WHERE game_instance_id=". '"'. $key. '"' .";"; break;
     }
     else if ($table == "games") {
         $sql = "select * from game WHERE deleted is null and created_by=". '"'. $key. '"' .";"; break;
@@ -76,8 +85,14 @@ switch ($method) {
     if ($table == "game") {
         $sql = "update game set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
     }
+    if ($table == "game_instance") {
+        $sql = "update game_instance set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
+    }
     else if ($table == "game_players") {
         $sql = "update game_players set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
+    }
+    else if ($table == "game_instance_players") {
+        $sql = "update game_instance_players set $set WHERE id=". '"'. $key. '"' .";"; echo $sql; break;
     }
     else if ($table == "clear_game_players") {
       $sql = "delete from game_players WHERE game_id=". $key .";"; echo $sql; break;
@@ -109,11 +124,11 @@ if (!$result) {
  
 // print results, insert id or affected row count
 if ($method == 'GET') {
-  if (!$key || ($table == "channel_posts" || $table == "game_question" || $table == "games" || $table == "game_list" || $table == "game_players" || $table == "game_players_id")) echo '[';
+  if (!$key || ($table == "channel_posts" || $table == "game_question" || $table == "games" || $table == "game_list" || $table == "game_players" || $table == "game_players_id" || $table == "game_instance_players" || $table == "game_instance_players_id")) echo '[';
   for ($i=0;$i<mysqli_num_rows($result);$i++) {
     echo ($i>0?',':'').json_encode(mysqli_fetch_object($result));
   }
-  if (!$key || ($table == "channel_posts" || $table == "game_question" || $table == "games" || $table == "game_list" || $table == "game_players" || $table == "game_players_id")) echo ']';
+  if (!$key || ($table == "channel_posts" || $table == "game_question" || $table == "games" || $table == "game_list" || $table == "game_players" || $table == "game_players_id" || $table == "game_instance_players" || $table == "game_instance_players_id")) echo ']';
 } elseif ($method == 'POST') {
   echo mysqli_insert_id($link);
 } else {

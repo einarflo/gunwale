@@ -7,17 +7,18 @@ import whiteLogo from '../images/tavl-white.png';
 import { selectableColors } from "../phone/waiting";
 
 interface GamePlayersProps {
-  id: String;
-  stopGame: () => void
-  startGame: () => void
+  gameInstanceId: String;
+  gamePin: String;
+  stopGame: () => void;
+  startGame: () => void;
 }
 
-const GamePlayers = ({ id, startGame, stopGame}: GamePlayersProps) => {
+const GamePlayers = ({ gameInstanceId, startGame, gamePin, stopGame}: GamePlayersProps) => {
   const [players, setPlayers] = useState<Array<Player>>([]);
 
   useEffect(() => {
     const refreshPlayerListInterval = setInterval(() => {
-      axios.get(`https://www.dogetek.no/api/api.php/game_players_id/${id}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      axios.get(`https://www.dogetek.no/api/api.php/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
         .then(res => {
           if (res.data) {
             setPlayers(res.data);
@@ -27,7 +28,7 @@ const GamePlayers = ({ id, startGame, stopGame}: GamePlayersProps) => {
         });
     }, 3000);
     return () => clearInterval(refreshPlayerListInterval);
-  }, [id])
+  }, [gameInstanceId])
 
 
   return (
@@ -39,7 +40,7 @@ const GamePlayers = ({ id, startGame, stopGame}: GamePlayersProps) => {
             <QRCode 
               size={512} 
               style={{ height: "auto", maxWidth: "200px", width: "200px", border: '6px solid white', borderRadius: '4px' }}
-              value={'https://www.dogetek.no/tavl/?gameid='+id}
+              value={'https://www.dogetek.no/tavl/?gameid='+ gamePin}
               viewBox={`0 0 512 512`}
             />
             </QR>
@@ -47,7 +48,7 @@ const GamePlayers = ({ id, startGame, stopGame}: GamePlayersProps) => {
           </ContentLeft>
         </LeftSide>
         <RightSide>
-          <Pin>Game pin: {id}</Pin>
+          <Pin>Game pin: {gamePin}</Pin>
           <ContentRight>
 
             <ContentPlayers>
@@ -55,7 +56,7 @@ const GamePlayers = ({ id, startGame, stopGame}: GamePlayersProps) => {
               { players?.length === 0 ? 
                 <PlayerName>Waiting for players ...</PlayerName>
               : 
-                players?.map(player => <PlayerName hex={selectableColors[Number(player.admin) || 0]}>{player.name}</PlayerName>)}
+                players?.map(player => <PlayerName hex={selectableColors[Number(player.colour) || 0]}>{player.username}</PlayerName>)}
             </ContentPlayers>
             
 

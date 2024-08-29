@@ -1,19 +1,59 @@
 import styled from "styled-components";
 import { Game, Spinner } from "./selectGame";
 import GameListItem from "./gameListItem";
+import Modal from "react-modal";
+import { useState } from "react";
+import PrimaryButton from "../components/PrimaryButton";
+import SecondaryButton from "../components/SecondaryButton";
+import WhiteButton from "../components/WhiteButton";
+import axios from "axios";
+import randomstring from 'randomstring';
 
 interface HomeProps {
     games: Game[] | undefined,
+    userid: String,
     username: String,
     newGame: () => void,
     discover: () => void,
-    setPlayGames: (id: String) => void,
+    startGame: (gameId: String, gameInstanceId: String, gamePin: String) => void,
     loading: boolean,
     error: boolean,
     edit: (id: String) => void;
 }
 
-const Home = ({username, games, newGame, discover, loading, setPlayGames, error, edit}: HomeProps) => {
+const Home = ({ userid, username, games, newGame, discover, loading, startGame, error, edit}: HomeProps) => {
+
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+	const [selectedGameId, setSelectedGameId] = useState<String>();
+
+	const [watingForCreateGame, setWaitingForCreateGame] = useState(false);
+	const [newGamePin, setNewGamePin] = useState('');
+
+	const createNewGameInstance = (gameId: String, gamePin: String) => {
+		setWaitingForCreateGame(true);
+			axios.post(`https://www.dogetek.no/api/api.php/game_instance/`, {
+				game_id: gameId,
+				game_pin: gamePin,
+				status: 'created',
+				created_by: userid
+			}, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+				.then(res => {
+					console.log('gameInstanceId:', res.data);
+
+					setWaitingForCreateGame(false);
+					//setPlayGames(selectedGameId || '')
+					startGame(gameId, res.data, gamePin);
+				})
+				.catch(err => {
+					console.log("Something fishy is going on");
+					//seterror(true);
+					setWaitingForCreateGame(false);
+				});
+
+	}
+
+	
+
     return (
         <>
         <Header>
@@ -31,10 +71,52 @@ const Home = ({username, games, newGame, discover, loading, setPlayGames, error,
             :
               <>
                 {error && <div>An error has occured</div>}
-                {games?.map(game => <GameListItem onClick={() => setPlayGames(game.id)} edit={edit} game={game}/>)}
+                {games?.map(game => <GameListItem onClick={() => {setSelectedGameId(game.id); setModalIsOpen(true)}} edit={edit} game={game}/>)}
               </>
           }
           </RecentItems>
+          <Modal
+        isOpen={modalIsOpen}
+        onAfterOpen={() => {
+					setNewGamePin(randomstring.generate({
+						charset: ['numeric'],
+						readable: true,
+						length: 5
+					}))
+				}}
+        onRequestClose={() => setModalIsOpen(false)}
+        style={{
+					overlay: {
+						position: 'fixed',
+						top: 0 + '82px',
+						left: 0,
+						right: 0,
+						bottom: 0,
+						backgroundColor: 'rgba(255, 255, 255, 0.75)'
+					},
+					content: {
+						top: '40%',
+						left: '50%',
+						right: 'auto',
+						bottom: 'auto',
+						marginRight: '-50%',
+						transform: 'translate(-50%, -50%)',
+						borderRadius: '15px',
+						border: 'none',
+						color: 'white',
+						fontFamily: "Coll",
+						backgroundImage: 'linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%)',
+					},
+				}}
+        contentLabel="Game options"
+      >
+        <h2>{games?.find(game => game.id == selectedGameId)?.name}</h2>
+				{newGamePin}
+        <div>{games?.find(game => game.id == selectedGameId)?.qcount} question{ games?.find(game => game.id == selectedGameId)?.qcount !== '1' && 's' }</div>
+        <PrimaryButton text="Start game" click={() => createNewGameInstance(selectedGameId || '0', newGamePin)} loading={watingForCreateGame}/>
+				<SecondaryButton text="Edit game" click={() => edit(selectedGameId || '')} />
+				
+      </Modal>
           </>
     );
 };

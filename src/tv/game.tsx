@@ -9,12 +9,15 @@ import Podium from "./podium";
 import QuestionText from "./questionText";
 
 interface TvViewProps {
-  id: String;
+  gameId: String;
+  gamePin: String;
+  gameInstanceId: String;
   stopGame: () => void
 }
 
 export interface Question {
   id: String;
+  game_id: String;
   number_in_line: String,
   alt1: String,
   alt2: String,
@@ -29,11 +32,12 @@ export interface Question {
 
 export interface Player {
   admin: String;
-  name: String,
-  score: String
+  username: String;
+  score: String;
+  colour: String;
 }
 
-const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
+const TVGamePlayView = ({gameId, gameInstanceId, gamePin, stopGame}: TvViewProps) => {
 
   const [questions, setQuestions] = useState<Array<Question>>([]);
   const [currentQ, setCurrentQ] = useState(0); 
@@ -88,7 +92,7 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
   }
 
   const setGameStatus = useCallback((status: String) => {
-    axios.put(`https://www.dogetek.no/api/api.php/game/${id}/`, {
+    axios.put(`https://www.dogetek.no/api/api.php/game_instance/${gameInstanceId}/`, {
       status: status,
       currentquestion: "",
       starttime: "",
@@ -99,10 +103,10 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
     .catch(() => {
       console.log("Something fishy is going on");
     });
-  },[id])
+  },[gameId])
 
   const setGameQuestion = (q: number, time: string) => {
-    axios.put(`https://www.dogetek.no/api/api.php/game/${id}/`, {
+    axios.put(`https://www.dogetek.no/api/api.php/game_instance/${gameInstanceId}/`, {
       currentquestion: q,
       starttime: time,
       status: "started"
@@ -132,13 +136,13 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
   }
 
   useEffect(() => {
-    getQuestionsForGameId(id)
+    getQuestionsForGameId(gameId)
     setGameStatus("created");
-  }, [id, setGameStatus]);
+  }, [gameId, setGameStatus]);
 
   // Show list of players that have joined the game
   if (!started) {
-    return <GamePlayers startGame={startGame} stopGame={onStopGame} id={id}/>
+    return <GamePlayers startGame={startGame} stopGame={onStopGame}  gameInstanceId={gameInstanceId} gamePin={gamePin} />
   }
 
   // Show the question with countdown bar
@@ -147,14 +151,14 @@ const TVGamePlayView = ({id, stopGame}: TvViewProps) => {
   }
 
   if (showScoreBoard && questions.length > currentQ+1) {
-    return <CurrentScores id={id} next={next} stop={stopGame} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
+    return <CurrentScores gameInstanceId={gameInstanceId} next={next} stop={stopGame} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
   }
 
   if (!showScoreBoard && questions.length > currentQ) {
     return <Alternatives question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
   }
 
-  return <Podium finish={onStopGame} id={id}/>
+  return <Podium finish={onStopGame} gameInstanceId={gameInstanceId}/>
 }
 
 const backgroundAnimation = keyframes`

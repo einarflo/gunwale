@@ -8,20 +8,20 @@ import TopLeftLogo from "../components/TopLeftLogo";
 import { selectableColors } from "../phone/waiting";
 
 interface CurrentScoresProps {
-  id: String,
+  gameInstanceId: String,
   currentQuestionCount: string,
   next: () => void,
   stop: () => void,
 }
 
-const CurrentScores = ({ id, next, stop, currentQuestionCount }: CurrentScoresProps) => {
+const CurrentScores = ({ gameInstanceId, next, stop, currentQuestionCount }: CurrentScoresProps) => {
   const [players, setPlayers] = useState<Array<Player>>([]);
   const [loading, setLoading] = useState(false);
 
 
   useEffect(() => {
     setLoading(true);
-      axios.get(`https://www.dogetek.no/api/api.php/game_players_id/${id}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      axios.get(`https://www.dogetek.no/api/api.php/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
         .then(res => {
           if (res.data) {
             setPlayers(res.data);
@@ -31,7 +31,7 @@ const CurrentScores = ({ id, next, stop, currentQuestionCount }: CurrentScoresPr
           console.log("Error when getting player list");
           setLoading(false);
         });
-  }, [id])
+  }, [gameInstanceId])
 
   if (loading) {
     <Tvrapper>
@@ -58,7 +58,7 @@ const CurrentScores = ({ id, next, stop, currentQuestionCount }: CurrentScoresPr
         { players?.length === 0 ? 
             <div>No players ...</div>
           : 
-            players?.sort((a: Player, b: Player) => Number(b.score) - Number(a.score)).slice(0,5).map(player => <ScoreEntry hex={selectableColors[Number(player.admin) || 0]}><Name>{player.name}</Name><Score>{player.score}</Score></ScoreEntry>)}
+            players?.sort((a: Player, b: Player) => Number(b.score) - Number(a.score)).slice(0,5).map(player => <ScoreEntry hex={selectableColors[Number(player.colour) || 0]}><Name>{player.username}</Name><Score>{player.score}</Score></ScoreEntry>)}
       </ContentPlayers>
       <Start onClick={next}>Next</Start>
       <Stop onClick={stop}>Stop</Stop>

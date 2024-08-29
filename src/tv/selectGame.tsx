@@ -29,7 +29,9 @@ const TVView = ({ username, logout }: CreateViewProps) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [games, setGames] = useState<Array<Game>>()
-  const [playGame, setPlayGames] = useState<String | undefined>()
+  const [gamePin, setGamePin] = useState<String | undefined>()
+  const [gameId, setGameId] = useState<String | undefined>()
+  const [gameInstanceId, setGameInstanceId] = useState<String | undefined>()
   const [page, setPage] = useState("home");
   const [userId, setUserId] = useState(25);
   const [editId, setEditId] = useState<String | undefined>(undefined);
@@ -39,6 +41,17 @@ const TVView = ({ username, logout }: CreateViewProps) => {
     getUserInfo()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId]);
+
+  const startGame = (_gameId: String, _gameInstanceId: String, _gamePin: String) => {
+    setGameId(_gameId);
+    setGameInstanceId(_gameInstanceId);
+    setGamePin(_gamePin);
+  }
+
+  const stopGame = () => {
+    setGameId(undefined);
+    setGameInstanceId(undefined);
+  }
 
   const getUserInfo = () => {
     axios.get(`https://www.dogetek.no/api/api.php/users/${username}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
@@ -81,8 +94,8 @@ const TVView = ({ username, logout }: CreateViewProps) => {
 
 
   // Game selected: 
-  if (playGame) {
-    return <TVGamePlayView id={playGame} stopGame={() => setPlayGames(undefined)}/>
+  if (gameId && gameInstanceId && gamePin) {
+    return <TVGamePlayView gameId={gameId} gameInstanceId={gameInstanceId} gamePin={gamePin} stopGame={stopGame}/>
   }
 
   // List of available games
@@ -101,7 +114,7 @@ const TVView = ({ username, logout }: CreateViewProps) => {
       </Header>
       <Content>
         
-        { page === "home" && <Home games={games} error={error} edit={(id: String) => {setEditId(id); setPage("edit")}} loading={loading} username={username} newGame={() => setPage("newgame")} discover={() => {}} setPlayGames={setPlayGames}/> }
+        { page === "home" && <Home userid={String(userId)} games={games} error={error} edit={(id: String) => {setEditId(id); setPage("edit")}} loading={loading} username={username} newGame={() => setPage("newgame")} discover={() => {}} startGame={startGame} /> }
         { page === "newgame" && <NewGame userid={String(userId)} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => setPage("home")} /> }
         { page === "edit" && editId && <EditGame gameId={editId} edit={(id: String) => {setQuestionId(id); setPage("question")}} update={(id: String) => {setEditId(id); setPage("update")}} cancel={() => {setPage("home"); setEditId(undefined);}} /> }
         { page === "question" && questionId && <EditQuestion gameId={editId} questionId={questionId} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => {setPage("home"); setQuestionId(undefined);}} /> }

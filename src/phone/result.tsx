@@ -61,7 +61,7 @@ const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, game
 
   useEffect(() => {
     const interval = setInterval(() => {
-      axios.get(`https://www.dogetek.no/api/api.php/game/${gamepin}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      axios.get(`https://www.dogetek.no/api/api.php/game_instance/${gamepin}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
       .then(res => {
         if (res.data["status"] === 'started') {
           if (res.data["currentquestion"] === currentQ.toString()) {

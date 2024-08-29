@@ -11,7 +11,7 @@ interface GameListItemProps {
 const GameListItem = ({game, onClick, edit}: GameListItemProps) => {
     return (
         <GameInst >
-            <Top onClick={() => edit(game.id)}>
+            <Top onClick={() => {onClick()}}>
                 <GameName>{game.name}</GameName>
                 <Count>{game.qcount} question{ game.qcount !== '1' && 's' }</Count>
             </Top>

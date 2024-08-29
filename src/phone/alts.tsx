@@ -25,7 +25,8 @@ interface AltsProps {
   points: number
   setPoints: (points: number) => void
   answered: () => void
-  gamepin: String,
+  gameInstanceId: String,
+  gameId: String,
   question: Question
   fif: boolean;
   buyfif: () => void
@@ -34,7 +35,7 @@ interface AltsProps {
   color: number;
 }
 
-const Alts = ({ userId, username, points, setPoints, answered, gamepin, question, fif, buyfif, stop, buyStop, color }: AltsProps) => {
+const Alts = ({ userId, username, points, setPoints, answered, gameId, gameInstanceId, question, fif, buyfif, stop, buyStop, color }: AltsProps) => {
   const [roundPoints, setRoundPoints] = useState(0);
   const [score, setScore] = useState(1000);
 
@@ -57,8 +58,26 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
 
   // POST points to server 
   const setUserPoints = (points: number) => {
-    axios.put(`https://www.dogetek.no/api/api.php/game_players/${userId}/`, {
+    axios.put(`https://www.dogetek.no/api/api.php/game_instance_players/${userId}/`, {
       score: points.toString(),
+    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log("Error when updating user points");
+    });
+  }
+
+  const pushAnswer = (points: number, answer: String, correct: boolean) => {
+    axios.post(`https://www.dogetek.no/api/api.php/game_instance_answers/${userId}/`, {
+      game_instance_id: gameInstanceId,
+      game_instance_player_id: userId,
+      game_question_id: question.id,
+      game_id: gameId,
+      points: points.toString(),
+      alternative: answer,
+      correct: correct ? '1' : '0',
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
     .then(res => {
       console.log(res);
@@ -132,6 +151,9 @@ const Alts = ({ userId, username, points, setPoints, answered, gamepin, question
     setAnswerSelected(true);
 
     setAnsweredCorrectly(answer === question?.correct);
+
+    // push to server
+    pushAnswer(score, answer, answer === question?.correct)
 
     // If it is correct 
     if (answer === question?.correct) {

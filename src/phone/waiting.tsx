@@ -26,7 +26,7 @@ const Waiting = ({ username, userId, points, gameStarted, gamepin, colorForUser,
 
   useEffect(() => {
     const interval = setInterval(() => {
-      axios.get(`https://www.dogetek.no/api/api.php/game/${gamepin}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      axios.get(`https://www.dogetek.no/api/api.php/game_instance/${gamepin}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
       .then(res => {
         if (res.data["status"] !== "created") {
           gameStarted();
@@ -42,8 +42,8 @@ const Waiting = ({ username, userId, points, gameStarted, gamepin, colorForUser,
 
   const setColor = (number: number) => {
     setColorForUser(number);
-    axios.put(`https://www.dogetek.no/api/api.php/game_players/${userId}/`, {
-      admin: number.toString(),
+    axios.put(`https://www.dogetek.no/api/api.php/game_instance_players/${userId}/`, {
+      colour: number.toString(),
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
     .then(res => {
       console.log(res);
