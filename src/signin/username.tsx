@@ -21,12 +21,16 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
         return false;
     }
 
+    /*
+
     // Sjekk om strengen kun inneholder bokstaver og tall
     const regex = /^[a-zA-Z0-9]*$/;
     if (input && !regex.test(input)) {
         setValidationError("Username contains special characters");
         return false;
     }
+
+    */
 
     return true;
     }

@@ -45,7 +45,6 @@ const CurrentScores = ({ gameInstanceId, next, stop, currentQuestionCount }: Cur
     
   }
 
-
   // Leader should cover sreen with banner from side to side
   // Should display what question were currently at
 

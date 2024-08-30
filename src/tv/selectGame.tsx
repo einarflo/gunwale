@@ -13,15 +13,17 @@ import ProfilePage from "./profilePage";
 import PrimaryButton from "../components/PrimaryButton";
 
 interface CreateViewProps {
-    username: String,
-    logout: () => void
+    username: String;
+    logout: () => void;
 }
 
 export interface Game {
-    id: String,
-    name: String,
-    description: String,
-    qcount: String,
+    id: String;
+    name: String;
+    description: String;
+    qcount: String;
+    plays: String;
+    username: String;
 }
 
 const TVView = ({ username, logout }: CreateViewProps) => {
@@ -104,10 +106,10 @@ const TVView = ({ username, logout }: CreateViewProps) => {
       
       <Header>
         <TopLeftLogo/>
-        <NavItem onClick={() => { setPage("home"); setQuestionId(undefined); setEditId(undefined);}}>home</NavItem>
-        <NavItem onClick={() => setPage("library")}>library</NavItem>
-        <NavItem onClick={() => setPage("discover")}>discover</NavItem>
-        <NavItem onClick={() => setPage("profile")}>profile</NavItem>
+        <NavItem selected={page === "home"} onClick={() => { setPage("home"); setQuestionId(undefined); setEditId(undefined);}}>home</NavItem>
+        <NavItem selected={page === "library"} onClick={() => setPage("library")}>library</NavItem>
+        <NavItem selected={page === "discover"} onClick={() => setPage("discover")}>discover</NavItem>
+        <NavItem selected={page === "profile"} onClick={() => setPage("profile")}>profile</NavItem>
         <JoinGameButton>
           <PrimaryButton text="Join a game" click={logout}/>
         </JoinGameButton>
@@ -119,7 +121,7 @@ const TVView = ({ username, logout }: CreateViewProps) => {
         { page === "edit" && editId && <EditGame gameId={editId} edit={(id: String) => {setQuestionId(id); setPage("question")}} update={(id: String) => {setEditId(id); setPage("update")}} cancel={() => {setPage("home"); setEditId(undefined);}} /> }
         { page === "question" && questionId && <EditQuestion gameId={editId} questionId={questionId} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => {setPage("home"); setQuestionId(undefined);}} /> }
         { page === "update" && editId && <UpdateGame gameId={editId} edit={(id: String) => {setEditId(id); setPage("edit")}} /> }
-        { page === "profile" && editId && <ProfilePage username={username} logout={logout} /> }
+        { page === "profile" && <ProfilePage username={username} logout={logout} /> }
         </Content>
     </GameSelectionWrapper>)
 }
@@ -150,11 +152,11 @@ const SideBarNav = styled.div`
   border-right: 2px solid #2d387050;
 `; //width: 260px;
 
-const NavItem = styled.div`
+const NavItem = styled.div.attrs((props: {selected: boolean}) => props)`
   font-weight: normal;
   font-family: "Coll";
   //padding-left: 45px;
-  color: #9F9F9F;
+  color: ${props => props.selected ? '#9C8AFA' : '#9F9F9F%'};
   font-size: 1.3rem;
   //padding-bottom: 25px;
   cursor: pointer;
@@ -176,6 +178,8 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: end;
+  position: sticky;
+  top: 0;
 `;
 
 const Logo = styled.img`

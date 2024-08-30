@@ -4,17 +4,26 @@ import styled from "styled-components";
 import { useEffect, useState } from "react";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { selectableColors } from "../phone/waiting";
+import axios, { AxiosRequestConfig } from "axios";
 
 interface AlternativesProps {
-  question: Question,
-  currentQuestionCount: string,
-  nextQuestion: () => void,
-  stopGame: () => void
+  question: Question;
+  currentQuestionCount: string;
+  nextQuestion: () => void;
+  stopGame: () => void;
+  gameInstanceId: String;
 }
 
-const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }: AlternativesProps) => {
+interface Answer {
+  alternative: String;
+  game_question_id: String;
+}
+
+const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, gameInstanceId }: AlternativesProps) => {
   const [showAnswers, setShowAnswers] = useState(false);
+  const [answers, setAnswers] = useState<Array<Answer>>();
   const [altTimeLeft, setAltTimeLeft] = useState(20); 
+  const [showDistribution, setShowDistribution] = useState(false);
 
   const option = (text: String, number: number, color: string, correct: boolean) => {
     return(
@@ -23,6 +32,35 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }
       </Option>
     )
   }
+
+  // Get all questions for the current game Id
+  const getAnswersForGameInstanceId = () => {
+    axios.get(`https://www.dogetek.no/api/api.php/game_instance_answers/${gameInstanceId}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      .then(res => {
+        if (res.data) {
+          setAnswers(res.data.filter((a: Answer) => a.game_question_id == question.id));
+        } 
+        setShowDistribution(true);
+      })
+      .catch(err => {
+        setShowDistribution(true);
+        console.log("Error when getting answers for game instance with id ", gameInstanceId);
+      });
+  }
+
+  const next = () => {
+    if (showDistribution) {
+      nextQuestion();
+    } else {
+      if (showAnswers) {
+        // get answers and show
+        getAnswersForGameInstanceId()
+      } else {
+        setShowAnswers(true);
+      }
+    }
+  }
+
   useEffect(() => {
     setAltTimeLeft(question?.time || 20);
   }, [question?.time])
@@ -45,9 +83,20 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }
     <Tvrapper>
       <TopLeftLogo/>
       <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>
-      <ContentQuestions>
-        <ContentQuestionText>{question?.text}</ContentQuestionText>
-      </ContentQuestions>
+      {
+        !showDistribution ?
+          <ContentQuestions>
+            <ContentQuestionText>{question?.text}</ContentQuestionText>
+          </ContentQuestions>
+          :
+          <Distribution>
+            <Column height={((answers?.filter(a => a.alternative == '1' ).length || 0)/(answers?.length || 1)*100) + '%'} color={selectableColors[0]}>{ answers?.filter(a => a.alternative == '1' ).length }</Column>
+            <Column height={((answers?.filter(a => a.alternative == '2' ).length || 0)/(answers?.length || 1)*100) + '%'} color={selectableColors[1]}>{ answers?.filter(a => a.alternative == '2' ).length }</Column>
+            <Column height={((answers?.filter(a => a.alternative == '3' ).length || 0)/(answers?.length || 1)*100) + '%'} color={selectableColors[2]}>{ answers?.filter(a => a.alternative == '3' ).length }</Column>
+            <Column height={((answers?.filter(a => a.alternative == '4' ).length || 0)/(answers?.length || 1)*100) + '%'} color={selectableColors[3]}>{ answers?.filter(a => a.alternative == '4' ).length }</Column>
+          </Distribution>
+      }
+      
       { altTimeLeft > 0 && <Timer>{altTimeLeft}</Timer> }
       <Alts>
         <AltsContainer>
@@ -61,11 +110,38 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame }
         </Bot>
         </AltsContainer>
       </Alts>
-      <Start onClick={nextQuestion}>Next</Start>
+      <Start onClick={next}>Next</Start>
       <Stop onClick={stopGame}>Stop</Stop>
     </Tvrapper>
   )
 }
+
+const Column = styled.div.attrs((props: {height: any}) => props)`
+  color: white;
+  display: flex;
+  background-color: ${props => (props.color)};
+  width: 25%;
+  justify-content: center;
+  margin: 10px;
+  border-radius: 15px;
+  font-size: 1.5em;
+  font-family: "Coll";
+  height: ${props => (props.height)};
+  min-height: 30px;
+  line-height: 2rem;
+  align-items: end;
+`;
+
+const Distribution = styled.div`
+  display: flex;
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75vw;
+  height: 250%;
+  align-items: end;
+`;
 
 const AltsContainer = styled.div`
  

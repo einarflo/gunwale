@@ -25,7 +25,6 @@ const Button = styled.div`
     background-clip: padding-box;
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
     max-width: 350px;
-    margin: auto;
       
     background: white;
        

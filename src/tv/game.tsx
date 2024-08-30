@@ -155,7 +155,7 @@ const TVGamePlayView = ({gameId, gameInstanceId, gamePin, stopGame}: TvViewProps
   }
 
   if (!showScoreBoard && questions.length > currentQ) {
-    return <Alternatives question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
+    return <Alternatives gameInstanceId={gameInstanceId} question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
   }
 
   return <Podium finish={onStopGame} gameInstanceId={gameInstanceId}/>

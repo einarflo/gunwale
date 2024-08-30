@@ -52,15 +52,12 @@ const Home = ({ userid, username, games, newGame, discover, loading, startGame, 
 
 	}
 
-	
-
     return (
         <>
         <Header>
           <Welcome>Welcome, {username}!</Welcome>
           <Actions>
-            <New onClick={newGame}>+ New quiz</New>
-            <Discover onClick={discover}>Discover</Discover>
+            <WhiteButton click={newGame} text="New quiz"></WhiteButton>
           </Actions>
         </Header>
         
@@ -106,16 +103,24 @@ const Home = ({ userid, username, games, newGame, discover, loading, startGame, 
 						color: 'white',
 						fontFamily: "Coll",
 						backgroundImage: 'linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%)',
+						width: '70%',
+						maxWidth: '1000px'
 					},
 				}}
         contentLabel="Game options"
       >
-        <h2>{games?.find(game => game.id == selectedGameId)?.name}</h2>
-				{newGamePin}
-        <div>{games?.find(game => game.id == selectedGameId)?.qcount} question{ games?.find(game => game.id == selectedGameId)?.qcount !== '1' && 's' }</div>
-        <PrimaryButton text="Start game" click={() => createNewGameInstance(selectedGameId || '0', newGamePin)} loading={watingForCreateGame}/>
-				<SecondaryButton text="Edit game" click={() => edit(selectedGameId || '')} />
-				
+				<Content>
+					<Left>
+						<Heading>{games?.find(game => game.id == selectedGameId)?.name}</Heading>
+						<Username>by {games?.find(game => game.id == selectedGameId)?.username}</Username>
+						<div>{games?.find(game => game.id == selectedGameId)?.qcount} question{ games?.find(game => game.id == selectedGameId)?.qcount !== '1' && 's' }</div>
+						<WhiteButton text="Edit game" click={() => edit(selectedGameId || '')} />
+					</Left>
+					<Right>
+						<NewPin>{newGamePin}</NewPin>
+						<PrimaryButton text="Start game" click={() => createNewGameInstance(selectedGameId || '0', newGamePin)} loading={watingForCreateGame}/>
+					</Right>
+				</Content>
       </Modal>
           </>
     );
@@ -123,12 +128,52 @@ const Home = ({ userid, username, games, newGame, discover, loading, startGame, 
 
 export default Home;
 
+const Heading = styled.div`
+	color: white;
+	font-family: "Coll";
+	font-size: 2.5rem;
+  padding-top: 20px;
+  padding-left: 20px;
+`;
+
+const Left = styled.div`
+	display: block;
+	width: 50%;
+`;
+
+const Right = styled.div`
+	display: block;
+	width: 50%;
+	margin: 20px;
+	border-radius: 15px;
+	background: white;
+`;
+
+const Content = styled.div`
+	display: flex;
+`;
+
+const NewPin = styled.div`
+	color: #9f9f9f;
+	font-family: "Coll";
+	font-size: 2.5rem;
+	text-align: center;
+	padding-top: 10px;
+`;
+
 const Header = styled.div`
     color: white;
     font-family: "Coll";
     padding: 30px;
     background-image: linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%);
   width: 100%;
+`;
+
+const Username = styled.div`
+	color: #ffffff90;
+	font-family: "Coll";
+	font-size: 1.5rem;
+	padding-left: 20px;
 `;
 
 const RecentItems = styled.div`
