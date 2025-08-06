@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import axios from "axios"
-import { useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useRef, useState } from "react"
 import styled, { keyframes } from "styled-components"
 import { Question } from "../tv/game"
 import { GameWrapper, Header, Points, Username, MobileSpinner } from "./game"
@@ -10,6 +10,7 @@ import { MobileNav } from "../landing"
 import TopLeftLogo from "../components/TopLeftLogo"
 import TopRightPoints from "../components/TopRightPoints"
 import { selectableColors } from "./waiting"
+import { UserContext } from "../UserContext"
 import one from '../images/upgrades/1.png';
 import two from '../images/upgrades/2.png';
 import three from '../images/upgrades/3.png';
@@ -20,8 +21,6 @@ import seven from '../images/upgrades/7.png';
 import eight from '../images/upgrades/8.png';
 
 interface AltsProps {
-  userId: String
-  username: String
   points: number
   setPoints: (points: number) => void
   answered: () => void
@@ -35,7 +34,8 @@ interface AltsProps {
   color: number;
 }
 
-const Alts = ({ userId, username, points, setPoints, answered, gameId, gameInstanceId, question, fif, buyfif, stop, buyStop, color }: AltsProps) => {
+const Alts = ({ points, setPoints, answered, gameId, gameInstanceId, question, fif, buyfif, stop, buyStop, color }: AltsProps) => {
+  const { username, userId } = useContext(UserContext);
   const [roundPoints, setRoundPoints] = useState(0);
   const [score, setScore] = useState(1000);
 
@@ -170,7 +170,7 @@ const Alts = ({ userId, username, points, setPoints, answered, gameId, gameInsta
     <GameWrapper>
         <MobileNav>
           <TopLeftLogo />
-          <TopRightPoints username={username} points={points} color={selectableColors[color]}/>
+          <TopRightPoints points={points} color={selectableColors[color]}/>
         </MobileNav>
         <Text>Waiting for your score...</Text>
         <MobileSpinner/>
@@ -183,7 +183,7 @@ const Alts = ({ userId, username, points, setPoints, answered, gameId, gameInsta
     <GameWrapper style={{ background: answeredCorrectly ? 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(0,164,67,1) 0%, rgba(34,214,135,1) 100%)' : 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(255,39,39,1) 0%, rgba(247,89,89,1) 100%)' }}>
         <MobileNav>
           <TopLeftLogo />
-          <TopRightPoints username={username} points={points} color={selectableColors[color]}/>
+          <TopRightPoints points={points} color={selectableColors[color]}/>
         </MobileNav>
         <Text>{answeredCorrectly ? 'Correct' : 'Nope!'}</Text>
         <Text>You got {answeredCorrectly ? roundPoints : 0} points</Text>
@@ -196,7 +196,7 @@ const Alts = ({ userId, username, points, setPoints, answered, gameId, gameInsta
     <GameWrapper>
       <MobileNav>
         <TopLeftLogo />
-        <TopRightPoints username={username} points={points} color={selectableColors[color]}/>
+        <TopRightPoints points={points} color={selectableColors[color]}/>
       </MobileNav>
       
       <PowerUpContainer>

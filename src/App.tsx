@@ -7,6 +7,7 @@ import Username from './signin/username';
 import PhoneGameView from './phone/game';
 import TVView from './tv/selectGame';
 import LandingPage from './landing';
+import { UserContext } from './UserContext';
 
 const appHeight = () => {
   const doc = document.documentElement
@@ -153,10 +154,14 @@ const App = () => {
   if (!username || !userId) {
     return <Username error={error} loading={loading} setName={(user) => setUser(user || "", gameId)} />;
   }
-  return <PhoneGameView userId={userId} username={username} gameId={gameId} gamePin={gamePin} gameInstanceId={gameInstanceId} logout={() => {
-    setUsername(undefined)
-    setGamePin(undefined)
-  }} />;
+  return (
+    <UserContext.Provider value={{ username: username as string | undefined, userId: userId as string | undefined, setUsername: setUsername as (name?: string) => void, setUserId: setUserId as (id?: string) => void }}>
+      <PhoneGameView gameId={gameId} gamePin={gamePin} gameInstanceId={gameInstanceId} logout={() => {
+        setUsername(undefined);
+        setGamePin(undefined);
+      }} />
+    </UserContext.Provider>
+  );
 }
 
 export default App;

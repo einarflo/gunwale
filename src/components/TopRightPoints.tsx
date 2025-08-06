@@ -1,12 +1,14 @@
 import styled from 'styled-components';
+import { useContext } from 'react';
+import { UserContext } from '../UserContext';
 
 interface TopRightProps {
-    username: String;
     points: number;
-    color: String;
+    color: string;
 }
 
-const TopRightPoints = ({ username, points, color }: TopRightProps) => {
+const TopRightPoints = ({ points, color }: TopRightProps) => {
+    const { username } = useContext(UserContext);
     return (
         <Wrapper hex={color}>
             <Username>{username}</Username>

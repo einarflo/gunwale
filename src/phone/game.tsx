@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Question } from "../tv/game";
 import Alts from "./alts";
@@ -10,19 +10,19 @@ import Waiting, { selectableColors } from "./waiting";
 import { MobileNav } from "../landing";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
+import { UserContext } from "../UserContext";
 //import Waiting from "./waiting";
 import { useWakeLock } from 'react-screen-wake-lock';
 
 interface Game {
-    username: String,
     gameId: String,
     gamePin: String,
-    userId: String,
     gameInstanceId: String,
     logout: () => void
 }
 
-const PhoneGameView = ({ username, userId, gameId, gamePin, gameInstanceId, logout }: Game) => {
+const PhoneGameView = ({ gameId, gamePin, gameInstanceId, logout }: Game) => {
+  const { username, userId } = useContext(UserContext);
 
   // Maybe get user from session storage? and some way to reset it
   const [points, setPoints] = useState(0);
@@ -80,11 +80,10 @@ const PhoneGameView = ({ username, userId, gameId, gamePin, gameInstanceId, logo
 
   useEffect(() => {
     getQuestionsForGameId(gameId);
-    //getUser(username);
 
     // request wake lock
     request();
-  }, [gameId, username]);
+  }, [gameId]);
 
   const setAnswer = () => {
     setAnswered(true);
@@ -110,7 +109,7 @@ const PhoneGameView = ({ username, userId, gameId, gamePin, gameInstanceId, logo
 
     // Waiting for game to start
   if (!gameStarted) {
-    return <Waiting points={points} userId={userId} username={username} gameStarted={() => setGameStarted(true)} gamepin={gamePin} colorForUser={colorForUser} setColorForUser={setColorForUser} />
+    return <Waiting points={points} gameStarted={() => setGameStarted(true)} gamepin={gamePin} colorForUser={colorForUser} setColorForUser={setColorForUser} />
   }
 
   // view score when timer ends
@@ -122,18 +121,18 @@ const PhoneGameView = ({ username, userId, gameId, gamePin, gameInstanceId, logo
 
   // Show the questions alternatives and if the answer is correct
   if (!answered && !gameEnded) {
-    return <Alts question={questions[currentQ]} points={points} username={username} userId={userId} setPoints={(p) => setPoints(p)} answered={setAnswer} gameId={gameId} gameInstanceId={gameInstanceId} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)} stop={stop} buyStop={() => setStoptime(false)} color={colorForUser}/>
+    return <Alts question={questions[currentQ]} points={points} setPoints={(p) => setPoints(p)} answered={setAnswer} gameId={gameId} gameInstanceId={gameInstanceId} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)} stop={stop} buyStop={() => setStoptime(false)} color={colorForUser}/>
   }
 
   if (answered && !gameEnded) {
-    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} username={username} gamepin={gamePin} gameFinished={() => {setGameEnded(true); release()}} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser}/>
+    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} gamepin={gamePin} gameFinished={() => {setGameEnded(true); release()}} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser}/>
   }
 
   return(
     <GameWrapper onClick={() => setGameEnded(false)}>
       <MobileNav>
         <TopLeftLogo />
-        <TopRightPoints username={username} points={points} color={selectableColors[colorForUser]}/>
+        <TopRightPoints points={points} color={selectableColors[colorForUser]}/>
       </MobileNav>
       <Logo src={whiteLogo}/>
     </GameWrapper>

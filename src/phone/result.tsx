@@ -1,12 +1,13 @@
 import axios, { AxiosRequestConfig } from "axios";
 import moment from "moment";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { GameWrapper, Header, MobileSpinner, Points, Username } from "./game";
 import { ItemImage, ItemImageMobile, MobileNav } from "../landing";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { selectableColors } from "./waiting";
+import { UserContext } from "../UserContext";
 import one from '../images/upgrades/1.png';
 import two from '../images/upgrades/2.png';
 import three from '../images/upgrades/3.png';
@@ -17,7 +18,6 @@ import seven from '../images/upgrades/7.png';
 import eight from '../images/upgrades/8.png';
 
 interface ResultProps {
-  username: String
   currentQ: number
   points: number
   nextQuestionStarted: () => void
@@ -31,7 +31,8 @@ interface ResultProps {
   color: number;
 }
 
-const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, gameFinished, fif, buyfif, setPoints, buyStop, stop, color }: ResultProps) => {
+const Result = ({ currentQ, points, nextQuestionStarted, gamepin, gameFinished, fif, buyfif, setPoints, buyStop, stop, color }: ResultProps) => {
+  const { username } = useContext(UserContext);
   
   const [getReady, setGetReady] = useState(false);
 
@@ -144,7 +145,7 @@ const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, game
       <GameWrapper>
           <MobileNav>
             <TopLeftLogo />
-            <TopRightPoints username={username} points={points} color={selectableColors[color]}/>
+            <TopRightPoints points={points} color={selectableColors[color]}/>
           </MobileNav>
           <Text>Get ready!</Text>
           <MobileSpinner/>
@@ -156,7 +157,7 @@ const Result = ({ currentQ, username, points, nextQuestionStarted, gamepin, game
     <GameWrapper>
       <MobileNav>
         <TopLeftLogo />
-        <TopRightPoints username={username} points={points} color={selectableColors[color]}/>
+        <TopRightPoints points={points} color={selectableColors[color]}/>
       </MobileNav>
         <UpgradeContainer>
           <PowerUp onClick={purchaseFifityFifty}>
