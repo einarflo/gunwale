@@ -1,13 +1,12 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { HeaderMobile, MobileHeader, MobileNav } from "../landing";
+import { UserContext } from "../UserContext";
 
 interface WaitingProps {
-  username: String;
-  userId: String;
   points: number
   gameStarted: () => void
   gamepin: String
@@ -22,7 +21,8 @@ export const selectableColors = [
   '#000000',
 ]
 
-const Waiting = ({ username, userId, points, gameStarted, gamepin, colorForUser, setColorForUser }: WaitingProps) => {
+const Waiting = ({ points, gameStarted, gamepin, colorForUser, setColorForUser }: WaitingProps) => {
+  const { username, userId } = useContext(UserContext);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -57,7 +57,7 @@ const Waiting = ({ username, userId, points, gameStarted, gamepin, colorForUser,
     <MobileGameWrapper>
       <MobileNav>
       <TopLeftLogo />
-      <TopRightPoints username={username} points={points} color={selectableColors[colorForUser]}/>
+      <TopRightPoints points={points} color={selectableColors[colorForUser]}/>
       </MobileNav>
       <BlueWrapper>
         <MobileHeader>Waiting for game to begin...</MobileHeader>
