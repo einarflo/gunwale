@@ -1,6 +1,7 @@
-import axios, { AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
+import { get } from "../api";
+import Status from "../components/Status";
 import logo from '../images/gw-logo-dark.png';
 import TVGamePlayView from "./game";
 import Home from "./home";
@@ -56,7 +57,7 @@ const TVView = ({ username, logout }: CreateViewProps) => {
   }
 
   const getUserInfo = () => {
-    axios.get(`https://www.dogetek.no/api/api.php/users/${username}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+    get(`/users/${username}/`)
       .then(res => {
         if (res.data["username"] === username) {
           getGamesForUserId(res.data["id"])
@@ -75,7 +76,7 @@ const TVView = ({ username, logout }: CreateViewProps) => {
   }
 
   const getGamesForUserId = (id: String) => {
-    axios.get(`https://www.dogetek.no/api/api.php/game_list/${id}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+    get(`/game_list/${id}/`)
       .then(res => {
         setLoading(false);
         if (res.data) {
@@ -115,7 +116,7 @@ const TVView = ({ username, logout }: CreateViewProps) => {
         </JoinGameButton>
       </Header>
       <Content>
-        
+        <Status loading={loading} error={error} />
         { page === "home" && <Home userid={String(userId)} games={games} error={error} edit={(id: String) => {setEditId(id); setPage("edit")}} loading={loading} username={username} newGame={() => setPage("newgame")} discover={() => {}} startGame={startGame} /> }
         { page === "newgame" && <NewGame userid={String(userId)} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => setPage("home")} /> }
         { page === "edit" && editId && <EditGame gameId={editId} edit={(id: String) => {setQuestionId(id); setPage("question")}} update={(id: String) => {setEditId(id); setPage("update")}} cancel={() => {setPage("home"); setEditId(undefined);}} /> }

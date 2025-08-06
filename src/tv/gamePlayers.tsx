@@ -1,6 +1,6 @@
-import axios, { AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
+import { get } from "../api";
 import { Player } from "./game";
 import QRCode from "react-qr-code";
 import whiteLogo from '../images/tavl-white.png';
@@ -18,7 +18,7 @@ const GamePlayers = ({ gameInstanceId, startGame, gamePin, stopGame}: GamePlayer
 
   useEffect(() => {
     const refreshPlayerListInterval = setInterval(() => {
-      axios.get(`https://www.dogetek.no/api/api.php/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      get(`/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`)
         .then(res => {
           if (res.data) {
             setPlayers(res.data);

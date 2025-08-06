@@ -1,6 +1,6 @@
-import axios from "axios";
 import { useState } from "react";
 import styled from "styled-components";
+import { post } from "../api";
 
 interface NewGameProps {
     userid: String,
@@ -15,7 +15,7 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
 
      // Insert player in DB and set username
   const insertQuestion = (name: String, description: String) => {
-    axios.post(`https://www.dogetek.no/api/api.php/game/`, {
+    post(`/game/`, {
       name: name,
       description: description,
       created_by: userid,

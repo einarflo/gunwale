@@ -1,6 +1,7 @@
-import axios, { AxiosRequestConfig } from 'axios';
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { get, post } from './api';
+import Status from './components/Status';
 
 import LandingPage from './landing';
 import Signin from './signin/signin';
@@ -42,11 +43,7 @@ const App = () => {
   const setUser = (name: string, pin: string) => {
     setLoading(true);
     if (name && name.length > 1) {
-      axios
-        .get(
-          `https://www.dogetek.no/api/api.php/game_instance_players/${pin}/?checkUser=true`,
-          { mode: 'no-cors' } as AxiosRequestConfig<any>
-        )
+      get(`/game_instance_players/${pin}/?checkUser=true`)
         .then(res => {
           if (res.data) {
             if (res.data.find((player: GameInstancePlayer) => player.username === name)) {
@@ -69,17 +66,16 @@ const App = () => {
   };
 
   const insertPlayer = (name: string) => {
-    axios
-      .post(
-        `https://www.dogetek.no/api/api.php/game_instance_players/`,
-        {
-          game_id: gameId,
-          game_instance_id: gameInstanceId,
-          username: name,
-          score: '0'
-        },
-        { headers: { 'content-type': 'application/x-www-form-urlencoded' } }
-      )
+    post(
+      `/game_instance_players/`,
+      {
+        game_id: gameId,
+        game_instance_id: gameInstanceId,
+        username: name,
+        score: '0'
+      },
+      { headers: { 'content-type': 'application/x-www-form-urlencoded' } }
+    )
       .then(res => {
         setUserId(res.data);
         setUsername(name);
@@ -95,11 +91,7 @@ const App = () => {
   const setPin = (pin: string | undefined) => {
     if (pin && pin.length > 0 && pin !== '0') {
       setLoading(true);
-      axios
-        .get(
-          `https://www.dogetek.no/api/api.php/game_instance/${pin}/`,
-          { mode: 'no-cors' } as AxiosRequestConfig<any>
-        )
+      get(`/game_instance/${pin}/`)
         .then(res => {
           if (res.data && res.data['status'] === 'created') {
             setGameId(res.data['game_id']);
@@ -123,6 +115,8 @@ const App = () => {
   };
 
   return (
+    <>
+    <Status loading={loading} error={error} />
     <Routes>
       <Route
         path="/"
@@ -217,6 +211,7 @@ const App = () => {
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 };
 

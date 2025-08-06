@@ -6,8 +6,8 @@ import { useState } from "react";
 import PrimaryButton from "../components/PrimaryButton";
 import SecondaryButton from "../components/SecondaryButton";
 import WhiteButton from "../components/WhiteButton";
-import axios from "axios";
 import randomstring from 'randomstring';
+import { post } from "../api";
 
 interface HomeProps {
     games: Game[] | undefined,
@@ -31,12 +31,12 @@ const Home = ({ userid, username, games, newGame, discover, loading, startGame, 
 
 	const createNewGameInstance = (gameId: String, gamePin: String) => {
 		setWaitingForCreateGame(true);
-			axios.post(`https://www.dogetek.no/api/api.php/game_instance/`, {
-				game_id: gameId,
-				game_pin: gamePin,
-				status: 'created',
-				created_by: userid
-			}, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+                        post(`/game_instance/`, {
+                                game_id: gameId,
+                                game_pin: gamePin,
+                                status: 'created',
+                                created_by: userid
+                        }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
 				.then(res => {
 					console.log('gameInstanceId:', res.data);
 

@@ -1,4 +1,3 @@
-import axios, { AxiosRequestConfig } from "axios";
 import { useContext, useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Question } from "../tv/game";
@@ -11,6 +10,7 @@ import { MobileNav } from "../landing";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { UserContext } from "../UserContext";
+import { get } from "../api";
 //import Waiting from "./waiting";
 import { useWakeLock } from 'react-screen-wake-lock';
 
@@ -52,7 +52,7 @@ const PhoneGameView = ({ gameId, gamePin, gameInstanceId, logout }: Game) => {
 
   // Get all questions for the current game Id
   const getQuestionsForGameId = (id: String) => {
-    axios.get(`https://www.dogetek.no/api/api.php/game_question/${id}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+    get(`/game_question/${id}/`)
       .then(res => {
         if (res.data) {
           setQuestions(res.data);
@@ -61,22 +61,6 @@ const PhoneGameView = ({ gameId, gamePin, gameInstanceId, logout }: Game) => {
         console.log("Error when getting questions for game with id ", id);
     });
   }
-
-  /*
-  const getUser = (username: String) => {
-    if (username && username.length > 1) {
-      axios.get(`https://www.dogetek.no/api/api.php/game_players/${username}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
-      .then(res => {
-        if (res.data && (res.data[0]["name"] === username)) {
-          setUserId(res.data[0]["id"]);
-        }
-      })
-      .catch(err => {
-        console.log(err);
-      });
-    }
-  }
-  */
 
   useEffect(() => {
     getQuestionsForGameId(gameId);
