@@ -10,6 +10,13 @@ import PhoneGameView from './phone/game';
 import TVView from './tv/selectGame';
 import { UserContext } from './UserContext';
 
+const appHeight = () => {
+  const doc = document.documentElement
+  doc.style.setProperty(' — app-height', `${window.innerHeight}px`)
+ }
+ window.addEventListener('resize', appHeight)
+ appHeight()
+
 const App = () => {
   const navigate = useNavigate();
 

@@ -7,11 +7,11 @@ import TopLeftLogo from "../components/TopLeftLogo";
 interface UsernameProps {
     error: boolean,
     loading: boolean,
-    setName: (name: String | undefined) => void
+    setName: (name: string | undefined) => void
 }
 
 const Username = ({ setName, loading, error }: UsernameProps) => {
-    const [username, setUsername] = useState<String | undefined>("");
+    const [username, setUsername] = useState<string | undefined>("");
     const [validationError, setValidationError] = useState<string | undefined>("");
 
     const validateName = (input: any) => {
@@ -45,7 +45,7 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
                 <>
                     {error && <ErrorText>Already taken. Try another pls?</ErrorText>}
                     {validationError && <ErrorText>{validationError}</ErrorText>}
-                    <TextInputField placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value)} onKeyPress={(e: any)  => {
+                    <TextInputField placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value.toString())} onKeyPress={(e: any)  => {
                         if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
                             setValidationError("");
                             if (validateName(username)) {
