@@ -1,179 +1,228 @@
-import Splash from './Splash';
 import axios, { AxiosRequestConfig } from 'axios';
 import { useEffect, useState } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+
+import LandingPage from './landing';
 import Signin from './signin/signin';
 import GamePin from './signin/gamepin';
 import Username from './signin/username';
 import PhoneGameView from './phone/game';
 import TVView from './tv/selectGame';
-import LandingPage from './landing';
 import { UserContext } from './UserContext';
 
-const appHeight = () => {
-  const doc = document.documentElement
-  doc.style.setProperty(' — app-height', `${window.innerHeight}px`)
- }
- window.addEventListener('resize', appHeight)
- appHeight()
-
-
 const App = () => {
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplashScreen(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    var query = window.location.search.substring(1);
-    var vars = query.split("&");
-    for (var i=0;i<vars.length;i++) {
-        var pair = vars[i].split("=");
-        if(pair[0] === 'gameid'){
-            setShowLandingPage(false)
-            setGamePin(pair[1])
-        }
+    const params = new URLSearchParams(window.location.search);
+    const gameid = params.get('gameid');
+    if (gameid) {
+      setGamePin(gameid);
+      navigate('/game');
     }
-}, [])
+  }, [navigate]);
 
-  const [username, setUsername] = useState<String | undefined>();
-  const [userId, setUserId] = useState<String | undefined>();
-  const [loggedInUsername, setLoggedInUsername] = useState<String | undefined>();
-  const [gamePin, setGamePin] = useState<String | undefined>();
-  const [gameId, setGameId] = useState<String | undefined>();
-  const [gameInstanceId, setGameInstanceId] = useState<String | undefined>();
-  const [showSplashScreen, setShowSplashScreen] = useState(true);
-  const [showLandingPage, setShowLandingPage] = useState(true);
-  const [TVMode, setTVMode] = useState(false);
+  const [username, setUsername] = useState<string | undefined>();
+  const [userId, setUserId] = useState<string | undefined>();
+  const [loggedInUsername, setLoggedInUsername] = useState<string | undefined>();
+  const [gamePin, setGamePin] = useState<string | undefined>();
+  const [gameId, setGameId] = useState<string | undefined>();
+  const [gameInstanceId, setGameInstanceId] = useState<string | undefined>();
 
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Check if username is taken
-  const setUser = (username: String, gamePin: String) => {
+  const setUser = (name: string, pin: string) => {
     setLoading(true);
-    if (username && username.length > 1) {
-      axios.get(`https://www.dogetek.no/api/api.php/game_instance_players/${gamePin}/?checkUser=true`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
-      .then(res => {
-        console.log(res);
-
-        if (res.data) {
-          if (res.data.find((player: GameInstancePlayer) => player.username == username)){
-            setError(true);
-            setLoading(false);
-          } else {
-            setError(false);
-            insertPlayer(username);
-          }     
-        }
-      })
-      .catch(err => {
-        console.log(err);
-        setLoading(false);
-      });
-    }
-    else {
+    if (name && name.length > 1) {
+      axios
+        .get(
+          `https://www.dogetek.no/api/api.php/game_instance_players/${pin}/?checkUser=true`,
+          { mode: 'no-cors' } as AxiosRequestConfig<any>
+        )
+        .then(res => {
+          if (res.data) {
+            if (res.data.find((player: GameInstancePlayer) => player.username === name)) {
+              setError(true);
+              setLoading(false);
+            } else {
+              setError(false);
+              insertPlayer(name);
+            }
+          }
+        })
+        .catch(err => {
+          console.log(err);
+          setLoading(false);
+        });
+    } else {
       setError(true);
       setLoading(false);
     }
-  }
+  };
 
-  // Insert player in DB and set username
-  const insertPlayer = (username: String) => {
-    axios.post(`https://www.dogetek.no/api/api.php/game_instance_players/`, {
-      game_id: gameId,
-      game_instance_id: gameInstanceId,
-      username: username,
-      score: "0",
-    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+  const insertPlayer = (name: string) => {
+    axios
+      .post(
+        `https://www.dogetek.no/api/api.php/game_instance_players/`,
+        {
+          game_id: gameId,
+          game_instance_id: gameInstanceId,
+          username: name,
+          score: '0'
+        },
+        { headers: { 'content-type': 'application/x-www-form-urlencoded' } }
+      )
       .then(res => {
-        console.log(res);
         setUserId(res.data);
-        setUsername(username);
+        setUsername(name);
         setLoading(false);
-        // Get new posts
+        navigate('/play');
       })
-      .catch(err => {
-        console.log("Something fishy is going on");
+      .catch(() => {
+        console.log('Something fishy is going on');
         setLoading(false);
       });
-  }
+  };
 
-  // Set the game pin if it exists
-  const setPin = (pin: String | undefined) => {
-    if (pin && pin.length > 0 && pin !== "0") {
+  const setPin = (pin: string | undefined) => {
+    if (pin && pin.length > 0 && pin !== '0') {
       setLoading(true);
-      axios.get(`https://www.dogetek.no/api/api.php/game_instance/${pin}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
-      .then(res => {
-        console.log('status: ', res.data["status"])
-        if (res.data && (res.data["status"] === "created")) {
-          setGameId(res.data["game_id"]);
-          setGameInstanceId(res.data["id"]);
-          setGamePin(pin);
-          setError(false);
+      axios
+        .get(
+          `https://www.dogetek.no/api/api.php/game_instance/${pin}/`,
+          { mode: 'no-cors' } as AxiosRequestConfig<any>
+        )
+        .then(res => {
+          if (res.data && res.data['status'] === 'created') {
+            setGameId(res.data['game_id']);
+            setGameInstanceId(res.data['id']);
+            setGamePin(pin);
+            setError(false);
+            setLoading(false);
+            navigate('/username');
+          } else {
+            setError(true);
+            setLoading(false);
+          }
+        })
+        .catch(err => {
+          console.log(err);
           setLoading(false);
-        } else {
-          setError(true);
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        console.log(err);
-        setLoading(false);
-      });
-    }
-    else {
+        });
+    } else {
       setError(true);
     }
-  }
+  };
 
-
-  // Just the splash screen
-  if (showSplashScreen && false) {
-    return <Splash />;
-  }
-
-  if (showLandingPage) {
-    return <LandingPage toGameMode={() => {setTVMode(true); setShowLandingPage(false)}} toEditMode={() => {setShowLandingPage(false)}} />;
-  }
-
-  // TV Mode
-  if (TVMode && !loggedInUsername) {
-    return <Signin toGameMode={() => setTVMode(false)} setLoggedInUser={setLoggedInUsername}/>;
-  }
-  if (TVMode && loggedInUsername) {
-    return <TVView username={loggedInUsername} logout={() => setLoggedInUsername(undefined)} />;
-  }
-
-  // Phone Mode
-  if (!gameId || !gameInstanceId || !gamePin) {
-    return <GamePin error={error} loading={loading} setPin={setPin} toCreatorMode={() => setTVMode(true)}/>;
-  }
-  if (!username || !userId) {
-    return <Username error={error} loading={loading} setName={(user) => setUser(user || "", gameId)} />;
-  }
   return (
-    <UserContext.Provider value={{ username: username as string | undefined, userId: userId as string | undefined, setUsername: setUsername as (name?: string) => void, setUserId: setUserId as (id?: string) => void }}>
-      <PhoneGameView gameId={gameId} gamePin={gamePin} gameInstanceId={gameInstanceId} logout={() => {
-        setUsername(undefined);
-        setGamePin(undefined);
-      }} />
-    </UserContext.Provider>
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <LandingPage
+            toGameMode={() => navigate('/tv/login')}
+            toEditMode={() => navigate('/game')}
+          />
+        }
+      />
+      <Route
+        path="/tv/login"
+        element={
+          <Signin
+            toGameMode={() => navigate('/')}
+            setLoggedInUser={name => {
+              setLoggedInUsername(name as string);
+              navigate('/tv');
+            }}
+          />
+        }
+      />
+      <Route
+        path="/tv"
+        element={
+          loggedInUsername ? (
+            <TVView
+              username={loggedInUsername}
+              logout={() => {
+                setLoggedInUsername(undefined);
+                navigate('/');
+              }}
+            />
+          ) : (
+            <Navigate to="/tv/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/game"
+        element={
+          <GamePin
+            error={error}
+            loading={loading}
+            setPin={setPin}
+            toCreatorMode={() => navigate('/tv/login')}
+          />
+        }
+      />
+      <Route
+        path="/username"
+        element={
+          gameId && gameInstanceId && gamePin ? (
+            <Username
+              error={error}
+              loading={loading}
+              setName={user => setUser(user || '', gamePin)}
+            />
+          ) : (
+            <Navigate to="/game" replace />
+          )
+        }
+      />
+      <Route
+        path="/play"
+        element={
+          username && userId && gameId && gameInstanceId && gamePin ? (
+            <UserContext.Provider
+              value={{
+                username,
+                userId,
+                setUsername: setUsername as (name?: string) => void,
+                setUserId: setUserId as (id?: string) => void
+              }}
+            >
+              <PhoneGameView
+                gameId={gameId}
+                gamePin={gamePin}
+                gameInstanceId={gameInstanceId}
+                logout={() => {
+                  setUsername(undefined);
+                  setUserId(undefined);
+                  setGamePin(undefined);
+                  navigate('/');
+                }}
+              />
+            </UserContext.Provider>
+          ) : (
+            <Navigate to="/game" replace />
+          )
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
-}
+};
 
 export default App;
 
-
 export interface GameInstancePlayer {
-  id: String;
-  game_id: String;
-  game_instance_id: String;
-  username: String;
-  score: String;
-  colour: String;
-  lottery: String;
-  spending: String;
+  id: string;
+  game_id: string;
+  game_instance_id: string;
+  username: string;
+  score: string;
+  colour: string;
+  lottery: string;
+  spending: string;
 }
+
