@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import axios from "axios"
 import { useContext, useEffect, useRef, useState } from "react"
 import styled, { keyframes } from "styled-components"
 import { Question } from "../tv/game"
@@ -19,6 +18,7 @@ import five from '../images/upgrades/5.png';
 import six from '../images/upgrades/6.png';
 import seven from '../images/upgrades/7.png';
 import eight from '../images/upgrades/8.png';
+import { put, post } from "../api";
 
 interface AltsProps {
   points: number
@@ -58,7 +58,7 @@ const Alts = ({ points, setPoints, answered, gameId, gameInstanceId, question, f
 
   // POST points to server 
   const setUserPoints = (points: number) => {
-    axios.put(`https://www.dogetek.no/api/api.php/game_instance_players/${userId}/`, {
+    put(`/game_instance_players/${userId}/`, {
       score: points.toString(),
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
     .then(res => {
@@ -70,7 +70,7 @@ const Alts = ({ points, setPoints, answered, gameId, gameInstanceId, question, f
   }
 
   const pushAnswer = (points: number, answer: String, correct: boolean) => {
-    axios.post(`https://www.dogetek.no/api/api.php/game_instance_answers/${userId}/`, {
+    post(`/game_instance_answers/${userId}/`, {
       game_instance_id: gameInstanceId,
       game_instance_player_id: userId,
       game_question_id: question.id,

@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { useEffect, useState } from "react";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { selectableColors } from "../phone/waiting";
-import axios, { AxiosRequestConfig } from "axios";
+import { get } from "../api";
 
 interface AlternativesProps {
   question: Question;
@@ -35,7 +35,7 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
 
   // Get all questions for the current game Id
   const getAnswersForGameInstanceId = () => {
-    axios.get(`https://www.dogetek.no/api/api.php/game_instance_answers/${gameInstanceId}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+    get(`/game_instance_answers/${gameInstanceId}/`)
       .then(res => {
         if (res.data) {
           setAnswers(res.data.filter((a: Answer) => a.game_question_id == question.id));

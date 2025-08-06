@@ -1,7 +1,7 @@
-import axios, { AxiosRequestConfig } from "axios";
 import moment from "moment";
 import { useCallback, useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
+import { get, put } from "../api";
 import CurrentScores from "./currentScores";
 import Alternatives from "./gameAlts";
 import GamePlayers from "./gamePlayers";
@@ -49,7 +49,7 @@ const TVGamePlayView = ({gameId, gameInstanceId, gamePin, stopGame}: TvViewProps
     
   // Get all questions for the current game Id
   const getQuestionsForGameId = (id: String) => {
-    axios.get(`https://www.dogetek.no/api/api.php/game_question/${id}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+    get(`/game_question/${id}/`)
       .then(res => {
         if (res.data) {
           setQuestions(res.data);
@@ -92,7 +92,7 @@ const TVGamePlayView = ({gameId, gameInstanceId, gamePin, stopGame}: TvViewProps
   }
 
   const setGameStatus = useCallback((status: String) => {
-    axios.put(`https://www.dogetek.no/api/api.php/game_instance/${gameInstanceId}/`, {
+    put(`/game_instance/${gameInstanceId}/`, {
       status: status,
       currentquestion: "",
       starttime: "",
@@ -106,7 +106,7 @@ const TVGamePlayView = ({gameId, gameInstanceId, gamePin, stopGame}: TvViewProps
   },[gameId])
 
   const setGameQuestion = (q: number, time: string) => {
-    axios.put(`https://www.dogetek.no/api/api.php/game_instance/${gameInstanceId}/`, {
+    put(`/game_instance/${gameInstanceId}/`, {
       currentquestion: q,
       starttime: time,
       status: "started"

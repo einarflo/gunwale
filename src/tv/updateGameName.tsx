@@ -1,6 +1,6 @@
-import axios, { AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { get, put } from "../api";
 
 interface UpdateGameProps {
     gameId: String | undefined
@@ -14,7 +14,7 @@ const UpdateGame = ({gameId = "", edit}: UpdateGameProps) => {
 
      // Insert player in DB and set username
   const updateGame = (name: String, description: String) => {
-    axios.put(`https://www.dogetek.no/api/api.php/game/${gameId}/`, {
+    put(`/game/${gameId}/`, {
       name: name,
       description: description
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
@@ -29,7 +29,7 @@ const UpdateGame = ({gameId = "", edit}: UpdateGameProps) => {
   }
 
   const getGame = () => {
-    axios.get(`https://www.dogetek.no/api/api.php/game/${gameId}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+    get(`/game/${gameId}/`)
       .then(res => {
         if (res.data) {
           setDescription(res.data.description);

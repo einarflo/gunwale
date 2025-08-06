@@ -1,6 +1,6 @@
-import axios, { AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { get, put } from "../api";
 
 interface EditQuestionProps {
   questionId: String;
@@ -31,17 +31,16 @@ const EditQuestion = ({ gameId, questionId, cancel, edit }: EditQuestionProps) =
 
   const updateQuestion = (
   ) => {
-    axios
-      .put(`https://www.dogetek.no/api/api.php/game_question/${questionId}/`, {
-        text: text,
-        score: "1000",
-        description: description,
-        time: "10",
-        correct: correctAlternative,
-        alt1: alternatives[0],
-        alt2: alternatives[1],
-        alt3: alternatives[2],
-        alt4: alternatives[3]
+    put(`/game_question/${questionId}/`, {
+      text: text,
+      score: "1000",
+      description: description,
+      time: "10",
+      correct: correctAlternative,
+      alt1: alternatives[0],
+      alt2: alternatives[1],
+      alt3: alternatives[2],
+      alt4: alternatives[3]
       })
       .then((res) => {
         console.log(res);
@@ -54,7 +53,7 @@ const EditQuestion = ({ gameId, questionId, cancel, edit }: EditQuestionProps) =
   };
 
   const deleteQuestion = () => {
-    axios.put(`https://www.dogetek.no/api/api.php/game_question/${questionId}/`, {
+    put(`/game_question/${questionId}/`, {
       deleted: "1"
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
       .then(res => {
@@ -67,7 +66,7 @@ const EditQuestion = ({ gameId, questionId, cancel, edit }: EditQuestionProps) =
   }
 
    const getQuestion = () => {
-    axios.get(`https://www.dogetek.no/api/api.php/game_question_by_id/${questionId}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+    get(`/game_question_by_id/${questionId}/`)
       .then(res => {
         if (res.data) {
           setAlternatives([res.data.alt1, res.data.alt2, res.data.alt3, res.data.alt4]);

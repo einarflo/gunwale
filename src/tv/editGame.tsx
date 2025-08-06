@@ -1,6 +1,6 @@
-import axios, { AxiosRequestConfig } from "axios";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { get, post, put } from "../api";
 import { Question } from "./game";
 
 interface EditGameProps {
@@ -31,8 +31,7 @@ const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
 
   const newQuestion = (
   ) => {
-    axios
-      .post(`https://www.dogetek.no/api/api.php/game_question/`, {
+    post(`/game_question/`, {
         text: "",
         game_id: gameId,
         score: "1000",
@@ -58,7 +57,7 @@ const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
 
    // Get all questions for the current game Id
    const getQuestionsForGameId = (id: String) => {
-    axios.get(`https://www.dogetek.no/api/api.php/game_question/${id}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+    get(`/game_question/${id}/`)
       .then(res => {
         if (res.data) {
           setQuestions(res.data);
@@ -70,7 +69,7 @@ const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
 
      // Get game info
      const getGame = (id: String) => {
-      axios.get(`https://www.dogetek.no/api/api.php/game/${id}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      get(`/game/${id}/`)
         .then(res => {
           if (res.data) {
             setGame(res.data);
@@ -81,7 +80,7 @@ const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
     }
 
     const deleteGame = () => {
-      axios.put(`https://www.dogetek.no/api/api.php/game/${gameId}/`, {
+      put(`/game/${gameId}/`, {
         deleted: "1"
       }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
         .then(res => {
@@ -95,7 +94,7 @@ const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
 
     // Get game info
     const resetGame = (id: String) => {
-      axios.put(`https://www.dogetek.no/api/api.php/clear_game_players/${id}/`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      put(`/clear_game_players/${id}/`, {})
         .then(res => {
           if (res.data) {
             alert("Cleared");

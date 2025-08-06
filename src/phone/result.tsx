@@ -1,4 +1,3 @@
-import axios, { AxiosRequestConfig } from "axios";
 import moment from "moment";
 import { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
@@ -8,6 +7,7 @@ import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { selectableColors } from "./waiting";
 import { UserContext } from "../UserContext";
+import { get } from "../api";
 import one from '../images/upgrades/1.png';
 import two from '../images/upgrades/2.png';
 import three from '../images/upgrades/3.png';
@@ -62,7 +62,7 @@ const Result = ({ currentQ, points, nextQuestionStarted, gamepin, gameFinished, 
 
   useEffect(() => {
     const interval = setInterval(() => {
-      axios.get(`https://www.dogetek.no/api/api.php/game_instance/${gamepin}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      get(`/game_instance/${gamepin}/?hash=${Math.random() * 21991919393914999419}`)
       .then(res => {
         if (res.data["status"] === 'started') {
           if (res.data["currentquestion"] === currentQ.toString()) {

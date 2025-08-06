@@ -1,10 +1,10 @@
-import axios, { AxiosRequestConfig } from "axios";
 import { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { HeaderMobile, MobileHeader, MobileNav } from "../landing";
 import { UserContext } from "../UserContext";
+import { get, put } from "../api";
 
 interface WaitingProps {
   points: number
@@ -26,7 +26,7 @@ const Waiting = ({ points, gameStarted, gamepin, colorForUser, setColorForUser }
 
   useEffect(() => {
     const interval = setInterval(() => {
-      axios.get(`https://www.dogetek.no/api/api.php/game_instance/${gamepin}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      get(`/game_instance/${gamepin}/?hash=${Math.random() * 21991919393914999419}`)
       .then(res => {
         if (res.data["status"] !== "created") {
           gameStarted();
@@ -42,7 +42,7 @@ const Waiting = ({ points, gameStarted, gamepin, colorForUser, setColorForUser }
 
   const setColor = (number: number) => {
     setColorForUser(number);
-    axios.put(`https://www.dogetek.no/api/api.php/game_instance_players/${userId}/`, {
+    put(`/game_instance_players/${userId}/`, {
       colour: number.toString(),
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
     .then(res => {

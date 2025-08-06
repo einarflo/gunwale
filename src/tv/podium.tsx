@@ -2,10 +2,10 @@ import { Logo, Player, Start, Tvrapper } from "./game";
 import logo from '../images/tavl-white.png';
 import styled from "styled-components";
 import { useEffect, useState } from "react";
-import axios, { AxiosRequestConfig } from "axios";
 import { Spinner } from "./selectGame";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { selectableColors } from "../phone/waiting";
+import { get } from "../api";
 
 
 interface PodiumProps {
@@ -20,7 +20,7 @@ const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
 
   useEffect(() => {
     setLoading(true);
-      axios.get(`https://www.dogetek.no/api/api.php/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`, { mode: 'no-cors' } as AxiosRequestConfig<any>)
+      get(`/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`)
         .then(res => {
           if (res.data) {
             setPlayers(res.data);
