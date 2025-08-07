@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SocketProvider } from './context/SocketContext';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { get, post } from './api';
 import Status from './components/Status';
@@ -115,7 +116,7 @@ const App = () => {
   };
 
   return (
-    <>
+    <SocketProvider>
     <Status loading={loading} error={error} />
     <Routes>
       <Route
@@ -211,7 +212,7 @@ const App = () => {
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-    </>
+    </SocketProvider>
   );
 };
 
