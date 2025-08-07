@@ -9,13 +9,17 @@ npm install
 cp .env.example .env
 ```
 
-Rediger `.env` etter behov. Typiske variabler:
+Rediger `.env` etter behov.
 
-```
-PORT=3000
-CLIENT_URL=http://localhost:5173
-API_URL=http://localhost:8000
-```
+## Miljøvariabler
+
+Serveren bruker følgende variabler:
+
+| Variabel | Beskrivelse | Standard |
+|---------|-------------|----------|
+| `PORT` | Porten serveren lytter på. | `3000` |
+| `CLIENT_URL` | URL til klienten som tillates via CORS. | `*` |
+| `API_URL` | Base-URL til REST-APIet for periodiske statusoppdateringer. | – |
 
 ## Kjøring
 
