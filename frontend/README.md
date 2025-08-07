@@ -2,6 +2,15 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## WebSocket client
+
+1. Start the WebSocket server from `../websocket-api` using `npm start`.
+2. Create a `.env` file with the server URL:
+   ```
+   REACT_APP_WS_URL=http://localhost:3000
+   ```
+3. Run `npm start` to launch the React app.
+
 ## Available Scripts
 
 In the project directory, you can run:

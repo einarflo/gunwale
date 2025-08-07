@@ -27,6 +27,10 @@ Serveren starter på angitt `PORT` og eksponerer Socket.IO-endepunktet.
 
 ### Events
 
-- `join_game` – klienten melder seg inn i et spill (room).
-- `player_update` – videresendes til alle i rommet.
-- `game_status` – sendes periodisk fra serveren.
+| Event | Payload | Respons |
+|-------|---------|---------|
+| `join_game` | `gameId` (string) | Ingen direkte respons, socketen joiner rommet for spillet. |
+| `player_update` | Objekt med minst `gameId` og øvrige spillerdata | Broadcastes som `player_update` til alle klienter i samme rom. |
+| `game_status` | Objekt, valgfritt `gameId` | Broadcastes som `game_status` til rommet eller alle klienter. Serveren sender også periodisk status fra REST-APIet. |
+
+REST-APIet brukes fortsatt for operasjoner som ikke er tidskritiske.
