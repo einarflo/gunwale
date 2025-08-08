@@ -5,12 +5,13 @@ import { get, post } from './api';
 import Status from './components/Status';
 
 import LandingPage from './landing';
-import Signin from './signin/signin';
 import GamePin from './signin/gamepin';
 import Username from './signin/username';
 import PhoneGameView from './phone/game';
 import TVView from './tv/selectGame';
 import { UserContext } from './UserContext';
+import Login from './auth/Login';
+import { useKeycloak } from './auth/KeycloakProvider';
 
 const appHeight = () => {
   const doc = document.documentElement
@@ -33,13 +34,14 @@ const App = () => {
 
   const [username, setUsername] = useState<string | undefined>();
   const [userId, setUserId] = useState<string | undefined>();
-  const [loggedInUsername, setLoggedInUsername] = useState<string | undefined>();
   const [gamePin, setGamePin] = useState<string | undefined>();
   const [gameId, setGameId] = useState<string | undefined>();
   const [gameInstanceId, setGameInstanceId] = useState<string | undefined>();
 
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const { keycloak, login, logout } = useKeycloak();
 
   const setUser = (name: string, pin: string) => {
     setLoading(true);
@@ -128,26 +130,15 @@ const App = () => {
           />
         }
       />
-      <Route
-        path="/tv/login"
-        element={
-          <Signin
-            toGameMode={() => navigate('/')}
-            setLoggedInUser={name => {
-              setLoggedInUsername(name as string);
-              navigate('/tv');
-            }}
-          />
-        }
-      />
+      <Route path="/tv/login" element={<Login />} />
       <Route
         path="/tv"
         element={
-          loggedInUsername ? (
+          keycloak?.authenticated && keycloak.hasRealmRole('premium') ? (
             <TVView
-              username={loggedInUsername}
+              username={keycloak.tokenParsed?.preferred_username || ''}
               logout={() => {
-                setLoggedInUsername(undefined);
+                logout();
                 navigate('/');
               }}
             />
