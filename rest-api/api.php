@@ -1,5 +1,13 @@
 <?php
  header("Access-Control-Allow-Origin: *");
+ header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
+ header("Access-Control-Allow-Headers: Content-Type");
+
+ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+     http_response_code(204);
+     exit;
+ }
+
 // get the HTTP method, path and body of the request
 $method = $_SERVER['REQUEST_METHOD'];
 $request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
