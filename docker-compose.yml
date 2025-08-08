@@ -50,9 +50,10 @@ services:
       - app-network
 
   frontend:
-    build: ./frontend
-    environment:
-      - REACT_APP_WS_URL=wss://ovh.tavl.no/ws
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_WS_URL: wss://ovh.tavl.no
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`ovh.tavl.no`)"
