@@ -1,7 +1,18 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import keycloak from '../auth/keycloak';
 
 const api = axios.create({
   baseURL: 'https://www.dogetek.no/api/api.php'
+});
+
+api.interceptors.request.use(config => {
+  if (keycloak.authenticated && keycloak.token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${keycloak.token}`
+    };
+  }
+  return config;
 });
 
 export const get = <T = any>(url: string, config?: AxiosRequestConfig) => api.get<T>(url, config);

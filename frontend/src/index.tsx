@@ -5,6 +5,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
+import { KeycloakProvider } from './auth/KeycloakProvider';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -20,9 +21,11 @@ appHeight()
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <KeycloakProvider>
+        <App />
+      </KeycloakProvider>
     </BrowserRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
 // If you want to start measuring performance in your app, pass a function
