@@ -78,8 +78,7 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
-    command:
-      - start --optimized
+    command: ["start"]
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
@@ -87,11 +86,16 @@ services:
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
       KC_HOSTNAME: auth.tavl.no
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: xforwarded
     expose:
       - "8080"
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=app-network"
       - "traefik.http.routers.keycloak.rule=Host(`auth.tavl.no`)"
       - "traefik.http.routers.keycloak.entrypoints=websecure"
       - "traefik.http.routers.keycloak.tls.certresolver=myresolver"
