@@ -90,6 +90,12 @@ services:
       KC_HOSTNAME: auth.tavl.no
     expose:
       - "8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`auth.tavl.no`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls.certresolver=myresolver"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
     depends_on:
       - keycloak-db
     networks:
