@@ -1,21 +1,64 @@
 version: "3.9"
 
 services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.myresolver.acme.httpchallenge=true
+      - --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.myresolver.acme.email=din.epost@domene.no
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/acme.json:/letsencrypt/acme.json
+    networks:
+      - app-network
+
+  porthuset:
+    image: porthuset-lamp-backup:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.porthuset.rule=Host(`ovh.porthuset.no`)"
+      - "traefik.http.routers.porthuset.entrypoints=websecure"
+      - "traefik.http.routers.porthuset.tls.certresolver=myresolver"
+    volumes:
+      - /home/debian/porthuset:/var/www/html
+    networks:
+      - app-network
+
   websocket:
     build: ./websocket-api
-    ports:
-      - "3000:3000"
-    env_file:
-      - ./websocket-api/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.websocket.rule=Host(`ovh.tavl.no`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.websocket.entrypoints=websecure"
+      - "traefik.http.routers.websocket.tls.certresolver=myresolver"
+      - "traefik.http.services.websocket.loadbalancer.server.port=3000"
+      - "traefik.http.routers.websocket.service=websocket"
+      - "traefik.http.routers.websocket.middlewares=strip-ws"
+      - "traefik.http.middlewares.strip-ws.stripprefix.prefixes=/ws"
     networks:
       - app-network
 
   frontend:
     build: ./frontend
-    ports:
-      - "5173:80"
     environment:
-      - REACT_APP_WS_URL=http://websocket:3000
+      - REACT_APP_WS_URL=wss://ovh.tavl.no/ws
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`ovh.tavl.no`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
     depends_on:
       - websocket
     networks:
