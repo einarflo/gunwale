@@ -67,7 +67,8 @@ export const KeycloakProvider = ({ children }: { children: ReactNode }) => {
   initialized: didInit.current,
   login: () => {
     if (didInit.current && typeof keycloak.login === 'function') {
-      keycloak.login();
+      console.log("Logging in with Keycloak redirect", `${window.location.origin}/tv`);
+      keycloak.login({ redirectUri: `${window.location.origin}/tv` });
     } else {
       console.warn('Keycloak is not initialized yet.');
     }
