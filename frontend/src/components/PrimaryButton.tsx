@@ -50,12 +50,15 @@ const Button = styled.div.attrs((props: {loading: string}) => props)`
     line-height: 1.5;
     color: white;
     background-clip: padding-box;
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s, background-position .3s ease, transform .3s ease;
     max-width: 500px;
     margin: auto;
-      
-    background: #9C8AFA;
-       
+    background: linear-gradient(135deg, #6A71FA 0%, #9C8AFA 100%);
+    background-size: 200% 200%;
     cursor: ${props => props.loading === "true"  ? 'default' : 'pointer'};
     border-radius: 15px;
+    &:hover {
+        background-position: 100% 0;
+        transform: ${props => props.loading === "true" ? 'none' : 'translateY(-2px)'};
+    }
 `;
