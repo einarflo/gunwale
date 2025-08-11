@@ -15,11 +15,11 @@ import eight from './images/upgrades/8.png';
 import WhiteButton from './components/WhiteButton';
 
 interface SiginProps {
-    toGameMode: () => void
-    toEditMode: () => void
+    signIn: () => void
+    playMode: () => void
 }
 
-const LandingPage = ({ toGameMode, toEditMode }: SiginProps) => {
+const LandingPage = ({ signIn, playMode }: SiginProps) => {
   const [stopCarusel, setStopCarusel] = useState(false);
   const [selectedItem, setSelectedItem] = useState(0);
 
@@ -128,9 +128,9 @@ const LandingPage = ({ toGameMode, toEditMode }: SiginProps) => {
           <ContentRight>
             <Logo src={logo} />
             <div style={{ paddingTop: '60px'}} />
-            <PrimaryButton click={() => toEditMode()} text='Join a game'/>
+            <PrimaryButton click={() => playMode()} text='Join a game'/>
             <div style={{ paddingTop: '20px'}} />
-            <SecondaryButton click={() => toGameMode()} text='Sign in'/>
+            <SecondaryButton click={() => signIn()} text='Sign in'/>
             <div style={{ paddingTop: '80px'}} />
           </ContentRight>
         </RightSide>
@@ -138,13 +138,13 @@ const LandingPage = ({ toGameMode, toEditMode }: SiginProps) => {
           <MobileNav>
             <TopLeftLogo />
             <JoinGame>
-              <PrimaryButton text='Join game' click={() => toEditMode()}/>
+              <PrimaryButton text='Join game' click={() => playMode()}/>
             </JoinGame>
           </MobileNav>
           <BlueWrapper>
               <MobileHeader>Theres a new quiz in town. <br/>Free.</MobileHeader>
               <SignInContainer>
-                <WhiteButton text='Sign in or sign up' click={() => toGameMode()} />
+                <WhiteButton text='Sign in or sign up' click={() => signIn()} />
               </SignInContainer>
             </BlueWrapper>
             <HeaderMobile>Upgrades</HeaderMobile>

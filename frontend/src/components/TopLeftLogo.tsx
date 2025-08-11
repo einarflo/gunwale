@@ -1,17 +1,23 @@
 import styled from 'styled-components';
 import logo from '../images/tavl-logo.png';
-//import { useHistory } from "react-router-dom";
+import { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { UserContext } from '../UserContext';
 
 const TopLeftLogo = () => {
-    //const history = useHistory();
+    const { username } = useContext(UserContext);
+    const navigate = useNavigate();
 
     const goHome = () => {
-        //history.push("/home")
-        window.location.href = "/tavl/"
-    }
+        if (username) {
+            navigate('/tv');
+        } else {
+            navigate('/');
+        }
+    };
 
     return (
-        <Logo src={logo} onClick={() => goHome()}/>
+        <Logo src={logo} onClick={goHome}/>
     );
 };
 
