@@ -10,7 +10,6 @@ import Username from './signin/username';
 import PhoneGameView from './phone/game';
 import TVView from './tv/selectGame';
 import { UserContext } from './UserContext';
-import Login from './auth/Login';
 import { useKeycloak } from './auth/KeycloakProvider';
 
 const appHeight = () => {
@@ -125,16 +124,15 @@ const App = () => {
         path="/"
         element={
           <LandingPage
-            toGameMode={() => navigate('/tv/login')}
-            toEditMode={() => navigate('/game')}
+            signIn={() => keycloak?.authenticated ? navigate('/tv') : login()}
+            playMode={() => navigate('/game')}
           />
         }
       />
-      <Route path="/tv/login" element={<Login />} />
       <Route
         path="/tv"
         element={
-          keycloak?.authenticated && keycloak.hasRealmRole('premium') ? (
+          keycloak?.authenticated ? (
             <TVView
               username={keycloak.tokenParsed?.preferred_username || ''}
               logout={() => {
@@ -143,7 +141,7 @@ const App = () => {
               }}
             />
           ) : (
-            <Navigate to="/tv/login" replace />
+            <Navigate to="/" replace />
           )
         }
       />

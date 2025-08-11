@@ -8,7 +8,7 @@ interface Props {
 
 const PrimaryButton = ({ text, click, loading = false }: Props) => {
     return (
-        <Button loading={loading} onClick={!loading ? click : () => {}}>{!loading ? text : <Spinner/>}</Button>
+        <Button loading={loading ? "true" : "false"} onClick={!loading ? click : () => {}}>{!loading ? text : <Spinner/>}</Button>
     );
 };
 
@@ -40,7 +40,7 @@ animation: spin 1s ease-in-out infinite;
 -webkit-animation: ${rotate} 1s ease-in-out infinite;
 `;
 
-const Button = styled.div.attrs((props: {loading: boolean}) => props)`
+const Button = styled.div.attrs((props: {loading: string}) => props)`
     font-family : 'Coll';
     text-align: center;
     display: block;
@@ -56,6 +56,6 @@ const Button = styled.div.attrs((props: {loading: boolean}) => props)`
       
     background: #9C8AFA;
        
-    cursor: ${props => props.loading  ? 'default' : 'pointer'};
+    cursor: ${props => props.loading === "true"  ? 'default' : 'pointer'};
     border-radius: 15px;
 `;

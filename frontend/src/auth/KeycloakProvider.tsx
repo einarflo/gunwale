@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, ReactNode } from 'react';
 import keycloak from './keycloak';
 import socket, { connectSocket } from '../api/socket';
 
@@ -17,22 +17,34 @@ const KeycloakContext = createContext<KeycloakContextProps>({
 });
 
 export const KeycloakProvider = ({ children }: { children: ReactNode }) => {
-  const [initialized, setInitialized] = useState(false);
+  const didInit = useRef(false);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'test') {
-      setInitialized(true);
+      didInit.current = true;
       return;
     }
 
-    keycloak
+    if (keycloak.didInitalize) {
+      didInit.current = true;
+      return;
+    }
+
+    if (didInit.current === false) {
+      didInit.current = true;
+      console.log("Initializing Keycloak");
+      keycloak
       .init({ onLoad: 'check-sso', pkceMethod: 'S256' })
       .then((authenticated: boolean) => {
         if (authenticated && keycloak.token) {
           connectSocket(keycloak.token);
         }
-        setInitialized(true);
-      });
+        didInit.current = true;
+      }).catch((error: any) => {
+        console.error("Keycloak initialization failed", error);
+        didInit.current = false;
+      })
+    };
 
     const refreshInterval = setInterval(() => {
       if (keycloak.authenticated) {
@@ -51,11 +63,23 @@ export const KeycloakProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const value: KeycloakContextProps = {
-    keycloak,
-    initialized,
-    login: () => keycloak.login(),
-    logout: () => keycloak.logout()
-  };
+  keycloak,
+  initialized: didInit.current,
+  login: () => {
+    if (didInit.current && typeof keycloak.login === 'function') {
+      keycloak.login();
+    } else {
+      console.warn('Keycloak is not initialized yet.');
+    }
+  },
+  logout: () => {
+    if (didInit.current && typeof keycloak.logout === 'function') {
+      keycloak.logout();
+    } else {
+      console.warn('Keycloak is not initialized yet.');
+    }
+  }
+};
 
   return (
     <KeycloakContext.Provider value={value}>

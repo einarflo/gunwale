@@ -2,8 +2,8 @@ import Keycloak from 'keycloak-js';
 
 const keycloak = new Keycloak({
   url: 'https://auth.tavl.no',
-  realm: 'tavl',
-  clientId: 'frontend'
+  realm: 'Tavl',
+  clientId: 'tavl-frontend'
 });
 
 export default keycloak;
