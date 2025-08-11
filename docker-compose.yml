@@ -105,6 +105,19 @@ services:
     networks:
       - app-network
 
+  mothership:
+    build: ./mothership
+    environment:
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_URL: http://keycloak:8080
+      CLIENT_ID: ${CLIENT_ID}
+    depends_on:
+      - keycloak
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
