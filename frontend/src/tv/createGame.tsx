@@ -36,7 +36,7 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
 
     return (
         <>
-        { !isPremium && <Ads /> }
+        
         <Heading>Create a new quiz</Heading>
             <NameInput placeholder="Name" onChange={(e) => setName(e.target.value)} />
             <DescriptionInput placeholder="Description" onChange={(e) => setDescription(e.target.value)} />
@@ -45,6 +45,7 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
             <Cancel onClick={cancel}>Cancel</Cancel>
             { error && "Something went wrong, please try again!" }
           </Actions>
+          { !isPremium && <Ads /> }
           </>
     );
 };
@@ -96,6 +97,7 @@ const Actions = styled.div`
   display: flex;
   padding: 31px;
   padding-top: 5px;
+  padding-bottom: 31px;
 `;
 
 const Create = styled.div`
