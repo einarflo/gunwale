@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   traefik:
+    restart: unless-stopped
     image: traefik:v2.11
     command:
       - --api.insecure=true
@@ -24,6 +25,7 @@ services:
       - app-network
 
   porthuset:
+    restart: unless-stopped
     image: porthuset-lamp-backup:latest
     labels:
       - "traefik.enable=true"
@@ -36,6 +38,7 @@ services:
       - app-network
 
   websocket:
+    restart: unless-stopped
     build: ./websocket-api
     labels:
       - "traefik.enable=true"
@@ -50,6 +53,7 @@ services:
       - app-network
 
   frontend:
+    restart: unless-stopped
     build:
       context: ./frontend
       args:
@@ -66,6 +70,7 @@ services:
       - app-network
 
   keycloak-db:
+    estart: unless-stopped
     image: postgres:15
     environment:
       POSTGRES_DB: keycloak
@@ -77,6 +82,7 @@ services:
       - app-network
 
   keycloak:
+    restart: unless-stopped
     image: quay.io/keycloak/keycloak:latest
     command: ["start"]
     environment:
