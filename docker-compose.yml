@@ -111,6 +111,26 @@ services:
     networks:
       - app-network
 
+  mothership:
+    build: ./mothership
+    environment:
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_URL: https://auth:tavl.no
+      CLIENT_ID: ${CLIENT_ID}
+    depends_on:
+      - keycloak
+    ports:
+      - "1337:1337"
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=app-network"
+      - "traefik.http.routers.keycloak.rule=Host(`api.tavl.no`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls.certresolver=myresolver"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=1337"
+
 networks:
   app-network:
     driver: bridge
