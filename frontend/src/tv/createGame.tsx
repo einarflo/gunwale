@@ -1,6 +1,8 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { post } from "../api";
+import { useKeycloak } from "../auth/KeycloakProvider";
+import Ads from "../components/Ads";
 
 interface NewGameProps {
     userid: String,
@@ -12,6 +14,7 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [error, seterror] = useState(false);
+    const { isPremium } = useKeycloak();
 
      // Insert player in DB and set username
   const insertQuestion = (name: String, description: String) => {
@@ -33,6 +36,7 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
 
     return (
         <>
+        
         <Heading>Create a new quiz</Heading>
             <NameInput placeholder="Name" onChange={(e) => setName(e.target.value)} />
             <DescriptionInput placeholder="Description" onChange={(e) => setDescription(e.target.value)} />
@@ -41,6 +45,7 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
             <Cancel onClick={cancel}>Cancel</Cancel>
             { error && "Something went wrong, please try again!" }
           </Actions>
+          { !isPremium && <Ads /> }
           </>
     );
 };
@@ -92,6 +97,7 @@ const Actions = styled.div`
   display: flex;
   padding: 31px;
   padding-top: 5px;
+  padding-bottom: 31px;
 `;
 
 const Create = styled.div`
