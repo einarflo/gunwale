@@ -7,13 +7,15 @@ interface KeycloakContextProps {
   initialized: boolean;
   login: () => void;
   logout: () => void;
+  isPremium: boolean;
 }
 
 const KeycloakContext = createContext<KeycloakContextProps>({
   keycloak: undefined,
   initialized: false,
   login: () => {},
-  logout: () => {}
+  logout: () => {},
+  isPremium: false
 });
 
 export const KeycloakProvider = ({ children }: { children: ReactNode }) => {
@@ -62,25 +64,27 @@ export const KeycloakProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(refreshInterval);
   }, []);
 
+  const roles = (keycloak.tokenParsed as any)?.realm_access?.roles;
   const value: KeycloakContextProps = {
-  keycloak,
-  initialized: didInit.current,
-  login: () => {
-    if (didInit.current && typeof keycloak.login === 'function') {
-      console.log("Logging in with Keycloak redirect", `${window.location.origin}/tv`);
-      keycloak.login({ redirectUri: `${window.location.origin}/tv` });
-    } else {
-      console.warn('Keycloak is not initialized yet.');
-    }
-  },
-  logout: () => {
-    if (didInit.current && typeof keycloak.logout === 'function') {
-      keycloak.logout();
-    } else {
-      console.warn('Keycloak is not initialized yet.');
-    }
-  }
-};
+    keycloak,
+    initialized: didInit.current,
+    login: () => {
+      if (didInit.current && typeof keycloak.login === 'function') {
+        console.log("Logging in with Keycloak redirect", `${window.location.origin}/tv`);
+        keycloak.login({ redirectUri: `${window.location.origin}/tv` });
+      } else {
+        console.warn('Keycloak is not initialized yet.');
+      }
+    },
+    logout: () => {
+      if (didInit.current && typeof keycloak.logout === 'function') {
+        keycloak.logout();
+      } else {
+        console.warn('Keycloak is not initialized yet.');
+      }
+    },
+    isPremium: Array.isArray(roles) && roles.includes('premium')
+  };
 
   return (
     <KeycloakContext.Provider value={value}>
