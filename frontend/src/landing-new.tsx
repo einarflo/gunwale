@@ -259,7 +259,7 @@ function Hero({ signIn, playMode }: { signIn: () => void; playMode: () => void }
         {/* Large Logo Section */}
         <div className="mb-12 flex justify-center">
           <div className="relative">
-            <img src={logo} alt="Tavl" className="h-32 w-32 drop-shadow-2xl" />
+            <img src={logo} alt="Tavl" className="h-32 drop-shadow-2xl" />
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-200/50 to-purple-200/50 rounded-full blur-2xl -z-10"></div>
           </div>
         </div>
@@ -583,8 +583,8 @@ function Footer() {
     <footer className="border-t-2 border-gray-200 py-12 bg-white/80">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 text-sm text-gray-600 md:flex-row">
         <div className="flex items-center gap-3">
-          <img src={logo} alt="Tavl" className="h-6 w-6" />
-          <p>© {new Date().getFullYear()} Tavl. Alle rettigheter forbeholdt.</p>
+          <img src={logo} alt="Tavl" className="h-6" />
+          <p>© {new Date().getFullYear()} Betaworks. Alle rettigheter forbeholdt.</p>
         </div>
         <div className="flex items-center gap-6">
           <a href="#" className="hover:text-blue-600 transition-colors">Personvern</a>

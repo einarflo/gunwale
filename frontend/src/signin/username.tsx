@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import logo from '../images/tavl-logo.png';
 import { ErrorText, TextInputField, PrimaryButtonLocal as PrimaryButton, Logo } from "./gamepin";
 import TopLeftLogo from "../components/TopLeftLogo";
+import { useNavigate } from "react-router-dom";
 
 interface UsernameProps {
     error: boolean,
@@ -14,6 +15,7 @@ interface UsernameProps {
 const Username = ({ setName, loading, error }: UsernameProps) => {
     const [username, setUsername] = useState<string | undefined>("");
     const [validationError, setValidationError] = useState<string | undefined>("");
+    const navigate = useNavigate();
 
     const validateName = (input: any) => {
             // Sjekk lengden på strengen
@@ -36,43 +38,61 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
     return true;
     }
 
-    return(
-    <GamePinWrapper>
-        <BackgroundLayer />
-        <GlowLeft />
-        <GlowRight />
-        <TopLeftLogo />
-        <Content>
-            <AnimatedPanel
-                initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            >
-                <Logo src={logo} />
-                {
-                    loading ? <Spinner/> :
-                    <>
-                        {error && <ErrorText>Already taken. Try another pls?</ErrorText>}
-                        {validationError && <ErrorText>{validationError}</ErrorText>}
-                        <TextInputField placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value.toString())} onKeyPress={(e: any)  => {
-                            if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
-                                setValidationError("");
-                                if (validateName(username)) {
-                                    setName(username)
-                                }
-                            }
-                        }}/>
-                        <PrimaryButton onClick={() => {
-                            setValidationError("");
-                            if (validateName(username)) {
-                                setName(username)
-                            }
-                        }}>GO!</PrimaryButton>
-                    </>
-                }
-            </AnimatedPanel>
-        </Content>
-    </GamePinWrapper>)
+    return (
+        <GamePinWrapper>
+            <BackgroundLayer />
+            <GlowLeft />
+            <GlowRight />
+            <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+                <TopLeftLogo />
+                <button
+                    style={{
+                        position: "absolute",
+                        left: 32,
+                        top: 32,
+                        background: "none",
+                        border: "none",
+                        color: "#3b82f6",
+                        fontSize: "1.1rem",
+                        cursor: "pointer",
+                        zIndex: 20
+                    }}
+                    onClick={() => navigate(-1)}
+                >
+                    ← Tilbake
+                </button>
+                <Content>
+                    <AnimatedPanel
+                        initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                        <Logo src={logo} />
+                        {loading ? <Spinner/> : (
+                            <>
+                                {error && <ErrorText>Already taken. Try another pls?</ErrorText>}
+                                {validationError && <ErrorText>{validationError}</ErrorText>}
+                                <TextInputField placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value.toString())} onKeyPress={(e: any)  => {
+                                    if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
+                                        setValidationError("");
+                                        if (validateName(username)) {
+                                            setName(username)
+                                        }
+                                    }
+                                }}/>
+                                <PrimaryButton onClick={() => {
+                                    setValidationError("");
+                                    if (validateName(username)) {
+                                        setName(username)
+                                    }
+                                }}>PLAY</PrimaryButton>
+                            </>
+                        )}
+                    </AnimatedPanel>
+                </Content>
+            </div>
+        </GamePinWrapper>
+    );
 }
 
 const GamePinWrapper = styled.div`

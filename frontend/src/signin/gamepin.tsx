@@ -3,6 +3,7 @@ import styled, { keyframes } from "styled-components";
 import { motion } from "framer-motion";
 import TopLeftLogo from "../components/TopLeftLogo";
 import logo from '../images/tavl-logo.png';
+import { useNavigate } from "react-router-dom";
 
 interface GamePinProps {
     error: boolean,
@@ -15,6 +16,7 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
     const [gamePin, setGamePin] = useState<string>("");
     const [exiting, setExiting] = useState<boolean>(false);
     const [nextPin, setNextPin] = useState<string | undefined>(undefined);
+    const navigate = useNavigate();
 
     useEffect(() => {
         var query = window.location.search.substring(1);
@@ -22,46 +24,64 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
         for (var i=0;i<vars.length;i++) {
             var pair = vars[i].split("=");
             if(pair[0] === 'gameid'){
-                setGamePin(pair[1])
+                setGamePin(pair[1]);
             }
         }
-    }, [])
+    }, []);
 
-    return(
-    <GamePinWrapper>
-        <BackgroundLayer />
-        <GlowLeft />
-        <GlowRight />
-        <TopLeftLogo />
-        <Content>
-            <AnimatedPanel
-                initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                animate={{ opacity: exiting ? 0 : 1, y: exiting ? -12 : 0, scale: exiting ? 0.98 : 1 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                onAnimationComplete={() => {
-                    if (exiting && nextPin !== undefined) {
-                        setPin(nextPin);
-                    }
-                }}
-            >
-                <Logo src={logo}/>
-                {
-                    loading ? <Spinner /> :
-                    <>
-                        {error && <ErrorText>Wrong game pin. Try another pls?</ErrorText>}
-                        <TextInputField autoFocus={false} tabIndex={0} placeholder="Game pin" type={"number"} value={gamePin} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
-                            if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined) && !exiting) {
-                                setNextPin(gamePin);
-                                setExiting(true);
+    return (
+        <GamePinWrapper>
+            <BackgroundLayer />
+            <GlowLeft />
+            <GlowRight />
+            <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+                <TopLeftLogo />
+                <button
+                    style={{
+                        position: "absolute",
+                        left: 32,
+                        top: 32,
+                        background: "none",
+                        border: "none",
+                        color: "#3b82f6",
+                        fontSize: "1.1rem",
+                        cursor: "pointer",
+                        zIndex: 20
+                    }}
+                    onClick={() => navigate(-1)}
+                >
+                    ← Tilbake
+                </button>
+                <Content>
+                    <AnimatedPanel
+                        initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                        animate={{ opacity: exiting ? 0 : 1, y: exiting ? -12 : 0, scale: exiting ? 0.98 : 1 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        onAnimationComplete={() => {
+                            if (exiting && nextPin !== undefined) {
+                                setPin(nextPin);
                             }
-                        }}/>
-                        <PrimaryButtonLocal onClick={() => { if (!exiting) { setNextPin(gamePin); setExiting(true); }}}>PLAY</PrimaryButtonLocal>
-                        <Footer>or create a new game&nbsp;<div onClick={toCreatorMode} style={{ color: "#3b82f6", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
-                    </>
-                }
-            </AnimatedPanel>
-        </Content>
-    </GamePinWrapper>)
+                        }}
+                    >
+                        <Logo src={logo}/>
+                        {loading ? <Spinner /> : (
+                            <>
+                                {error && <ErrorText>Wrong game pin. Try another pls?</ErrorText>}
+                                <TextInputField autoFocus={false} tabIndex={0} placeholder="Game pin" type={"number"} value={gamePin} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
+                                    if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined) && !exiting) {
+                                        setNextPin(gamePin);
+                                        setExiting(true);
+                                    }
+                                }}/>
+                                <PrimaryButtonLocal onClick={() => { if (!exiting) { setNextPin(gamePin); setExiting(true); }}}>PLAY</PrimaryButtonLocal>
+                                <Footer>or create a new game&nbsp;<div onClick={toCreatorMode} style={{ color: "#3b82f6", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
+                            </>
+                        )}
+                    </AnimatedPanel>
+                </Content>
+            </div>
+        </GamePinWrapper>
+    );
 }
 
 const GamePinWrapper = styled.div`
