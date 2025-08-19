@@ -225,7 +225,7 @@ function Header({ signIn, playMode }: { signIn: () => void; playMode: () => void
     <header className="sticky top-0 z-30 border-b-2 border-blue-200 bg-white/90 backdrop-blur-xl shadow-lg shadow-blue-100/50">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
-          <img src={logo} alt="Tavl" className="h-8 w-8" />
+          <img src={logo} alt="Tavl" className="h-8" />
         </div>
         <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
           <a href="#features" className="hover:text-blue-600 transition-colors font-medium">Funksjoner</a>
