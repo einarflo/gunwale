@@ -255,39 +255,50 @@ function Header({ signIn, playMode }: { signIn: () => void; playMode: () => void
 function Hero({ signIn, playMode }: { signIn: () => void; playMode: () => void }) {
   return (
     <section className="relative mx-auto max-w-7xl px-6 pt-24 pb-28 sm:pt-32">
-      <div className="mx-auto max-w-4xl text-center">
-        {/* Large Logo Section */}
-        <div className="mb-12 flex justify-center">
-          <div className="relative">
-            <img src={logo} alt="Tavl" className="h-32 drop-shadow-2xl" />
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-200/50 to-purple-200/50 rounded-full blur-2xl -z-10"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        {/* Venstre: tekst og logo */}
+        <div className="text-center md:text-left">
+          <div className="mb-12 flex justify-center md:justify-start">
+            <div className="relative">
+              <img src={logo} alt="Tavl" className="h-32 drop-shadow-2xl" />
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-200/50 to-purple-200/50 rounded-full blur-2xl -z-10"></div>
+            </div>
           </div>
+          <div className="inline-flex items-center gap-2 rounded-full border-2 border-blue-300 bg-blue-50 px-4 py-2 text-sm text-blue-600 font-medium mb-4">
+            <Sparkles className="h-4 w-4" /> Nytt quiz-spill · Gratis å spille
+          </div>
+          <h1 className="mt-4 text-balance text-6xl font-bold tracking-tight sm:text-7xl text-gray-800">
+            Quiz som føles <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">magisk</span>
+          </h1>
+          <p className="mt-6 text-pretty text-xl text-gray-600 leading-relaxed">
+            Tavl er det nyeste quiz-spillet i byen. Gratis å spille, med spennende oppgraderinger, 
+            sanntids-konkurranse og en helt ny måte å teste kunnskapen din på.
+          </p>
         </div>
-        
-        <div className="inline-flex items-center gap-2 rounded-full border-2 border-blue-300 bg-blue-50 px-4 py-2 text-sm text-blue-600 font-medium">
-          <Sparkles className="h-4 w-4" /> Nytt quiz-spill · Gratis å spille
-        </div>
-        <h1 className="mt-8 text-balance text-6xl font-bold tracking-tight sm:text-7xl text-gray-800">
-          Quiz som føles <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">magisk</span>
-        </h1>
-        <p className="mt-6 text-pretty text-xl text-gray-600 leading-relaxed">
-          Tavl er det nyeste quiz-spillet i byen. Gratis å spille, med spennende oppgraderinger, 
-          sanntids-konkurranse og en helt ny måte å teste kunnskapen din på.
-        </p>
-        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <button 
-            onClick={playMode}
-            className="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-4 text-lg font-semibold text-white hover:from-blue-600 hover:to-purple-600 transition-all shadow-xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/40 hover:scale-105"
-          >
-            Start gratis spill
-            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-          </button>
-          <button 
-            onClick={signIn}
-            className="rounded-xl border-2 border-gray-300 bg-white px-8 py-4 text-lg text-gray-700 hover:bg-gray-50 transition-all shadow-lg shadow-gray-200/50 hover:shadow-xl hover:shadow-gray-300/50"
-          >
-            Opprett konto
-          </button>
+        {/* Høyre: CTA-boks */}
+        <div className="flex justify-center md:justify-end">
+          <div className="glass relative overflow-hidden rounded-3xl p-10 w-full max-w-md shadow-xl">
+            <h3 className="text-3xl font-bold mb-4 text-gray-800 text-center">Klar til å spille?</h3>
+            <p className="text-lg text-gray-600 mb-8 text-center">
+              Bli med i det mest spennende quiz-spillet i byen. Gratis å spille, med mulighet for å låse opp maktige oppgraderinger.
+            </p>
+            <GamePinInput playMode={playMode} />
+            <div className="flex flex-col items-center justify-center gap-4 mt-6">
+              <button 
+                onClick={playMode}
+                className="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-4 text-lg font-semibold text-white hover:from-blue-600 hover:to-purple-600 transition-all shadow-xl shadow-blue-500/30 hover:scale-105"
+              >
+                Start gratis spill
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </button>
+              <button 
+                onClick={signIn}
+                className="rounded-xl border-2 border-gray-300 bg-white px-8 py-4 text-lg text-gray-700 hover:bg-gray-50 transition-all shadow-lg shadow-gray-200/50 hover:shadow-xl hover:shadow-gray-300/50"
+              >
+                Opprett konto
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -593,5 +604,42 @@ function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+// GamePinInput: input field for game pin in CTA box
+function GamePinInput({ playMode }: { playMode: () => void }) {
+  const [gamePin, setGamePin] = useState("");
+  const [error, setError] = useState("");
+
+  const handleStart = () => {
+    if (!gamePin.trim()) {
+      setError("Skriv inn en gamepin");
+      return;
+    }
+    setError("");
+    // TODO: Implement navigation to game with pin
+    // For now, just call playMode
+    playMode();
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <input
+        type="text"
+        value={gamePin}
+        onChange={e => setGamePin(e.target.value)}
+        placeholder="Gamepin..."
+        className="w-full max-w-xs rounded-xl border-2 border-blue-200 px-4 py-3 text-lg text-gray-800 focus:outline-none focus:border-blue-400 bg-white shadow"
+      />
+      <button
+        onClick={handleStart}
+        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 text-base font-semibold text-white hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg shadow-blue-500/30 hover:scale-105"
+      >
+        Start med gamepin
+        <ArrowRight className="h-5 w-5" />
+      </button>
+      {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+    </div>
   );
 }
