@@ -1,62 +1,92 @@
 import React from "react";
-import { Shield, Trophy, Zap, Users } from "lucide-react";
+
+const plans = [
+	{
+		name: "Free",
+		price: "0 kr/mnd",
+		features: [
+			"Unlimited games",
+            "No limit on participants",
+            "Standard upgrades"
+		],
+		color: "from-blue-500/20 to-cyan-500/20",
+		highlight: false,
+	},
+	{
+		name: "Premium",
+		price: "49 kr/mnd",
+		features: [
+			"Unlimited games",
+            "No limit on participants",
+            "Premium upgrades",
+            "No ads"
+		],
+		color: "from-purple-500/20 to-pink-500/20",
+		highlight: true,
+	},
+	{
+		name: "Team",
+		price: "199 kr/mnd",
+		features: [
+			"Unlimited games",
+            "No limit on participants",
+            "Premium upgrades",
+            "Admin-panel",
+            "No ads"
+		],
+		color: "from-yellow-500/20 to-orange-500/20",
+		highlight: false,
+	},
+];
 
 export default function FeatureGrid() {
-  const items = [
-    {
-      icon: <Shield className="h-6 w-6" />,
-      title: "Falske svar fjernes",
-      text: "Fjern minst to feil alternativer for å gjøre spillet enklere.",
-      color: "from-blue-500/20 to-cyan-500/20",
-      bgColor: "from-blue-50 to-cyan-50"
-    },
-    {
-      icon: <Trophy className="h-6 w-6" />,
-      title: "Full poengsum",
-      text: "Få full poeng når du velger riktig alternativ, som om klokken var tilbake til start.",
-      color: "from-yellow-500/20 to-orange-500/20",
-      bgColor: "from-yellow-50 to-orange-50"
-    },
-    {
-      icon: <Zap className="h-6 w-6" />,
-      title: "Poeng multiplikator",
-      text: "Score multiplikator som øker mengden poeng du tjener per spørsmål.",
-      color: "from-purple-500/20 to-pink-500/20",
-      bgColor: "from-purple-50 to-pink-50"
-    },
-    {
-      icon: <Users className="h-6 w-6" />,
-      title: "Øye i himmelen",
-      text: "Se hva dine motstandere svarer i sanntid.",
-      color: "from-green-500/20 to-emerald-500/20",
-      bgColor: "from-green-50 to-emerald-50"
-    },
-  ];
-  return (
-    <section id="features" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="text-center mb-16">
-        <h2 className="text-4xl font-bold mb-4 text-gray-800">Maktige oppgraderinger</h2>
-        <p className="text-xl text-gray-600">Unlock nye muligheter og bli den ultimate quiz-mesteren</p>
-      </div>
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-        {items.map((it, idx) => (
-          <FeatureCard key={idx} {...it} />
-        ))}
-      </div>
-    </section>
-  );
+	return (
+		<section id="features" className="mx-auto max-w-7xl px-6 py-20">
+			<div className="text-center mb-16">
+				<h2 className="text-4xl font-bold mb-4 text-gray-800">
+					Available Plans and Pricing
+				</h2>
+				<p className="text-xl text-gray-600">
+					Select the plan that suits you best and gain access to more features!
+				</p>
+			</div>
+			<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+				{plans.map((plan, idx) => (
+					<PlanCard key={idx} {...plan} />
+				))}
+			</div>
+		</section>
+	);
 }
 
-function FeatureCard({ icon, title, text, color, bgColor }: any) {
-  return (
-    <div className="group relative overflow-hidden rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 hover:bg-gradient-to-br hover:from-white hover:to-blue-50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-200/50">
-      <div className="pointer-events-none absolute -inset-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-           style={{background: "radial-gradient(600px 200px at var(--x,50%) var(--y,50%), rgba(59,130,246,0.1), transparent 40%)"}}/>
-      <div className={`relative mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${color} text-white`}>
-        {icon}
-      </div>
-      <h3 className="relative text-lg font-semibold mb-2 text-gray-800">{title}</h3>
-      <p className="relative text-sm text-gray-600 leading-relaxed">{text}</p>
-    </div>
-  );
+function PlanCard({ name, price, features, color, highlight }: any) {
+	return (
+		<div
+			className={`group relative overflow-hidden rounded-2xl border-2 ${
+				highlight
+					? "border-purple-500 shadow-xl shadow-purple-200/50 scale-105"
+					: "border-gray-200"
+			} bg-gradient-to-br from-white to-gray-50 p-6 hover:bg-gradient-to-br hover:from-white hover:to-blue-50 transition-all duration-300 hover:scale-105`}
+		>
+			<div
+				className={`relative mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${color} text-white font-bold text-lg`}
+			>
+				{name[0]}
+			</div>
+			<h3 className="relative text-2xl font-semibold mb-2 text-gray-800">
+				{name}
+			</h3>
+			<div className="text-xl font-bold text-blue-600 mb-4">{price}</div>
+			<ul className="mb-4 text-sm text-gray-700 list-disc list-inside">
+				{features.map((f: string, i: number) => (
+					<li key={i}>{f}</li>
+				))}
+			</ul>
+			{highlight && (
+				<div className="absolute top-4 right-4 text-white text-sm font-bold px-3 py-1 rounded-full shadow bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
+					Best value
+				</div>
+			)}
+		</div>
+	);
 }
