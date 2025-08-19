@@ -28,49 +28,65 @@ const LandingPage = ({ signIn, playMode }: SiginProps) => {
       image: <ItemImage src={one}/>,
       imageMobile: <ItemImageMobile src={one}/>,
       header: "Remove false answers",
-      description: "Removes at least two false alternatives."
+      description: "Removes at least two false alternatives.",
+      price: "100 points",
+      premium: false
     },
     {
       image: <ItemImage src={two}/>,
       imageMobile: <ItemImageMobile src={two}/>,
       header: "Full point score",
-      description: "Get full score when choosing the correct alternative, like the clock was back to start."
+      description: "Get full score when choosing the correct alternative, like the clock was back to start.",
+      price: "100 points",
+      premium: false
     },
     {
       image: <ItemImage src={three}/>,
       imageMobile: <ItemImageMobile src={three}/>,
       header: "Gear up your score",
-      description: "Score multiplyer that increases the amount of points you earn per question."
+      description: "Score multiplyer that increases the amount of points you earn per question.",
+      price: "100 points",
+      premium: false
     },
     {
       image: <ItemImage src={four}/>,
       imageMobile: <ItemImageMobile src={four}/>,
       header: "Eye in the sky",
-      description: "See what your oppontents are answrering in real time."
+      description: "See what your oppontents are answrering in real time.",
+      price: "400 points",
+      premium: false
     },
     {
       image: <ItemImage src={five}/>,
       imageMobile: <ItemImageMobile src={five}/>,
       header: "Shield protection",
-      description: "Protects you from sabotage from other players."
+      description: "Protects you from sabotage from other players.",
+      price: "500 points",
+      premium: true
     },
     {
       image: <ItemImage src={six}/>,
       imageMobile: <ItemImageMobile src={six}/>,
       header: "Slow down",
-      description: "Sabotages your opponents by slowing down their games."
+      description: "Sabotages your opponents by slowing down their games.",
+      price: "1000 points",
+      premium: true
     },
     {
       image: <ItemImage src={seven}/>,
       imageMobile: <ItemImageMobile src={seven}/>,
       header: "End an opponent",
-      description: "Sabotage one opponent by taking away their entire score."
+      description: "Sabotage one opponent by taking away their entire score.",
+      price: "2000 points",
+      premium: true
     },
     {
       image: <ItemImage src={eight}/>,
       imageMobile: <ItemImageMobile src={eight}/>,
       header: "Nuke",
-      description: "Sabotage the entire game by taking away everyones score!"
+      description: "Sabotage the entire game by taking away everyones score!",
+      price: "10 000 points",
+      premium: true
     },
   ]
 

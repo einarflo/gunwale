@@ -42,24 +42,34 @@ export default function ProductSticky() {
             style={{ scale, rotate, y }}
             className="glass sticky top-28 mx-auto h-[400px] w-full max-w-[500px] rounded-3xl p-6 shadow-2xl shadow-blue-200/50"
           >
-            <div className="relative h-full w-full overflow-hidden rounded-2xl border-2 border-blue-200">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 via-purple-100/30 to-pink-100/30" />
-              <div className="relative z-10 p-6">
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span className="font-mono">tavl-game.tsx</span>
+            <div className="relative h-full w-full overflow-hidden rounded-2xl border-2 border-blue-200 flex flex-col justify-center items-center bg-white">
+              {/* Kahoot-style question area */}
+              <div className="w-full px-6 pt-6 pb-4">
+                <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+                  <span className="font-mono">tavl.tsx</span>
                   <span>● ● ●</span>
                 </div>
-                <div className="space-y-4">
-                  <div className="h-8 bg-gradient-to-r from-blue-200 to-purple-200 rounded-lg"></div>
-                  <div className="h-6 bg-gray-200 rounded-lg w-3/4"></div>
-                  <div className="h-6 bg-gray-200 rounded-lg w-1/2"></div>
-                  <div className="h-6 bg-gray-200 rounded-lg w-2/3"></div>
+                <div className="mb-4">
+                  <div className="text-lg font-semibold text-gray-800">What is the capital of Norway?</div>
                 </div>
-                <div className="mt-6 flex gap-2">
-                  <div className="h-3 w-3 rounded-full bg-blue-400 animate-pulse"></div>
-                  <div className="h-3 w-3 rounded-full bg-purple-400 animate-pulse" style={{animationDelay: '0.2s'}}></div>
-                  <div className="h-3 w-3 rounded-full bg-pink-400 animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <button className="flex items-center justify-center h-12 rounded-lg bg-red-500 text-white font-bold shadow hover:bg-red-600 transition">Oslo</button>
+                  <button className="flex items-center justify-center h-12 rounded-lg bg-blue-500 text-white font-bold shadow hover:bg-blue-600 transition">Bergen</button>
+                  <button className="flex items-center justify-center h-12 rounded-lg bg-yellow-400 text-white font-bold shadow hover:bg-yellow-500 transition">Trondheim</button>
+                  <button className="flex items-center justify-center h-12 rounded-lg bg-green-500 text-white font-bold shadow hover:bg-green-600 transition">Stavanger</button>
                 </div>
+              </div>
+              {/* Simulated player avatars */}
+              <div className="absolute top-4 right-6 flex gap-2">
+                <div className="h-8 w-8 rounded-full bg-blue-200 border-2 border-white shadow" />
+                <div className="h-8 w-8 rounded-full bg-pink-200 border-2 border-white shadow" />
+                <div className="h-8 w-8 rounded-full bg-yellow-200 border-2 border-white shadow" />
+                <div className="h-8 w-8 rounded-full bg-green-200 border-2 border-white shadow" />
+              </div>
+              {/* Simulated timer and points */}
+              <div className="absolute bottom-4 left-6 flex items-center gap-4">
+                <div className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-mono text-xs shadow">Time: 12s</div>
+                <div className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-xs shadow">Points: 980</div>
               </div>
             </div>
           </motion.div>

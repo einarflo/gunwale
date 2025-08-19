@@ -10,10 +10,12 @@ interface UpgradesSectionProps {
 
 export default function UpgradesSection({ upgrades, selectedUpgrade, setSelectedUpgrade, setAutoPlay, autoPlay }: UpgradesSectionProps) {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
+    <section className="mx-auto max-w-7xl px-6 pt-6 pb-20">
       <div className="text-center mb-16">
-        <h2 className="text-4xl font-bold mb-4 text-gray-800">Maktige oppgraderinger</h2>
-        <p className="text-xl text-gray-600 mb-8">Unlock nye muligheter og bli den ultimate quiz-mesteren</p>
+        <h2 className="text-6xl font-bold mb-4 text-gray-800">Strategic <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent"> upgrades</span></h2>
+        <p className="text-xl text-gray-600 mb-8">
+            Unlock powerful upgrades to get ahead the competition
+        </p>
       </div>
       {/* Main Upgrade Display */}
       <div className="mb-12">
@@ -28,10 +30,15 @@ export default function UpgradesSection({ upgrades, selectedUpgrade, setSelected
               />
             </div>
             <div className="flex-1 text-center md:text-left">
-              <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium text-white mb-3 bg-gradient-to-r ${upgrades[selectedUpgrade].color}`}>
-                {upgrades[selectedUpgrade].icon}
-                Oppgradering {selectedUpgrade + 1}
+              <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-bold text-white mb-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 mr-2`}>
+                { upgrades[selectedUpgrade].price }
               </div>
+              
+              { upgrades[selectedUpgrade].premium && (
+                <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-bold text-black mb-3 bg-gradient-to-r from-red-500/20 to-pink-500/20`}>
+                    Premium
+                </div>
+              )}
               <h3 className="text-2xl font-bold text-gray-800 mb-3">{upgrades[selectedUpgrade].header}</h3>
               <p className="text-lg text-gray-600 leading-relaxed">{upgrades[selectedUpgrade].description}</p>
             </div>
@@ -62,9 +69,6 @@ export default function UpgradesSection({ upgrades, selectedUpgrade, setSelected
                 }`}
               />
               <h4 className="text-sm font-semibold text-gray-800 mb-1 line-clamp-2">{upgrade.header}</h4>
-              <div className={`w-3 h-3 rounded-full mx-auto ${
-                selectedUpgrade === index ? 'bg-blue-500' : 'bg-gray-300'
-              }`}></div>
             </div>
           </button>
         ))}
@@ -79,7 +83,7 @@ export default function UpgradesSection({ upgrades, selectedUpgrade, setSelected
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
-          {autoPlay ? 'Stopp auto-play' : 'Start auto-play'}
+          {autoPlay ? 'Toggle auto-play' : 'Toggle auto-play'}
         </button>
       </div>
     </section>
