@@ -119,7 +119,7 @@ export default function TavlLanding({ signIn, playMode }: LandingPageProps) {
       <UpgradesSection upgrades={upgrades} selectedUpgrade={selectedUpgrade} setSelectedUpgrade={setSelectedUpgrade} setAutoPlay={setAutoPlay} autoPlay={autoPlay} />
       <FeatureGrid />
       <ProductSticky />
-      <CTA signIn={signIn} playMode={playMode} />
+      <CTA />
       <Footer />
     </div>
   );

@@ -90,6 +90,12 @@ const PhoneGameView = ({ gameId, gamePin, gameInstanceId, logout }: Game) => {
     // Bette poeng? eller Geare poenge? eller kjøpe flere poeng (f. eks 10% ekstra poeng)
     // KJøpe lotto, og ha trekning på skjermen: Tall mellom 1-15 kanskje 1000 poeng i premie 
 
+    // second chance
+
+    // stjele poeng fra en annen spiller
+
+    // uno reverse 
+
 
     // Waiting for game to start
   if (!gameStarted) {
