@@ -1,4 +1,3 @@
-import React from "react";
 import logo from '../../images/tavl-logo.png';
 import { ArrowRight } from "lucide-react";
 
@@ -22,16 +21,16 @@ export default function Header({ signIn, playMode }: HeaderProps) {
         </nav>
         <div className="flex items-center gap-3">
           <button 
-            onClick={signIn}
+            onClick={playMode}
             className="rounded-xl border-2 border-blue-300 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-all font-medium"
           >
-            Logg inn
+            Join game
           </button>
           <button 
-            onClick={playMode}
+            onClick={signIn}
             className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-sm font-medium text-white hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40"
           >
-            Start spill <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            Start now <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
       </div>

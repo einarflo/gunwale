@@ -1,12 +1,13 @@
-import { ArrowRight, Sparkles, Users, Trophy, Zap } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import GamePinInput from "./GamePinInput";
 
 interface HeroProps {
   signIn: () => void;
   playMode: () => void;
+  setGamePin: (pin: string) => void
 }
 
-export default function Hero({ signIn, playMode }: HeroProps) {
+export default function Hero({ signIn, playMode, setGamePin }: HeroProps) {
   return (
     <section className="relative mx-auto max-w-7xl px-6 pt-24 pb-28 sm:pt-32">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -22,7 +23,7 @@ export default function Hero({ signIn, playMode }: HeroProps) {
             Tavl offers a unique blend of real-time competition and strategic upgrades, Tavl transforms traditional quizzing into an interactive experience that keeps players coming back for more.
           </p>
           <button 
-                onClick={playMode}
+                onClick={signIn}
                 className="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-2 text-lg font-semibold text-white hover:from-blue-600 hover:to-purple-600 transition-all shadow-xl shadow-blue-500/30 hover:scale-105 mt-6"
               >
                 Start now
@@ -30,7 +31,7 @@ export default function Hero({ signIn, playMode }: HeroProps) {
               </button>
         </div>
         {/* Høyre: CTA-boks */}
-         <GamePinInput playMode={playMode} />
+         <GamePinInput playMode={playMode} setGamePin={setGamePin} />
       </div>
 
       {/* Featured quizzes section */}

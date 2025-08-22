@@ -59,7 +59,7 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
                     }}
                     onClick={() => navigate(-1)}
                 >
-                    ← Tilbake
+                    ← Back
                 </button>
                 <Content>
                     <AnimatedPanel

@@ -31,12 +31,12 @@ const Home = ({ userid, username, games, newGame, discover, loading, startGame, 
 
 	const createNewGameInstance = (gameId: String, gamePin: String) => {
 		setWaitingForCreateGame(true);
-                        post(`/game_instance/`, {
+                        post(`/game_instance/`, JSON.stringify({
                                 game_id: gameId,
                                 game_pin: gamePin,
                                 status: 'created',
                                 created_by: userid
-                        }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+                        }) , { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
 				.then(res => {
 					console.log('gameInstanceId:', res.data);
 

@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 
-export default function GamePinInput({ playMode }: { playMode: () => void }) {
-    const [gamePin, setGamePin] = useState("");
+interface GamePinInputProps {
+    playMode: () => void;
+    setGamePin: (pin: string) => void;
+}
+
+export default function GamePinInput({ playMode, setGamePin }: GamePinInputProps) {
+    const [gamePin, _setGamePin] = useState("");
     const [error, setError] = useState("");
 
     const handleStart = () => {
@@ -12,7 +17,8 @@ export default function GamePinInput({ playMode }: { playMode: () => void }) {
         setError("");
         // TODO: Implement navigation to game with pin
         // For now, just call playMode
-        playMode();
+        setGamePin(gamePin);
+        playMode()
     };
 
     return (
@@ -28,7 +34,7 @@ export default function GamePinInput({ playMode }: { playMode: () => void }) {
                     <input
                         type="text"
                         value={gamePin}
-                        onChange={e => setGamePin(e.target.value)}
+                        onChange={e => _setGamePin(e.target.value)}
                         placeholder="Gamepin..."
                         className="w-full max-w-xs rounded-xl border-2 border-blue-200 px-4 py-3 text-lg text-gray-800 focus:outline-none focus:border-blue-400 bg-white shadow"
                     />

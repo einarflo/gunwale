@@ -50,7 +50,7 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
                     }}
                     onClick={() => navigate(-1)}
                 >
-                    ← Tilbake
+                    ← Back
                 </button>
                 <Content>
                     <AnimatedPanel

@@ -122,7 +122,7 @@ const App = () => {
     <Status loading={loading} error={error} />
     <Routes>
       <Route
-        path="/"
+        path="/old"
         element={
           <LandingPage
             signIn={() => keycloak?.authenticated ? navigate('/tv') : login()}
@@ -131,11 +131,12 @@ const App = () => {
         }
       />
       <Route
-        path="/new"
+        path="/"
         element={
           <StripeInspiredLanding
             signIn={() => keycloak?.authenticated ? navigate('/tv') : login()}
             playMode={() => navigate('/game')}
+            setGamePin={setPin}
           />
         }
       />

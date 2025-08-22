@@ -21,9 +21,10 @@ import eight from './images/upgrades/8.png';
 interface LandingPageProps {
     signIn: () => void
     playMode: () => void
+    setGamePin: (pin: string) => void
 }
 
-export default function TavlLanding({ signIn, playMode }: LandingPageProps) {
+export default function TavlLanding({ signIn, playMode, setGamePin }: LandingPageProps) {
   const [selectedUpgrade, setSelectedUpgrade] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
 
@@ -115,7 +116,7 @@ export default function TavlLanding({ signIn, playMode }: LandingPageProps) {
       <GlobalStyles />
       <AnimatedGradientBackground />
       <Header signIn={signIn} playMode={playMode} />
-      <Hero signIn={signIn} playMode={playMode} />
+      <Hero signIn={signIn} playMode={playMode} setGamePin={setGamePin} />
       <UpgradesSection upgrades={upgrades} selectedUpgrade={selectedUpgrade} setSelectedUpgrade={setSelectedUpgrade} setAutoPlay={setAutoPlay} autoPlay={autoPlay} />
       <FeatureGrid />
       <ProductSticky />
