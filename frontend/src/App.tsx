@@ -12,6 +12,7 @@ import TVView from './tv/selectGame';
 import { UserContext } from './UserContext';
 import { useKeycloak } from './auth/KeycloakProvider';
 import StripeInspiredLanding from './landing-new';
+import Authorizing from './components/Authorizing';
 
 const appHeight = () => {
   const doc = document.documentElement
@@ -131,10 +132,20 @@ const App = () => {
         }
       />
       <Route
+        path="/authorizing"
+        element={<Authorizing />}
+      />
+      <Route
         path="/"
         element={
           <StripeInspiredLanding
-            signIn={() => keycloak?.authenticated ? navigate('/tv') : login()}
+            signIn={() => {
+              if (keycloak?.authenticated) {
+                navigate('/tv');
+              } else {
+                login();
+              }
+            }}
             playMode={() => navigate('/game')}
             setGamePin={setPin}
           />
