@@ -2,16 +2,14 @@ import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { get } from "../api";
 import Status from "../components/Status";
-import logo from '../images/gw-logo-dark.png';
+import Header from '../components/landing/Header';
 import TVGamePlayView from "./game";
 import Home from "./home";
 import NewGame from "./createGame";
 import EditGame from "./editGame";
 import EditQuestion from "./editQuestion";
 import UpdateGame from "./updateGameName";
-import TopLeftLogo from "../components/TopLeftLogo";
 import ProfilePage from "./profilePage";
-import PrimaryButton from "../components/PrimaryButton";
 
 interface CreateViewProps {
     username: String;
@@ -105,16 +103,10 @@ const TVView = ({ username, logout }: CreateViewProps) => {
   return(
     <GameSelectionWrapper>
       
-      <Header>
-        <TopLeftLogo/>
-        <NavItem selected={page === "home"} onClick={() => { setPage("home"); setQuestionId(undefined); setEditId(undefined);}}>home</NavItem>
-        <NavItem selected={page === "library"} onClick={() => setPage("library")}>library</NavItem>
-        <NavItem selected={page === "discover"} onClick={() => setPage("discover")}>discover</NavItem>
-        <NavItem selected={page === "profile"} onClick={() => setPage("profile")}>profile</NavItem>
-        <JoinGameButton>
-          <PrimaryButton text="Join a game" click={logout}/>
-        </JoinGameButton>
-      </Header>
+      <Header 
+        username={String(username)}
+        logout={logout}
+      />
       <Content>
         <Status loading={loading} error={error} />
         { page === "home" && <Home userid={String(userId)} games={games} error={error} edit={(id: String) => {setEditId(id); setPage("edit")}} loading={loading} username={username} newGame={() => setPage("newgame")} discover={() => {}} startGame={startGame} /> }
@@ -128,13 +120,6 @@ const TVView = ({ username, logout }: CreateViewProps) => {
 }
 
 
-const JoinGameButton = styled.div`
-margin-right: 20px;
-margin-left: 20px;
-`;
-
-
-
 const GameSelectionWrapper = styled.div`
   height: 100vh;
   height: 100dvh;
@@ -145,74 +130,10 @@ const GameSelectionWrapper = styled.div`
   display: block;
 `;
 
-const SideBarNav = styled.div`
-  height: 100vh;
-  height: 100dvh;
-  
-  background: #ffffff;
-  border-right: 2px solid #2d387050;
-`; //width: 260px;
-
-const NavItem = styled.div.attrs((props: {selected: boolean}) => props)`
-  font-weight: normal;
-  font-family: "Coll";
-  //padding-left: 45px;
-  color: ${props => props.selected ? '#9C8AFA' : '#9F9F9F%'};
-  font-size: 1.3rem;
-  //padding-bottom: 25px;
-  cursor: pointer;
-  margin-right: 20px;
-  margin-left: 20px;
-`;
-
 const Content = styled.div`
   overflow: scroll;
 `;
 
-
-
-const Header = styled.div`
-  height: 82px;
-  width: 100vw;
-  background: #ffffff;
-  /* border-bottom: 2px solid #2d387050; */
-  display: flex;
-  align-items: center;
-  justify-content: end;
-  position: sticky;
-  top: 0;
-`;
-
-const Logo = styled.img`
-  border-radius: 5px;
-  padding: 10px;
-  padding-right: 40px;
-  padding-left: 40px;
-  font-weight: bold;
-  color: white;
-  height 60px;
-  padding-bottom: 50px;
-`;
-
-const Username = styled.div`
-  margin-left: auto;
-  flex: auto;
-  text-align: right;
-  padding-right: 20px;
-  font-weight: bold;
-`;
-
-const Logout = styled.div`
-  background: #ffffff;
-  margin: 18px;
-  border-radius: 5px;
-  padding: 10px;
-  font-weight: bold;
-  color:  #2d3870;
-  cursor: pointer;
-  margin-left: auto;
-  border: 2px solid #2d3870;
-`;
 
 const rotate = keyframes`
   from {

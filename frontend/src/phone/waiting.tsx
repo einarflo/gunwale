@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import styled from "styled-components";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
@@ -22,7 +22,7 @@ export const selectableColors = [
 ]
 
 const Waiting = ({ points, gameStarted, gamepin, colorForUser, setColorForUser }: WaitingProps) => {
-  const { username, userId } = useContext(UserContext);
+  const { userId } = useContext(UserContext);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -52,6 +52,11 @@ const Waiting = ({ points, gameStarted, gamepin, colorForUser, setColorForUser }
       console.log("Error when updating user color");
     });
   }
+
+    //select color - maybe 5 circles?
+    // diffent power ups for each color, maybe some sort of name?
+  
+    // Should be an upgrade getting black with gold letters
   
   return(
     <MobileGameWrapper>
@@ -105,12 +110,5 @@ export const BlueWrapper = styled.div`
   width: 100%;
 `;
 
-const Text = styled.div`
-  margin: 20px;
-  font-size: 2rem;
-  color: white;
-  text-align: center;
-  font-family: "coll";
-`;
 
 export default Waiting;
