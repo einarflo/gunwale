@@ -1,28 +1,91 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { motion } from "framer-motion";
 import logo from '../images/tavl-logo.png';
 import { ErrorText, TextInputField, PrimaryButtonLocal as PrimaryButton, Logo } from "./gamepin";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { useNavigate } from "react-router-dom";
+import { get, post } from "../api";
+import { GameInstancePlayer } from "../App";
+import { GameContext } from "../GameContext";
 
 interface UsernameProps {
-    error: boolean,
-    loading: boolean,
-    setName: (name: string | undefined) => void
+  setNickname: (name: string | undefined) => void;
+  setGameInstancePlayerId: (id: string | undefined) => void;
 }
 
-const Username = ({ setName, loading, error }: UsernameProps) => {
+const Username = ({ setNickname, setGameInstancePlayerId }: UsernameProps) => {
+    const { gameId, gameInstanceId, gamePin } = useContext(GameContext);
+    
     const [username, setUsername] = useState<string | undefined>("");
     const [validationError, setValidationError] = useState<string | undefined>("");
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
+
     const navigate = useNavigate();
 
     const validateName = (input: any) => {
-            // Sjekk lengden på strengen
-    if (input && input.length > 50) {
+      // Sjekk lengden på strengen
+      if (input && input.length > 50) {
         setValidationError("Username too long!");
         return false;
+      }
+      return true;
     }
+
+  const checkAndSetNickName = (enteredNickname: string | undefined) => {
+    // Check if nickname is already taken
+    setLoading(true);
+    if (enteredNickname && enteredNickname.length > 1) {
+      get(`/game_instance_players/${gameInstanceId}/?checkUser=true`)
+        .then(res => {
+          if (res.data) {
+            console.log(res.data);
+            if (res.data.find((player: GameInstancePlayer) => player.username === enteredNickname)) {
+              // Nickname already taken
+              setError(true);
+              setLoading(false);
+            } else {
+              // Nickname available
+              setError(false);
+              insertGameInstancePlayer(enteredNickname);
+            }
+          }
+        })
+        .catch(err => {
+          console.log(err);
+          setLoading(false);
+        });
+    } else {
+      setError(true);
+      setLoading(false);
+    }
+  };
+
+  const insertGameInstancePlayer = (name: string) => {
+    post(
+      `/game_instance_players/`,
+      JSON.stringify({
+        game_id: gameId,
+        game_instance_id: gameInstanceId,
+        username: name,
+        score: '0'
+      }),
+      { headers: { 'content-type': 'application/x-www-form-urlencoded' } }
+    )
+      .then(res => {
+        // Successfully added player
+        setNickname(name);
+        setGameInstancePlayerId(res.data);
+
+        setLoading(false);
+        navigate('/play');
+      })
+      .catch(() => {
+        console.log('Something fishy is going on');
+        setLoading(false);
+      });
+  };
 
     /*
 
@@ -35,8 +98,7 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
 
     */
 
-    return true;
-    }
+
 
     return (
         <GamePinWrapper>
@@ -57,16 +119,11 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
                         cursor: "pointer",
                         zIndex: 20
                     }}
-                    onClick={() => navigate(-1)}
+                    onClick={() => navigate('/join/' + gamePin)}
                 >
                     ← Back
                 </button>
                 <Content>
-                    <AnimatedPanel
-                        initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    >
                         <Logo src={logo} />
                         {loading ? <Spinner/> : (
                             <>
@@ -76,19 +133,18 @@ const Username = ({ setName, loading, error }: UsernameProps) => {
                                     if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
                                         setValidationError("");
                                         if (validateName(username)) {
-                                            setName(username)
+                                            checkAndSetNickName(username)
                                         }
                                     }
                                 }}/>
                                 <PrimaryButton onClick={() => {
                                     setValidationError("");
                                     if (validateName(username)) {
-                                        setName(username)
+                                        checkAndSetNickName(username)
                                     }
                                 }}>PLAY</PrimaryButton>
                             </>
                         )}
-                    </AnimatedPanel>
                 </Content>
             </div>
         </GamePinWrapper>
@@ -167,12 +223,5 @@ const GlowRight = styled.div`
     pointer-events: none;
 `;
 
-const AnimatedPanel = styled(motion.div)`
-    background: rgba(255,255,255,0.9);
-    border: 2px solid rgba(59,130,246,0.2);
-    box-shadow: 0 20px 40px rgba(59, 130, 246, 0.12);
-    border-radius: 20px;
-    padding: 30px 24px;
-`;
 export default Username;
 

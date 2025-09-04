@@ -1,15 +1,10 @@
+import { Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { get } from "../api";
 import Status from "../components/Status";
 import Header from '../components/landing/Header';
 import TVGamePlayView from "./game";
-import Home from "./home";
-import NewGame from "./createGame";
-import EditGame from "./editGame";
-import EditQuestion from "./editQuestion";
-import UpdateGame from "./updateGameName";
-import ProfilePage from "./profilePage";
 
 interface CreateViewProps {
     username: String;
@@ -29,21 +24,13 @@ export interface Game {
 
 const TVView = ({ username, logout }: CreateViewProps) => {
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-  const [games, setGames] = useState<Array<Game>>()
   const [gamePin, setGamePin] = useState<String | undefined>()
   const [gameId, setGameId] = useState<String | undefined>()
   const [gameInstanceId, setGameInstanceId] = useState<String | undefined>()
-  const [page, setPage] = useState("home");
   const [userId, setUserId] = useState(25);
   const [editId, setEditId] = useState<String | undefined>(undefined);
   const [questionId, setQuestionId] = useState<String | undefined>(undefined);
 
-  useEffect(() => {
-    getUserInfo()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editId]);
 
   const startGame = (_gameId: String, _gameInstanceId: String, _gamePin: String) => {
     setGameId(_gameId);
@@ -56,42 +43,7 @@ const TVView = ({ username, logout }: CreateViewProps) => {
     setGameInstanceId(undefined);
   }
 
-  const getUserInfo = () => {
-    get(`/users/${username}/`)
-      .then(res => {
-        if (res.data["username"] === username) {
-          getGamesForUserId(res.data["id"])
-          setUserId(res.data["id"]);
-        }
-        else {
-          setError(true);
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        console.log("Error when getting user info for ", username);
-        setLoading(false);
-        setError(true);
-      });
-  }
 
-  const getGamesForUserId = (id: String) => {
-    get(`/game_list/${id}/`)
-      .then(res => {
-        setLoading(false);
-        if (res.data) {
-          setGames(res.data);
-        }
-        else {
-          setError(true);
-        }
-      })
-      .catch(err => {
-        console.log("Error when getting games for user");
-        setLoading(false);
-        setError(true);
-      });
-  }
 
     
 
@@ -101,23 +53,13 @@ const TVView = ({ username, logout }: CreateViewProps) => {
     return <TVGamePlayView gameId={gameId} gameInstanceId={gameInstanceId} gamePin={gamePin} stopGame={stopGame}/>
   }
 
-  // List of available games
+
   return(
     <GameSelectionWrapper>
-      
-      <Header 
-        username={String(username)}
-        logout={logout}
-      />
+      <Header />
       <Content>
-        <Status loading={loading} error={error} />
-        { page === "home" && <Home userid={String(userId)} games={games} error={error} edit={(id: String) => {setEditId(id); setPage("edit")}} loading={loading} username={username} newGame={() => setPage("newgame")} discover={() => {}} startGame={startGame} /> }
-        { page === "newgame" && <NewGame userid={String(userId)} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => setPage("home")} /> }
-        { page === "edit" && editId && <EditGame gameId={editId} edit={(id: String) => {setQuestionId(id); setPage("question")}} update={(id: String) => {setEditId(id); setPage("update")}} cancel={() => {setPage("home"); setEditId(undefined);}} /> }
-        { page === "question" && questionId && <EditQuestion gameId={editId} questionId={questionId} edit={(id: String) => {setEditId(id); setPage("edit")}} cancel={() => {setPage("home"); setQuestionId(undefined);}} /> }
-        { page === "update" && editId && <UpdateGame gameId={editId} edit={(id: String) => {setEditId(id); setPage("edit")}} /> }
-        { page === "profile" && <ProfilePage username={username} logout={logout} /> }
-        </Content>
+        <Outlet />
+      </Content>
     </GameSelectionWrapper>)
 }
 

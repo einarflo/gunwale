@@ -2,13 +2,8 @@ import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { get, post, put } from "../api";
 import { Question } from "./game";
-
-interface EditGameProps {
-  gameId: String;
-  cancel: () => void;
-  edit: (id: String) => void;
-  update: (id: String) => void;
-}
+import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export interface GameItem {
   name: String;
@@ -17,11 +12,17 @@ export interface GameItem {
   status: String;
 }
 
-const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
+const EditGame = () => {
+  // get id from url params
+  const { gameId } = useParams<{ gameId: string }>();
+
+  const navigate = useNavigate();
+
   const [error, setError] = useState(false);
   const [game, setGame] = useState<GameItem>();
 
   useEffect(() => {
+    if (!gameId) return;
     getQuestionsForGameId(gameId);
     getGame(gameId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -47,7 +48,7 @@ const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
       })
       .then((res) => {
         console.log(res);
-        edit(res.data);
+        navigate('/home/question/' + res.data);
       })
       .catch((err) => {
         console.log("Something fishy is going on");
@@ -85,22 +86,10 @@ const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
       }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
         .then(res => {
           console.log(res);
-          cancel()
+          navigate('/home');
         })
         .catch(err => {
           console.log("Something fishy is going on");
-        });
-    }
-
-    // Get game info
-    const resetGame = (id: String) => {
-      put(`/clear_game_players/${id}/`, {})
-        .then(res => {
-          if (res.data) {
-            alert("Cleared");
-        }})
-        .catch(err => {
-          console.log("Error when getting questions for game with id ", id);
         });
     }
 
@@ -110,8 +99,7 @@ const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
     <Desc>{game?.description}</Desc>
     <QuizActions>
       <Play onClick={newQuestion}>Add question</Play>
-      <Home onClick={() => update(gameId)}>Edit</Home>
-      <Home onClick={() => resetGame(gameId)}>Reset</Home>
+      <Home onClick={() => navigate('home/update/' + gameId)}>Edit</Home>
       <Delete onClick={() => deleteGame()}>Delete</Delete>
       {error && <div style={{ color: "red", padding: "10px" }}>Det har oppstått en feil...</div>}
     </QuizActions>
@@ -119,7 +107,7 @@ const EditGame = ({ gameId, cancel, edit, update }: EditGameProps) => {
     <Container>
       <QuestionsList>
           {questions.map((question, index) => (
-            <QuestionContainer key={index} onClick={() => edit(question.id)}>
+            <QuestionContainer key={index} onClick={() => navigate('/home/question/' + question.id)}>
               <QuestionText>{question.text}</QuestionText>
               <QuestionDescription style={{ fontWeight: question.correct === "1" ? "bold" : "" }}>A: {question.alt1}</QuestionDescription>
               <QuestionDescription style={{ fontWeight: question.correct === "2" ? "bold" : "" }}>B: {question.alt2}</QuestionDescription>

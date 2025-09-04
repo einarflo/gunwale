@@ -1,33 +1,58 @@
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { motion } from "framer-motion";
 import TopLeftLogo from "../components/TopLeftLogo";
 import logo from '../images/tavl-logo.png';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { get } from "../api";
 
 interface GamePinProps {
-    error: boolean,
-    loading: boolean,
-    setPin: (pin: string | undefined) => void,
-    toCreatorMode: () => void
+  setGameId: (id: string) => void;
+  setGameInstanceId: (id: string) => void;
+  setGamePin: (pin: string) => void;
 }
 
-const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
-    const [gamePin, setGamePin] = useState<string>("");
-    const [exiting, setExiting] = useState<boolean>(false);
-    const [nextPin, setNextPin] = useState<string | undefined>(undefined);
-    const navigate = useNavigate();
+const GamePin = ({ setGameId, setGameInstanceId, setGamePin }: GamePinProps) => {
+    // get gamePin from url params
+    const { gamePin } = useParams<{ gamePin: string }>();
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
-        var query = window.location.search.substring(1);
-        var vars = query.split("&");
-        for (var i=0;i<vars.length;i++) {
-            var pair = vars[i].split("=");
-            if(pair[0] === 'gameid'){
-                setGamePin(pair[1]);
-            }
+        if (gamePin) {
+            setEnteredGamePin(gamePin);
         }
-    }, []);
+    }, [gamePin]);
+
+  const setPin = (pin: string | undefined) => {
+    if (pin && pin.length > 0 && pin !== '0') {
+      setLoading(true);
+      get(`/game_instance/${pin}/`)
+        .then(res => {
+          if (res.data && res.data['status'] === 'created') {
+            setGameId(res.data['game_id']);
+            setGameInstanceId(res.data['id']);
+            setGamePin(pin);
+            setError(false);
+            setLoading(false);
+            navigate('/username');
+          } else {
+            setError(true);
+            setLoading(false);
+          }
+        })
+        .catch(err => {
+          console.log(err);
+          setLoading(false);
+        });
+    } else {
+      setError(true);
+    }
+  };
+
+    const [enteredGamePin, setEnteredGamePin] = useState<string>("");
+
+    const navigate = useNavigate();
 
     return (
         <GamePinWrapper>
@@ -48,36 +73,25 @@ const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
                         cursor: "pointer",
                         zIndex: 20
                     }}
-                    onClick={() => navigate(-1)}
+                    onClick={() => navigate('/')}
                 >
                     ← Back
                 </button>
                 <Content>
-                    <AnimatedPanel
-                        initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                        animate={{ opacity: exiting ? 0 : 1, y: exiting ? -12 : 0, scale: exiting ? 0.98 : 1 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        onAnimationComplete={() => {
-                            if (exiting && nextPin !== undefined) {
-                                setPin(nextPin);
-                            }
-                        }}
-                    >
+
                         <Logo src={logo}/>
                         {loading ? <Spinner /> : (
                             <>
                                 {error && <ErrorText>Wrong game pin. Try another pls?</ErrorText>}
-                                <TextInputField autoFocus={false} tabIndex={0} placeholder="Game pin" type={"number"} value={gamePin} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
-                                    if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined) && !exiting) {
-                                        setNextPin(gamePin);
-                                        setExiting(true);
+                                <TextInputField autoFocus={false} tabIndex={0} placeholder="Game pin" type={"number"} value={enteredGamePin} onChange={(e: { target: { value: String; }; }) => setEnteredGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
+                                    if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
+                                      setPin(enteredGamePin)
                                     }
                                 }}/>
-                                <PrimaryButtonLocal onClick={() => { if (!exiting) { setNextPin(gamePin); setExiting(true); }}}>PLAY</PrimaryButtonLocal>
-                                <Footer>or create a new game&nbsp;<div onClick={toCreatorMode} style={{ color: "#3b82f6", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
+                                <PrimaryButtonLocal onClick={() => setPin(enteredGamePin)}>PLAY</PrimaryButtonLocal>
+                                <Footer>or create a new game&nbsp;<div onClick={() => navigate('/home/login')} style={{ color: "#3b82f6", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
                             </>
                         )}
-                    </AnimatedPanel>
                 </Content>
             </div>
         </GamePinWrapper>
@@ -237,14 +251,6 @@ const GlowRight = styled.div`
     opacity: 0.6;
     background: radial-gradient(circle, rgba(236,72,153,0.22), transparent 60%);
     pointer-events: none;
-`;
-
-const AnimatedPanel = styled(motion.div)`
-    background: rgba(255,255,255,0.9);
-    border: 2px solid rgba(59,130,246,0.2);
-    box-shadow: 0 20px 40px rgba(59, 130, 246, 0.12);
-    border-radius: 20px;
-    padding: 30px 24px;
 `;
 
 export default GamePin;

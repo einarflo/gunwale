@@ -2,14 +2,14 @@
 import { useContext, useEffect, useRef, useState } from "react"
 import styled, { keyframes } from "styled-components"
 import { Question } from "../tv/game"
-import { GameWrapper, Header, Points, Username, MobileSpinner } from "./game"
+import { GameWrapper, MobileSpinner } from "./game"
 import OptionButton from "./option"
 import { Text } from "./result"
 import { MobileNav } from "../landing"
 import TopLeftLogo from "../components/TopLeftLogo"
 import TopRightPoints from "../components/TopRightPoints"
 import { selectableColors } from "./waiting"
-import { UserContext } from "../UserContext"
+import { GameContext } from "../GameContext"
 import one from '../images/upgrades/1.png';
 import two from '../images/upgrades/2.png';
 import three from '../images/upgrades/3.png';
@@ -24,8 +24,6 @@ interface AltsProps {
   points: number
   setPoints: (points: number) => void
   answered: () => void
-  gameInstanceId: String,
-  gameId: String,
   question: Question
   fif: boolean;
   buyfif: () => void
@@ -34,8 +32,9 @@ interface AltsProps {
   color: number;
 }
 
-const Alts = ({ points, setPoints, answered, gameId, gameInstanceId, question, fif, buyfif, stop, buyStop, color }: AltsProps) => {
-  const { username, userId } = useContext(UserContext);
+const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buyStop, color }: AltsProps) => {
+  const { gameInstancePlayerId, gameInstanceId, gameId } = useContext(GameContext);
+
   const [roundPoints, setRoundPoints] = useState(0);
   const [score, setScore] = useState(1000);
 
@@ -58,7 +57,7 @@ const Alts = ({ points, setPoints, answered, gameId, gameInstanceId, question, f
 
   // POST points to server 
   const setUserPoints = (points: number) => {
-    put(`/game_instance_players/${userId}/`, {
+    put(`/game_instance_players/${gameInstancePlayerId}/`, {
       score: points.toString(),
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
     .then(res => {
@@ -70,9 +69,9 @@ const Alts = ({ points, setPoints, answered, gameId, gameInstanceId, question, f
   }
 
   const pushAnswer = (points: number, answer: String, correct: boolean) => {
-    post(`/game_instance_answers/${userId}/`, {
+    post(`/game_instance_answers/${gameInstancePlayerId}/`, {
       game_instance_id: gameInstanceId,
-      game_instance_player_id: userId,
+      game_instance_player_id: gameInstancePlayerId,
       game_question_id: question.id,
       game_id: gameId,
       points: points.toString(),

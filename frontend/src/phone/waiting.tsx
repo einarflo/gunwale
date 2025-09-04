@@ -3,15 +3,15 @@ import styled from "styled-components";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { HeaderMobile, MobileHeader, MobileNav } from "../landing";
-import { UserContext } from "../UserContext";
+import { GameContext } from "../GameContext";
 import { get, put } from "../api";
 
 interface WaitingProps {
-  points: number
-  gameStarted: () => void
-  gamepin: String
-  setColorForUser: (no: number) => void
-  colorForUser: number
+  points: number;
+  gameStarted: () => void;
+  gamepin: string | undefined;
+  setColorForUser: (no: number) => void;
+  colorForUser: number;
 }
 
 export const selectableColors = [
@@ -22,7 +22,7 @@ export const selectableColors = [
 ]
 
 const Waiting = ({ points, gameStarted, gamepin, colorForUser, setColorForUser }: WaitingProps) => {
-  const { userId } = useContext(UserContext);
+  const { gameInstancePlayerId } = useContext(GameContext);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,9 +42,9 @@ const Waiting = ({ points, gameStarted, gamepin, colorForUser, setColorForUser }
 
   const setColor = (number: number) => {
     setColorForUser(number);
-    put(`/game_instance_players/${userId}/`, {
+    put(`/game_instance_players/${gameInstancePlayerId}/`, JSON.stringify({
       colour: number.toString(),
-    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+    }), { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
     .then(res => {
       console.log(res);
     })

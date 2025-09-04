@@ -2,18 +2,16 @@ import { useState } from "react";
 import Ads from "../components/Ads";
 import { post } from "../api";
 import { useKeycloak } from "../auth/KeycloakProvider";
+import { useNavigate } from "react-router-dom";
 
-interface NewGameProps {
-    userid: String,
-    cancel: () => void,
-    edit: (id: String) => void
-}
+const CreateGame = () => {
+    const { isPremium, userId } = useKeycloak();
 
-const NewGame = ({userid, cancel, edit}: NewGameProps) => {
+    const navigate = useNavigate();
+
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [error, seterror] = useState(false);
-    const { isPremium } = useKeycloak();
     const [headerImage, setHeaderImage] = useState<string | null>(null);
     const [isPublic, setIsPublic] = useState(false);
 
@@ -34,14 +32,14 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
       post(`/game/`, JSON.stringify({
         name: name,
         description: description,
-        created_by: userid,
+        created_by: userId,
         status: "created"
         //public: isPublic,
         //header_image: headerImage
       }), { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
         .then(res => {
           console.log(res);
-          edit(res.data)
+          navigate(`/home/edit/${res.data}`);
         })
         .catch(err => {
           console.log("Something fishy is going on");
@@ -99,7 +97,7 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
                     Opprett quiz
                   </button>
                   <button
-                    onClick={cancel}
+                    onClick={() => navigate('/home')}
                     className="rounded-xl bg-white px-8 py-3 text-lg text-gray-700 font-bold shadow hover:scale-105 transition-all border-2 border-gray-300"
                   >
                     Avbryt
@@ -121,4 +119,4 @@ const NewGame = ({userid, cancel, edit}: NewGameProps) => {
     );
 };
 
-export default NewGame;
+export default CreateGame;

@@ -10,7 +10,7 @@ export default function Authorizing() {
     // Wait for keycloak state to update
     const timer = setTimeout(() => {
       if (keycloak?.authenticated) {
-        navigate("/tv", { replace: true });
+        navigate("/home", { replace: true });
       } else {
         navigate("/", { replace: true });
       }

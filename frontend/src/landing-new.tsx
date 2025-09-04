@@ -24,7 +24,7 @@ interface LandingPageProps {
     setGamePin: (pin: string) => void
 }
 
-export default function TavlLanding({ signIn, playMode, setGamePin }: LandingPageProps) {
+export default function LandingPage({ signIn, playMode, setGamePin }: LandingPageProps) {
   const [selectedUpgrade, setSelectedUpgrade] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
 

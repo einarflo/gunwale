@@ -1,11 +1,11 @@
 import styled from "styled-components";
+import { useKeycloak } from "../auth/KeycloakProvider";
 
-interface ProfilePageProps {
-    username: String,
-    logout: () => void,
-}
 
-const ProfilePage = ({username, logout}: ProfilePageProps) => {
+const ProfilePage = () => {
+  const { username, logout } = useKeycloak();
+
+  // overview of user profile + logout button
     return (
         <>
         <Welcome>Hi, {username}!</Welcome>

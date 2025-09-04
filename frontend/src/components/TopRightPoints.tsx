@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { useContext } from 'react';
-import { UserContext } from '../UserContext';
+import { GameContext } from '../GameContext';
 
 interface TopRightProps {
     points: number;
@@ -8,10 +8,10 @@ interface TopRightProps {
 }
 
 const TopRightPoints = ({ points, color }: TopRightProps) => {
-    const { username } = useContext(UserContext);
+    const { nickname } = useContext(GameContext);
     return (
         <Wrapper hex={color}>
-            <Username>{username}</Username>
+            <Username>{nickname}</Username>
             <Points hex={color}>{points}</Points>
         </Wrapper>
     );
