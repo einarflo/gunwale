@@ -2,51 +2,100 @@ import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import TopLeftLogo from "../components/TopLeftLogo";
 import logo from '../images/tavl-logo.png';
+import { useNavigate, useParams } from "react-router-dom";
+import { get } from "../api";
 
 interface GamePinProps {
-    error: boolean,
-    loading: boolean,
-    setPin: (pin: string | undefined) => void,
-    toCreatorMode: () => void
+  setGameId: (id: string) => void;
+  setGameInstanceId: (id: string) => void;
+  setGamePin: (pin: string) => void;
 }
 
-const GamePin = ({ setPin, error, loading, toCreatorMode }: GamePinProps) => {
-    const [gamePin, setGamePin] = useState<string>("");
+const GamePin = ({ setGameId, setGameInstanceId, setGamePin }: GamePinProps) => {
+    // get gamePin from url params
+    const { gamePin } = useParams<{ gamePin: string }>();
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
-        var query = window.location.search.substring(1);
-        var vars = query.split("&");
-        for (var i=0;i<vars.length;i++) {
-            var pair = vars[i].split("=");
-            if(pair[0] === 'gameid'){
-                setGamePin(pair[1])
-            }
+        if (gamePin) {
+            setEnteredGamePin(gamePin);
         }
-    }, [])
+    }, [gamePin]);
 
-    return(
-    <GamePinWrapper>
-        <TopLeftLogo />
-        <Content>
-            
-            <Logo src={logo}/>
-            {
-                loading ? <Spinner /> :
-                <>
-                    {error && <ErrorText>Wrong game pin. Try another pls?</ErrorText>}
-                    <TextInputField autoFocus={false} tabIndex={0} placeholder="Game pin" type={"number"} value={gamePin} onChange={(e: { target: { value: String; }; }) => setGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
-                        if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
-                            setPin(gamePin)
-                        }
-                    }}/>
-                    <PrimaryButtonLocal onClick={() => setPin(gamePin)}>PLAY</PrimaryButtonLocal>
-                    <Footer>or create a new game&nbsp;<div onClick={toCreatorMode} style={{ color: "#9084FA", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
-                </>
-            }
-            
-        </Content>
-        
-    </GamePinWrapper>)
+  const setPin = (pin: string | undefined) => {
+    if (pin && pin.length > 0 && pin !== '0') {
+      setLoading(true);
+      get(`/game_instance/${pin}/`)
+        .then(res => {
+          if (res.data && res.data['status'] === 'created') {
+            setGameId(res.data['game_id']);
+            setGameInstanceId(res.data['id']);
+            setGamePin(pin);
+            setError(false);
+            setLoading(false);
+            navigate('/username');
+          } else {
+            setError(true);
+            setLoading(false);
+          }
+        })
+        .catch(err => {
+          console.log(err);
+          setLoading(false);
+        });
+    } else {
+      setError(true);
+    }
+  };
+
+    const [enteredGamePin, setEnteredGamePin] = useState<string>("");
+
+    const navigate = useNavigate();
+
+    return (
+        <GamePinWrapper>
+            <BackgroundLayer />
+            <GlowLeft />
+            <GlowRight />
+            <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+                <TopLeftLogo />
+                <button
+                    style={{
+                        position: "absolute",
+                        left: 32,
+                        top: 32,
+                        background: "none",
+                        border: "none",
+                        color: "#3b82f6",
+                        fontSize: "1.1rem",
+                        cursor: "pointer",
+                        zIndex: 20
+                    }}
+                    onClick={() => navigate('/')}
+                >
+                    ← Back
+                </button>
+                <Content>
+
+                        <Logo src={logo}/>
+                        {loading ? <Spinner /> : (
+                            <>
+                                {error && <ErrorText>Wrong game pin. Try another pls?</ErrorText>}
+                                <TextInputField autoFocus={false} tabIndex={0} placeholder="Game pin" type={"number"} value={enteredGamePin} onChange={(e: { target: { value: String; }; }) => setEnteredGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
+                                    if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
+                                      setPin(enteredGamePin)
+                                    }
+                                }}/>
+                                <PrimaryButtonLocal onClick={() => setPin(enteredGamePin)}>PLAY</PrimaryButtonLocal>
+                                <Footer>or create a new game&nbsp;<div onClick={() => navigate('/home/login')} style={{ color: "#3b82f6", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
+                            </>
+                        )}
+                </Content>
+            </div>
+        </GamePinWrapper>
+    );
 }
 
 const GamePinWrapper = styled.div`
@@ -97,18 +146,22 @@ export const TextInputField = styled.input`
     font-size: 1.5rem;
     line-height: 1.5;
     background-clip: padding-box;
-    
-        
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    background: #ffffff;
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s, transform .15s ease-in-out;
     max-width: 500px;
     margin: auto;
-    border: 0px solid rgb(28,0,65);
-    border-bottom: 1px solid #9F9F9F;
-    color: #9F9F9F;
+    border: 2px solid #e5e7eb;
+    color: #374151;
     margin-bottom: 20px;
     margin-top: 50px;
-    border-radius: 3px;
+    border-radius: 14px;
     width: -webkit-fill-available;
+    &:focus {
+        outline: none;
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 6px rgba(147, 197, 253, 0.25);
+        transform: translateY(-1px);
+    }
 `;
 
 export const PrimaryButtonLocal = styled.div`
@@ -117,20 +170,23 @@ export const PrimaryButtonLocal = styled.div`
     display: block;
     width: 80%;
     padding: .375rem .75rem;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     line-height: 1.5;
-    color: white;
+    color: #ffffff;
     background-clip: padding-box;
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    transition: transform .15s ease-in-out, box-shadow .15s ease-in-out, background .2s ease-in-out;
     max-width: 500px;
     margin: auto;
     margin-bottom: 30px;
     margin-top: 40px;
-      
-    background: #9C8AFA;
-       
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
     cursor: pointer;
-    border-radius: 15px;
+    border-radius: 14px;
+    box-shadow: 0 12px 24px rgba(59, 130, 246, 0.25);
+    &:hover {
+        transform: translateY(-1px) scale(1.01);
+        box-shadow: 0 16px 32px rgba(59, 130, 246, 0.3);
+    }
 `;
 
 export const Footer = styled.div`
@@ -158,11 +214,43 @@ height: 50px;
 margin-left: auto;
 margin-right: auto;
 left: 50%;
-border: 3px solid rgba(255,255,255,.3);
+border: 3px solid rgba(59,130,246,.25);
 border-radius: 50%;
-border-top-color: #fff;
+border-top-color: #3b82f6;
 animation: spin 1s ease-in-out infinite;
 -webkit-animation: ${rotate} 1s ease-in-out infinite;
+`;
+
+const BackgroundLayer = styled.div`
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #ffffff, #f5f7ff);
+`;
+
+const GlowLeft = styled.div`
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 60vw;
+    height: 60vw;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.7;
+    background: radial-gradient(circle, rgba(59,130,246,0.25), transparent 60%);
+    pointer-events: none;
+`;
+
+const GlowRight = styled.div`
+    position: absolute;
+    bottom: -15%;
+    right: -10%;
+    width: 55vw;
+    height: 55vw;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.6;
+    background: radial-gradient(circle, rgba(236,72,153,0.22), transparent 60%);
+    pointer-events: none;
 `;
 
 export default GamePin;

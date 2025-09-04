@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { get, put } from "../api";
-
-interface EditQuestionProps {
-  questionId: String;
-  gameId: String | undefined;
-  cancel: () => void;
-  edit: (id: String) => void;
-}
+import { useNavigate, useParams } from "react-router-dom";
 
 export interface GameItem {
   name: String;
@@ -16,12 +10,16 @@ export interface GameItem {
   status: String;
 }
 
-const EditQuestion = ({ gameId, questionId, cancel, edit }: EditQuestionProps) => {
+const EditQuestion = () => {
   const [text, setText] = useState("");
   const [description, setDescription] = useState("");
   const [alternatives, setAlternatives] = useState(["", "", "", ""]);
   const [correctAlternative, setCorrectAlternative] = useState<String>();
   const [error, setError] = useState(false);
+
+  const { gameId, questionId } = useParams<{ gameId: string, questionId: string }>();
+  
+  const navigate = useNavigate();
 
 
   useEffect(() => {
@@ -44,7 +42,7 @@ const EditQuestion = ({ gameId, questionId, cancel, edit }: EditQuestionProps) =
       })
       .then((res) => {
         console.log(res);
-        edit(gameId || "");
+        navigate('/home/edit/' + gameId);
       })
       .catch((err) => {
         console.log("Something fishy is going on");
@@ -58,7 +56,7 @@ const EditQuestion = ({ gameId, questionId, cancel, edit }: EditQuestionProps) =
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
       .then(res => {
         console.log(res);
-        edit(gameId || "");
+        navigate('/home/edit/' + gameId);
       })
       .catch(err => {
         console.log("Something fishy is going on");
@@ -114,7 +112,7 @@ const EditQuestion = ({ gameId, questionId, cancel, edit }: EditQuestionProps) =
         <Actions>
             <Create onClick={() =>
               updateQuestion()}>Save</Create>
-            <Cancel onClick={() => edit(gameId || "")}>Cancel</Cancel>
+            <Cancel onClick={() => navigate('/home/edit' + gameId)}>Cancel</Cancel>
             <Delete onClick={() => deleteQuestion()}>Delete</Delete>
           </Actions>
         {error && <ErrorMessage>Something went wrong, please try again!</ErrorMessage>}
@@ -123,11 +121,6 @@ const EditQuestion = ({ gameId, questionId, cancel, edit }: EditQuestionProps) =
 };
 
 export default EditQuestion;
-
-const Container = styled.div`
-  display: flex;
-  margin: 10px;
-`;
 
 const Recent = styled.div`
   font-size: 1.5rem;
@@ -179,19 +172,6 @@ const Heading = styled.div`
   padding-bottom: 0px;
   font-family: "Coll";
 `;
-
-const Form = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #f8f8f8;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-  margin: 16px;
-  height: 100%;
-`;
-
 
 const TextInput = styled.input`
   background: #ffffff;

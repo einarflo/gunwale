@@ -1,136 +1,122 @@
 import { useState } from "react";
-import styled from "styled-components";
+import Ads from "../components/Ads";
 import { post } from "../api";
 import { useKeycloak } from "../auth/KeycloakProvider";
-import Ads from "../components/Ads";
+import { useNavigate } from "react-router-dom";
 
-interface NewGameProps {
-    userid: String,
-    cancel: () => void,
-    edit: (id: String) => void
-}
+const CreateGame = () => {
+    const { isPremium, userId } = useKeycloak();
 
-const NewGame = ({userid, cancel, edit}: NewGameProps) => {
+    const navigate = useNavigate();
+
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [error, seterror] = useState(false);
-    const { isPremium } = useKeycloak();
+    const [headerImage, setHeaderImage] = useState<string | null>(null);
+    const [isPublic, setIsPublic] = useState(false);
 
-     // Insert player in DB and set username
-  const insertQuestion = (name: String, description: String) => {
-    post(`/game/`, {
-      name: name,
-      description: description,
-      created_by: userid,
-      status: "created"
-    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
-      .then(res => {
-        console.log(res);
-        edit(res.data)
-      })
-      .catch(err => {
-        console.log("Something fishy is going on");
-        seterror(true);
-      });
-  }
+    // Handle image upload
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setHeaderImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    // Insert game into database
+    const insertGame = (name: String, description: String) => {
+      post(`/game/`, JSON.stringify({
+        name: name,
+        description: description,
+        created_by: userId,
+        status: "created"
+        //public: isPublic,
+        //header_image: headerImage
+      }), { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+        .then(res => {
+          console.log(res);
+          navigate(`/home/edit/${res.data}`);
+        })
+        .catch(err => {
+          console.log("Something fishy is going on");
+          seterror(true);
+        });
+    }
 
     return (
         <>
-        
-        <Heading>Create a new quiz</Heading>
-            <NameInput placeholder="Name" onChange={(e) => setName(e.target.value)} />
-            <DescriptionInput placeholder="Description" onChange={(e) => setDescription(e.target.value)} />
-          <Actions>
-            <Create onClick={() => insertQuestion(name, description)}>Create quiz</Create>
-            <Cancel onClick={cancel}>Cancel</Cancel>
-            { error && "Something went wrong, please try again!" }
-          </Actions>
-          { !isPremium && <Ads /> }
-          </>
+        <div className="fixed inset-0 z-0 " />
+        <div className="relative z-10 flex justify-center pt-10 min-h-screen">
+          <div className="w-full max-w-7xl px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Venstre kolonne: navn/beskrivelse + bilde */}
+              <div className="flex flex-col gap-8">
+                <div className="rounded-2xl bg-white/90 shadow p-6 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
+                  <div className="font-bold text-lg text-blue-700 mb-2">Quiznavn og beskrivelse</div>
+                  <label className="block font-semibold text-blue-700 mb-1">Navn på quiz</label>
+                  <input
+                    className="w-full mb-3 px-5 py-3 rounded-xl border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg bg-white/80 shadow"
+                    placeholder="Skriv inn et navn..."
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                  />
+                  <label className="block font-semibold text-purple-700 mb-1">Beskrivelse</label>
+                  <input
+                    className="w-full mb-1 px-5 py-3 rounded-xl border-2 border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 text-lg bg-white/80 shadow"
+                    placeholder="Kort beskrivelse (valgfritt)"
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                  />
+                  <div className="text-xs text-gray-500 mt-1">Navn og beskrivelse vises til spillerne.</div>
+                </div>
+                <div className="rounded-2xl bg-white/90 shadow p-6 flex items-center gap-4 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
+                  <label className="font-bold text-lg text-gray-700 flex items-center gap-2">Offentlig quiz
+                    <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} className="ml-2 w-5 h-5" />
+                  </label>
+                  <div className="text-xs text-gray-500">Hvis aktivert, kan alle finne og spille quizen.</div>
+                </div>
+              </div>
+              {/* Høyre kolonne: offentlig + actions + ads */}
+              <div className="flex flex-col gap-8 h-full justify-between">
+                <div className="rounded-2xl bg-white/90 shadow p-6 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
+                  <div className="font-bold text-lg text-gray-700 mb-2">Header-bilde</div>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="mb-2" />
+                  {headerImage && <img src={headerImage} alt="Header" className="rounded-xl w-full max-h-32 object-cover mb-2" />}
+                  <div className="text-xs text-gray-500">Vises øverst på quiz-siden.</div>
+                </div>
+                
+                <div className="rounded-2xl bg-white/90 shadow p-6 flex gap-4 items-center justify-between bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
+                  <button
+                    onClick={() => insertGame(name, description)}
+                    className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-8 py-3 text-lg text-white font-bold shadow-lg hover:scale-105 transition-all focus:ring-4 focus:ring-blue-200"
+                  >
+                    Opprett quiz
+                  </button>
+                  <button
+                    onClick={() => navigate('/home')}
+                    className="rounded-xl bg-white px-8 py-3 text-lg text-gray-700 font-bold shadow hover:scale-105 transition-all border-2 border-gray-300"
+                  >
+                    Avbryt
+                  </button>
+                  {error && <div className="text-red-500 font-semibold ml-4">Noe gikk galt, prøv igjen!</div>}
+                </div>
+              </div>
+            </div>
+            { !isPremium && <div className="rounded-2xl justify-center align-center bg-white/90 shadow p-6 mt-10">
+            <div className="font-bold text-lg w-full justfy-center text-gray-300 m-4">
+              Google Ads
+            </div>
+              {/*<Ads />*/}
+            
+            </div>}
+          </div>
+        </div>
+        </>
     );
 };
 
-export default NewGame;
-
-const NameInput = styled.input`
-background: #ffffff;
-border: 2px solid #2d3870;
-margin: 31px;
-border-radius: 5px;
-padding: 8px;
-width: 600px;
-height: 30px;
-color: #2d3870;
-display: flex;
-align-items: center;
-justify-content: center;
-font-family: "Coll";
-font-size: 1rem;
-`;
-
-const DescriptionInput = styled.input`
-background: #ffffff;
-border: 2px solid #2d3870;
-margin: 31px;
-border-radius: 5px;
-padding: 8px;
-width: 600px;
-height: 30px;
-color: #2d3870;
-display: flex;
-align-items: center;
-justify-content: center;
-font-family: "Coll";
-font-size: 1rem;
-`;
-
-const Heading = styled.div`
-  font-size: 2.5rem;
-  #font-weight: bold;
-  color: #05212f;
-  font-family: sans-serif;
-  padding: 31px;
-  font-family: "Coll";
-`;
-
-const Actions = styled.div`
-  display: flex;
-  padding: 31px;
-  padding-top: 5px;
-  padding-bottom: 31px;
-`;
-
-const Create = styled.div`
-  background: #2d3870;
-  margin: 0px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  height: 30px;
-  font-weight: bold;
-cursor: pointer;
-  color: white;
-  border: 2px solid #2d3870;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 20px;
-`;
-
-const Cancel = styled.div`
-  background: #ffffff;
-  border: 2px solid #2d3870;
-  margin: 0px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  height: 30px;
-  font-weight: bold;
-  cursor: pointer;
-  color: #2d3870;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+export default CreateGame;

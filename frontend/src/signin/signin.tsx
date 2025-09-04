@@ -37,10 +37,7 @@ const Signin = ({ toGameMode, setLoggedInUser }: SiginProps) => {
     });
   };
 
-  //select color - maybe 5 circles?
-  // diffent power ups for each color, maybe some sort of name?
 
-  // Should be an upgrade getting black with gold letters
 
   return (
     <LoginWrapper>

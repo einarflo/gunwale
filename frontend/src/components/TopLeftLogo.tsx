@@ -1,23 +1,14 @@
 import styled from 'styled-components';
 import logo from '../images/tavl-logo.png';
-import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserContext } from '../UserContext';
+import { useKeycloak } from '../auth/KeycloakProvider';
 
 const TopLeftLogo = () => {
-    const { username } = useContext(UserContext);
+    const { isAuthenticated } = useKeycloak();
     const navigate = useNavigate();
 
-    const goHome = () => {
-        if (username) {
-            navigate('/tv');
-        } else {
-            navigate('/');
-        }
-    };
-
     return (
-        <Logo src={logo} onClick={goHome}/>
+        <Logo src={logo} onClick={() => navigate(isAuthenticated ? '/home' : '/')}/>
     );
 };
 

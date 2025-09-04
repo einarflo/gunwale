@@ -40,7 +40,7 @@ const GamePlayers = ({ gameInstanceId, startGame, gamePin, stopGame}: GamePlayer
             <QRCode 
               size={512} 
               style={{ height: "auto", maxWidth: "200px", width: "200px", border: '6px solid white', borderRadius: '4px' }}
-              value={'https://www.dogetek.no/tavl/?gameid='+ gamePin}
+              value={'https://ovh.tavl.no/join/' + gamePin}
               viewBox={`0 0 512 512`}
             />
             </QR>

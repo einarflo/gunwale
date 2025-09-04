@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { get, put } from "../api";
+import { useNavigate, useParams } from "react-router-dom";
 
-interface UpdateGameProps {
-    gameId: String | undefined
-    edit: (id: String) => void
-}
 
-const UpdateGame = ({gameId = "", edit}: UpdateGameProps) => {
+const UpdateGame = () => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [error, seterror] = useState(false);
+
+
+    const { gameId } = useParams<{ gameId: string }>();
+      
+      const navigate = useNavigate();
 
      // Insert player in DB and set username
   const updateGame = (name: String, description: String) => {
@@ -20,7 +22,7 @@ const UpdateGame = ({gameId = "", edit}: UpdateGameProps) => {
     }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
       .then(res => {
         console.log(res);
-        edit(gameId)
+        navigate('/home/edit/' + gameId);
       })
       .catch(err => {
         console.log("Something fishy is going on");
@@ -52,7 +54,7 @@ const UpdateGame = ({gameId = "", edit}: UpdateGameProps) => {
             <DescriptionInput placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
           <Actions>
             <Create onClick={() => updateGame(name, description)}>Update</Create>
-            <Cancel onClick={() => edit(gameId)}>Cancel</Cancel>
+            <Cancel onClick={() => navigate('/home/edit/' + gameId)}>Cancel</Cancel>
             { error && "Something went wrong, please try again!" }
           </Actions>
           </>

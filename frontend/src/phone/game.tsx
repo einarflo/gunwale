@@ -9,20 +9,13 @@ import Waiting, { selectableColors } from "./waiting";
 import { MobileNav } from "../landing";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
-import { UserContext } from "../UserContext";
+import { GameContext } from "../GameContext";
 import { get } from "../api";
 //import Waiting from "./waiting";
 import { useWakeLock } from 'react-screen-wake-lock';
 
-interface Game {
-    gameId: String,
-    gamePin: String,
-    gameInstanceId: String,
-    logout: () => void
-}
-
-const PhoneGameView = ({ gameId, gamePin, gameInstanceId, logout }: Game) => {
-  const { username, userId } = useContext(UserContext);
+const PhoneGameView = () => {
+  const { gameId, gamePin } = useContext(GameContext);
 
   // Maybe get user from session storage? and some way to reset it
   const [points, setPoints] = useState(0);
@@ -38,7 +31,7 @@ const PhoneGameView = ({ gameId, gamePin, gameInstanceId, logout }: Game) => {
 
   const [colorForUser, setColorForUser] = useState(0);
 
-  const { isSupported, released, request, release } = useWakeLock({
+  const { request, release } = useWakeLock({
 
     // TODO: Some indication to the user?
 
@@ -63,10 +56,12 @@ const PhoneGameView = ({ gameId, gamePin, gameInstanceId, logout }: Game) => {
   }
 
   useEffect(() => {
+    if (!gameId) return;
     getQuestionsForGameId(gameId);
 
     // request wake lock
     request();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
 
   const setAnswer = () => {
@@ -90,6 +85,12 @@ const PhoneGameView = ({ gameId, gamePin, gameInstanceId, logout }: Game) => {
     // Bette poeng? eller Geare poenge? eller kjøpe flere poeng (f. eks 10% ekstra poeng)
     // KJøpe lotto, og ha trekning på skjermen: Tall mellom 1-15 kanskje 1000 poeng i premie 
 
+    // second chance
+
+    // stjele poeng fra en annen spiller
+
+    // uno reverse 
+
 
     // Waiting for game to start
   if (!gameStarted) {
@@ -105,11 +106,11 @@ const PhoneGameView = ({ gameId, gamePin, gameInstanceId, logout }: Game) => {
 
   // Show the questions alternatives and if the answer is correct
   if (!answered && !gameEnded) {
-    return <Alts question={questions[currentQ]} points={points} setPoints={(p) => setPoints(p)} answered={setAnswer} gameId={gameId} gameInstanceId={gameInstanceId} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)} stop={stop} buyStop={() => setStoptime(false)} color={colorForUser}/>
+    return <Alts question={questions[currentQ]} points={points} setPoints={(p) => setPoints(p)} answered={setAnswer} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)} stop={stop} buyStop={() => setStoptime(false)} color={colorForUser}/>
   }
 
   if (answered && !gameEnded) {
-    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} gamepin={gamePin} gameFinished={() => {setGameEnded(true); release()}} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser}/>
+    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} gameFinished={() => {setGameEnded(true); release()}} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser}/>
   }
 
   return(

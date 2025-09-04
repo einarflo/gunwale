@@ -1,16 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { SocketProvider } from './context/SocketContext';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { get, post } from './api';
-import Status from './components/Status';
 
-import LandingPage from './landing';
 import GamePin from './signin/gamepin';
 import Username from './signin/username';
 import PhoneGameView from './phone/game';
 import TVView from './tv/selectGame';
-import { UserContext } from './UserContext';
+import { GameContext } from './GameContext';
 import { useKeycloak } from './auth/KeycloakProvider';
+import LandingPage from './landing-new';
+import Authorizing from './components/Authorizing';
+import Home from './tv/home';
+import CreateGame from './tv/createGame';
+import EditGame from './tv/editGame';
+import EditQuestion from './tv/editQuestion';
+import UpdateGame from './tv/updateGameName';
+import ProfilePage from './tv/profilePage';
 
 const appHeight = () => {
   const doc = document.documentElement
@@ -22,137 +27,81 @@ const appHeight = () => {
 const App = () => {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const gameid = params.get('gameid');
-    if (gameid) {
-      setGamePin(gameid);
-      navigate('/game');
-    }
-  }, [navigate]);
-
-  const [username, setUsername] = useState<string | undefined>();
-  const [userId, setUserId] = useState<string | undefined>();
+  // Global state - used in GameContext
+  const [nickname, setNickname] = useState<string | undefined>();
+  const [gameInstancePlayerId, setGameInstancePlayerId] = useState<string | undefined>();
   const [gamePin, setGamePin] = useState<string | undefined>();
   const [gameId, setGameId] = useState<string | undefined>();
   const [gameInstanceId, setGameInstanceId] = useState<string | undefined>();
 
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
-
   const { keycloak, login, logout } = useKeycloak();
 
-  const setUser = (name: string, pin: string) => {
-    setLoading(true);
-    if (name && name.length > 1) {
-      get(`/game_instance_players/${pin}/?checkUser=true`)
-        .then(res => {
-          if (res.data) {
-            if (res.data.find((player: GameInstancePlayer) => player.username === name)) {
-              setError(true);
-              setLoading(false);
-            } else {
-              setError(false);
-              insertPlayer(name);
-            }
-          }
-        })
-        .catch(err => {
-          console.log(err);
-          setLoading(false);
-        });
-    } else {
-      setError(true);
-      setLoading(false);
-    }
-  };
-
-  const insertPlayer = (name: string) => {
-    post(
-      `/game_instance_players/`,
-      {
-        game_id: gameId,
-        game_instance_id: gameInstanceId,
-        username: name,
-        score: '0'
-      },
-      { headers: { 'content-type': 'application/x-www-form-urlencoded' } }
-    )
-      .then(res => {
-        setUserId(res.data);
-        setUsername(name);
-        setLoading(false);
-        navigate('/play');
-      })
-      .catch(() => {
-        console.log('Something fishy is going on');
-        setLoading(false);
-      });
-  };
-
-  const setPin = (pin: string | undefined) => {
-    if (pin && pin.length > 0 && pin !== '0') {
-      setLoading(true);
-      get(`/game_instance/${pin}/`)
-        .then(res => {
-          if (res.data && res.data['status'] === 'created') {
-            setGameId(res.data['game_id']);
-            setGameInstanceId(res.data['id']);
-            setGamePin(pin);
-            setError(false);
-            setLoading(false);
-            navigate('/username');
-          } else {
-            setError(true);
-            setLoading(false);
-          }
-        })
-        .catch(err => {
-          console.log(err);
-          setLoading(false);
-        });
-    } else {
-      setError(true);
-    }
+  const exitGame = () => {
+    setNickname(undefined);
+    setGameInstancePlayerId(undefined);
+    setGamePin(undefined);
+    setGameId(undefined);
+    setGameInstanceId(undefined);
+    navigate('/');
   };
 
   return (
     <SocketProvider>
-    <Status loading={loading} error={error} />
+    <GameContext.Provider
+      value={{
+        nickname,
+        gameInstancePlayerId,
+        gamePin,
+        gameId,
+        gameInstanceId,
+        exitGame: exitGame as () => void
+      }}
+    >
     <Routes>
+      <Route path="/authorizing" element={<Authorizing />} />
       <Route
         path="/"
         element={
           <LandingPage
-            signIn={() => keycloak?.authenticated ? navigate('/tv') : login()}
-            playMode={() => navigate('/game')}
+            signIn={() => {
+              if (keycloak?.authenticated) {
+                navigate('/home');
+              } else {
+                login();
+              }
+            }}
+            playMode={() => navigate('/join')}
+            setGamePin={() => {}}
           />
         }
       />
+      <Route path="/home" element={
+        keycloak?.authenticated ? (
+          <TVView
+            username={keycloak.tokenParsed?.preferred_username || ''}
+            logout={() => {
+              logout();
+              navigate('/');
+            }}
+          />
+        ) : (
+          <Navigate to="/" replace />
+        )
+      }>
+        <Route index element={<Home edit={() => {}} startGame={() => {}} />} />
+        <Route path="create" element={<CreateGame />} />
+        <Route path="edit/:gameId" element={<EditGame />} />
+        <Route path="edit/:gameId/question/:questionId" element={<EditQuestion />} />
+        <Route path="update/:gameId" element={<UpdateGame />} />
+        <Route path="profile" element={<ProfilePage />} />
+      </Route>
       <Route
-        path="/tv"
-        element={
-          keycloak?.authenticated ? (
-            <TVView
-              username={keycloak.tokenParsed?.preferred_username || ''}
-              logout={() => {
-                logout();
-                navigate('/');
-              }}
-            />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/game"
+        path="/join/:gamePin?"
         element={
           <GamePin
-            error={error}
-            loading={loading}
-            setPin={setPin}
-            toCreatorMode={() => navigate('/tv/login')}
+            setGamePin={setGamePin}
+            setGameId={setGameId}
+            setGameInstanceId={setGameInstanceId}
           />
         }
       />
@@ -161,46 +110,27 @@ const App = () => {
         element={
           gameId && gameInstanceId && gamePin ? (
             <Username
-              error={error}
-              loading={loading}
-              setName={user => setUser(user || '', gamePin)}
+              setNickname={setNickname}
+              setGameInstancePlayerId={setGameInstancePlayerId}
             />
           ) : (
-            <Navigate to="/game" replace />
+            <Navigate to="/join" replace />
           )
         }
       />
       <Route
         path="/play"
         element={
-          username && userId && gameId && gameInstanceId && gamePin ? (
-            <UserContext.Provider
-              value={{
-                username,
-                userId,
-                setUsername: setUsername as (name?: string) => void,
-                setUserId: setUserId as (id?: string) => void
-              }}
-            >
-              <PhoneGameView
-                gameId={gameId}
-                gamePin={gamePin}
-                gameInstanceId={gameInstanceId}
-                logout={() => {
-                  setUsername(undefined);
-                  setUserId(undefined);
-                  setGamePin(undefined);
-                  navigate('/');
-                }}
-              />
-            </UserContext.Provider>
+          nickname && gameInstancePlayerId && gameId && gameInstanceId && gamePin ? (
+              <PhoneGameView />
           ) : (
-            <Navigate to="/game" replace />
+            <Navigate to="/" replace />
           )
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </GameContext.Provider>
     </SocketProvider>
   );
 };

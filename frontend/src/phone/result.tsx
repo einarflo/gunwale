@@ -1,12 +1,12 @@
 import moment from "moment";
 import { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import { GameWrapper, Header, MobileSpinner, Points, Username } from "./game";
+import { GameWrapper, MobileSpinner } from "./game";
 import { ItemImage, ItemImageMobile, MobileNav } from "../landing";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { selectableColors } from "./waiting";
-import { UserContext } from "../UserContext";
+import { GameContext } from "../GameContext";
 import { get } from "../api";
 import one from '../images/upgrades/1.png';
 import two from '../images/upgrades/2.png';
@@ -22,7 +22,6 @@ interface ResultProps {
   points: number
   nextQuestionStarted: () => void
   gameFinished: () => void
-  gamepin: String
   fif: boolean;
   buyfif: () => void
   setPoints: (points: number) => void
@@ -31,8 +30,8 @@ interface ResultProps {
   color: number;
 }
 
-const Result = ({ currentQ, points, nextQuestionStarted, gamepin, gameFinished, fif, buyfif, setPoints, buyStop, stop, color }: ResultProps) => {
-  const { username } = useContext(UserContext);
+const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyfif, setPoints, buyStop, stop, color }: ResultProps) => {
+  const { gamePin } = useContext(GameContext);
   
   const [getReady, setGetReady] = useState(false);
 
@@ -62,7 +61,7 @@ const Result = ({ currentQ, points, nextQuestionStarted, gamepin, gameFinished, 
 
   useEffect(() => {
     const interval = setInterval(() => {
-      get(`/game_instance/${gamepin}/?hash=${Math.random() * 21991919393914999419}`)
+      get(`/game_instance/${gamePin}/?hash=${Math.random() * 21991919393914999419}`)
       .then(res => {
         if (res.data["status"] === 'started') {
           if (res.data["currentquestion"] === currentQ.toString()) {
@@ -85,7 +84,7 @@ const Result = ({ currentQ, points, nextQuestionStarted, gamepin, gameFinished, 
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [countdown, currentQ, gameFinished, gamepin]);
+  }, [countdown, currentQ, gameFinished, gamePin]);
 
 
 

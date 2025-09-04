@@ -10,7 +10,7 @@ api.interceptors.request.use(config => {
     config.headers = {
       ...config.headers,
       Authorization: `Bearer ${keycloak.token}`
-    };
+    } as any;
   }
   return config;
 });
