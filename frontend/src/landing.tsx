@@ -14,6 +14,30 @@ import seven from './images/upgrades/7.png';
 import eight from './images/upgrades/8.png';
 import WhiteButton from './components/WhiteButton';
 
+const gradient = keyframes`
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+`;
+
+const fadeUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+
 interface SiginProps {
     signIn: () => void
     playMode: () => void
@@ -264,7 +288,9 @@ export const MobileHeader = styled.div`
 `;
 
 const BlueWrapper = styled.div`
-  background-image: linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%);
+  background: linear-gradient(135deg, #6A71FA 0%, #9C8AFA 50%, #6A71FA 100%);
+  background-size: 200% 200%;
+  animation: ${gradient} 10s ease infinite;
   width: 100%;
 `;
 
@@ -343,6 +369,7 @@ const pulse = keyframes`
   }
 `;
 
+
 const UpgradeItemMobile = styled.div`
     display: flex;
     padding-left: 30px;
@@ -387,6 +414,7 @@ const ContentLeft = styled.div`
     transform: translate(-50%, -50%);
     min-width: 300px;
     max-width: 80vw;
+    animation: ${fadeUp} 1s ease forwards;
     @media (max-width: 1160px) {
       left: 50%;
     }
@@ -399,6 +427,7 @@ const ContentRight = styled.div`
     transform: translate(-50%, -50%);
     min-width: 300px;
     max-width: 80vw;
+    animation: ${fadeUp} 1s ease forwards;
     @media (max-width: 1160px) {
       display: none;
       left: 50%;
@@ -416,7 +445,9 @@ const LeftSide = styled.div`
 
 const RightSide = styled.div`
   width: 50%;
-  #background-image: linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%);
+  background: linear-gradient(135deg, #6A71FA 0%, #9C8AFA 50%, #6A71FA 100%);
+  background-size: 200% 200%;
+  animation: ${gradient} 10s ease infinite;
   @media (max-width: 1160px) {
     display: none;
     width: 100;
