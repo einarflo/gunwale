@@ -25,6 +25,7 @@ const Home = ({ userid, username, games, newGame, discover, loading, startGame, 
 
   const [watingForCreateGame, setWaitingForCreateGame] = useState(false);
   const [newGamePin, setNewGamePin] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const createNewGameInstance = (gameId: String, gamePin: String) => {
     setWaitingForCreateGame(true);
@@ -49,6 +50,13 @@ const Home = ({ userid, username, games, newGame, discover, loading, startGame, 
 
   }
 
+  // Example: games with favorite/popular flags (replace with real data)
+  const favoriteGames = games?.filter(game => game.favorite);
+  const popularGames = games?.filter(game => game.popular);
+  const filteredGames = games?.filter(game =>
+    game.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
     return (
     <>
       <GlobalStyles />
@@ -67,10 +75,60 @@ const Home = ({ userid, username, games, newGame, discover, loading, startGame, 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div className="text-3xl font-bold text-gray-800">Velkommen, {username}!</div>
             <div className="flex gap-4 mt-4 md:mt-0">
-              <button onClick={newGame} className="rounded-xl border-2 border-blue-300 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-all font-medium">Ny quiz</button>
-              <button onClick={discover} className="rounded-xl border-2 border-purple-300 px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 transition-all font-medium">Oppdag</button>
+              <button
+                onClick={newGame}
+                className="rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-8 py-3 text-lg text-white font-extrabold shadow-xl hover:scale-105 transition-all border-2 border-blue-400 focus:ring-4 focus:ring-blue-200 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                New quiz
+              </button>
+              <button
+                onClick={discover}
+                className="rounded-xl bg-gradient-to-r from-blue-400 via-pink-400 to-purple-500 px-6 py-3 text-lg text-white font-bold shadow-lg hover:scale-105 transition-all border-2 border-blue-400 focus:ring-4 focus:ring-purple-200 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                Discover
+              </button>
             </div>
           </div>
+          <div className="text-xl font-semibold text-gray-700 mb-4">Søk</div>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Søk etter quiz..."
+            className="w-full mb-6 px-4 py-2 rounded-xl border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
+          />
+          {favoriteGames && favoriteGames.length > 0 && (
+            <>
+              <div className="text-xl font-semibold text-purple-700 mb-2 mt-4">Favoritter</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                {favoriteGames.map(game => (
+                  <div key={String(game.id)} className="glass rounded-xl p-6 shadow bg-purple-50 hover:shadow-lg transition cursor-pointer border-2 border-purple-300" onClick={() => {setSelectedGameId(game.id); setModalIsOpen(true)}}>
+                    <div className="text-lg font-bold text-purple-700 mb-2">{game.name}</div>
+                    <div className="text-sm text-gray-500 mb-1">{game.qcount} spørsmål</div>
+                    <div className="text-sm text-gray-500 mb-2">Av {game.username}</div>
+                    <button className="rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => {e.stopPropagation(); edit(game.id);}}>Rediger</button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {popularGames && popularGames.length > 0 && (
+            <>
+              <div className="text-xl font-semibold text-yellow-700 mb-2 mt-4">Populære</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                {popularGames.map(game => (
+                  <div key={String(game.id)} className="glass rounded-xl p-6 shadow bg-yellow-50 hover:shadow-lg transition cursor-pointer border-2 border-yellow-300" onClick={() => {setSelectedGameId(game.id); setModalIsOpen(true)}}>
+                    <div className="text-lg font-bold text-yellow-700 mb-2">{game.name}</div>
+                    <div className="text-sm text-gray-500 mb-1">{game.qcount} spørsmål</div>
+                    <div className="text-sm text-gray-500 mb-2">Av {game.username}</div>
+                    <button className="rounded-lg bg-gradient-to-r from-yellow-400 to-pink-400 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => {e.stopPropagation(); edit(game.id);}}>Rediger</button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           <div className="text-xl font-semibold text-gray-700 mb-4">Dine spill</div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
@@ -78,7 +136,7 @@ const Home = ({ userid, username, games, newGame, discover, loading, startGame, 
             ) : error ? (
               <div className="text-red-500">En feil oppstod</div>
             ) : (
-              games?.map(game => (
+              filteredGames?.map(game => (
                 <div key={String(game.id)} className="glass rounded-xl p-6 shadow bg-white hover:shadow-lg transition cursor-pointer" onClick={() => {setSelectedGameId(game.id); setModalIsOpen(true)}}>
                   <div className="text-lg font-bold text-blue-700 mb-2">{game.name}</div>
                   <div className="text-sm text-gray-500 mb-1">{game.qcount} spørsmål</div>

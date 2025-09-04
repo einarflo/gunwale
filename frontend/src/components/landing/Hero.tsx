@@ -26,7 +26,7 @@ export default function Hero({ signIn, playMode, setGamePin }: HeroProps) {
                 onClick={signIn}
                 className="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-2 text-lg font-semibold text-white hover:from-blue-600 hover:to-purple-600 transition-all shadow-xl shadow-blue-500/30 hover:scale-105 mt-6"
               >
-                Start now
+                Sign in
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </button>
         </div>
