@@ -126,9 +126,6 @@ services:
       DATABASE_CLIENT: mysql
       DATABASE_HOST: mothership-db
       DATABASE_PORT: 3306
-      DATABASE_NAME: ${MS_DB_NAME}
-      DATABASE_USERNAME: ${MS_DB_USER}
-      DATABASE_PASSWORD: ${MS_DB_PASSWORD}
       DATABASE_URL: mysql://{${MS_DB_USER}}:{${MS_DB_PASSWORD}}@mothership-db:3306/{${MS_DB_NAME}}
       NODE_ENV: production
     depends_on:

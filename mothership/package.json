@@ -4,6 +4,7 @@
   "description": "",
   "main": "src/server.ts",
   "scripts": {
+    "prestart": "prisma generate --schema prisma/schema.prisma",
     "start": "ts-node src/server.ts",
     "test": "echo \"No tests\""
   },
@@ -16,12 +17,12 @@
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.0.1",
     "mysql2": "^3.14.4",
-    "prisma": "^6.15.0",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.10.4"
+    "@types/node": "^20.10.4",
+    "prisma": "^6.15.0"
   }
 }

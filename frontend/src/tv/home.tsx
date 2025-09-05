@@ -38,7 +38,7 @@ const Home = ({ startGame, edit }: HomeProps) => {
   }, [userId]);
   
     const getGamesForUserId = (id: String) => {
-      get(`/game_list/${id}/`)
+      get(`/games/`)
         .then(res => {
           setLoading(false);
           if (res.data) {

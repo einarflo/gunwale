@@ -1,8 +1,10 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import keycloak from '../auth/keycloak';
 
+const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:1337' : 'https://api.tavl.no');
+
 const api = axios.create({
-  baseURL: 'https://www.dogetek.no/api/api.php'
+  baseURL: API_URL,
 });
 
 api.interceptors.request.use(config => {
