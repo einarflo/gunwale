@@ -1,10 +1,6 @@
 import { Outlet } from "react-router-dom";
-import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { get } from "../api";
-import Status from "../components/Status";
 import Header from '../components/landing/Header';
-import TVGamePlayView from "./game";
 
 interface CreateViewProps {
     username: String;
@@ -25,37 +21,6 @@ export interface Game {
 }
 
 const TVView = ({ username, logout }: CreateViewProps) => {
-
-  const [gamePin, setGamePin] = useState<String | undefined>()
-  const [gameId, setGameId] = useState<String | undefined>()
-  const [gameInstanceId, setGameInstanceId] = useState<String | undefined>()
-  const [userId, setUserId] = useState(25);
-  const [editId, setEditId] = useState<String | undefined>(undefined);
-  const [questionId, setQuestionId] = useState<String | undefined>(undefined);
-
-
-  const startGame = (_gameId: String, _gameInstanceId: String, _gamePin: String) => {
-    setGameId(_gameId);
-    setGameInstanceId(_gameInstanceId);
-    setGamePin(_gamePin);
-  }
-
-  const stopGame = () => {
-    setGameId(undefined);
-    setGameInstanceId(undefined);
-  }
-
-
-
-    
-
-
-  // Game selected: 
-  if (gameId && gameInstanceId && gamePin) {
-    return <TVGamePlayView gameId={gameId} gameInstanceId={gameInstanceId} gamePin={gamePin} stopGame={stopGame}/>
-  }
-
-
   return(
     <GameSelectionWrapper>
       <Header />

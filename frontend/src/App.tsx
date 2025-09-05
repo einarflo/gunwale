@@ -16,6 +16,7 @@ import EditGame from './tv/editGame';
 import EditQuestion from './tv/editQuestion';
 import UpdateGame from './tv/updateGameName';
 import ProfilePage from './tv/profilePage';
+import TVGamePlayView from './tv/game';
 
 const appHeight = () => {
   const doc = document.documentElement
@@ -88,13 +89,14 @@ const App = () => {
           <Navigate to="/" replace />
         )
       }>
-        <Route index element={<Home edit={() => {}} startGame={() => {}} />} />
+        <Route index element={<Home />} />
         <Route path="create" element={<CreateGame />} />
         <Route path="edit/:gameId" element={<EditGame />} />
         <Route path="edit/:gameId/question/:questionId" element={<EditQuestion />} />
         <Route path="update/:gameId" element={<UpdateGame />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
+      <Route path="host/:gameId/instance/:gameInstanceId/pin/:gamePin" element={<TVGamePlayView stopGame={() => navigate('/home')}/>} />
       <Route
         path="/join/:gamePin?"
         element={

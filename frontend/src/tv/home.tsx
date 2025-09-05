@@ -1,19 +1,15 @@
 import { Game, Spinner } from "./selectGame";
 import Modal from "react-modal";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import randomstring from 'randomstring';
 import { get, post, put } from "../api";
 import GlobalStyles from '../components/landing/GlobalStyles';
 import AnimatedGradientBackground from '../components/landing/AnimatedGradientBackground';
 import { useNavigate } from "react-router-dom";
 import { useKeycloak } from "../auth/KeycloakProvider";
+import { upgrades } from "../data/upgrades";
 
-interface HomeProps {
-    startGame: (gameId: String, gameInstanceId: String, gamePin: String) => void,
-    edit: (id: String) => void;
-}
-
-const Home = ({ startGame, edit }: HomeProps) => {
+const Home = () => {
   const navigate = useNavigate();
 
   const { username, userId } = useKeycloak();
@@ -31,6 +27,23 @@ const Home = ({ startGame, edit }: HomeProps) => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const placeholderUrls = useMemo(
+    () => [
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1520975916090-3105956dac38?auto=format&fit=crop&w=800&q=80',
+    ],
+    []
+  );
+  const getPlaceholder = (g: any) => {
+    const key = String(g?.uuid || g?.id || g?.name || '0');
+    let sum = 0;
+    for (let i = 0; i < key.length; i++) sum = (sum + key.charCodeAt(i)) % 997;
+    return placeholderUrls[sum % placeholderUrls.length];
+  };
 
   useEffect(() => {
     console.log('userId changed:', userId);
@@ -71,8 +84,7 @@ const Home = ({ startGame, edit }: HomeProps) => {
           console.log('gameInstanceId:', res.data);
 
           setWaitingForCreateGame(false);
-          //setPlayGames(selectedGameId || '')
-          startGame(gameId, res.data, gamePin);
+          navigate(`/host/${gameId}/instance/${res.data}/pin/${gamePin}`);
         })
         .catch(err => {
           console.log("Something fishy is going on");
@@ -144,13 +156,31 @@ const Home = ({ startGame, edit }: HomeProps) => {
               <div className="text-xl font-semibold text-purple-700 mb-2 mt-4">Favoritter</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {favoriteGames.map(game => (
-                  <div key={String(game.uuid)} className="glass rounded-xl p-6 shadow bg-purple-50 hover:shadow-lg transition cursor-pointer border-2 border-purple-300" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
-                    <div className="text-lg font-bold text-purple-700 mb-2">{game.name}</div>
-                    <div className="text-sm text-gray-500 mb-1">{game.qcount} spørsmål</div>
-                    <div className="text-sm text-gray-500 mb-2">Av {game.created_by_name}</div>
+                  <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-purple-50 hover:shadow-lg transition cursor-pointer border-2 border-purple-300 overflow-hidden" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
+                    <div className="relative h-32">
+                      <img src={getPlaceholder(game)} alt="" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 to-transparent" />
+                      <div className="absolute top-2 left-2 flex gap-2">
+                        <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).qcount || 0} spørsmål</span>
+                        <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).playthroughs ?? 0} spillinger</span>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="text-lg font-bold text-purple-700">{game.name}</div>
+                      <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? 'Offentlig' : 'Privat'}</span>
+                    </div>
+                    <div className="text-sm text-gray-600 line-clamp-2 mb-2">{(game as any).description || 'Ingen beskrivelse'}</div>
+                    <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{(game as any).qcount || 0} spørsmål</span>
+                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z"/></svg>{(game as any).playthroughs ?? 0} spillinger</span>
+                      {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z"/></svg>{(game as any).status}</span>}
+                    </div>
+                    <div className="text-xs text-gray-500 mb-3">Av {game.created_by_name}</div>
                     <div className="flex gap-2">
                       <button className="rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>Start spill</button>
                       <button className="rounded-lg bg-white border-2 border-purple-300 px-4 py-2 text-purple-700 font-semibold shadow hover:bg-purple-50 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + (game.uuid as any));}}>Rediger</button>
+                    </div>
                     </div>
                   </div>
                 ))}
@@ -162,13 +192,31 @@ const Home = ({ startGame, edit }: HomeProps) => {
               <div className="text-xl font-semibold text-yellow-700 mb-2 mt-4">Populære</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {popularGames.map(game => (
-                  <div key={String(game.uuid)} className="glass rounded-xl p-6 shadow bg-yellow-50 hover:shadow-lg transition cursor-pointer border-2 border-yellow-300" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
-                    <div className="text-lg font-bold text-yellow-700 mb-2">{game.name}</div>
-                    <div className="text-sm text-gray-500 mb-1">{game.qcount} spørsmål</div>
-                    <div className="text-sm text-gray-500 mb-2">Av {game.created_by_name}</div>
+                  <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-yellow-50 hover:shadow-lg transition cursor-pointer border-2 border-yellow-300 overflow-hidden" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
+                    <div className="relative h-32">
+                      <img src={getPlaceholder(game)} alt="" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/30 to-transparent" />
+                      <div className="absolute top-2 left-2 flex gap-2">
+                        <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).qcount || 0} spørsmål</span>
+                        <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).playthroughs ?? 0} spillinger</span>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="text-lg font-bold text-yellow-700">{game.name}</div>
+                      <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? 'Offentlig' : 'Privat'}</span>
+                    </div>
+                    <div className="text-sm text-gray-700 line-clamp-2 mb-2">{(game as any).description || 'Ingen beskrivelse'}</div>
+                    <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{(game as any).qcount || 0} spørsmål</span>
+                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z"/></svg>{(game as any).playthroughs ?? 0} spillinger</span>
+                      {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z"/></svg>{(game as any).status}</span>}
+                    </div>
+                    <div className="text-xs text-gray-500 mb-3">Av {game.created_by_name}</div>
                     <div className="flex gap-2">
                       <button className="rounded-lg bg-gradient-to-r from-yellow-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>Start spill</button>
                       <button className="rounded-lg bg-white border-2 border-yellow-300 px-4 py-2 text-yellow-700 font-semibold shadow hover:bg-yellow-50 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + (game.uuid as any));}}>Rediger</button>
+                    </div>
                     </div>
                   </div>
                 ))}
@@ -196,13 +244,31 @@ const Home = ({ startGame, edit }: HomeProps) => {
               <div className="md:col-span-3 text-center text-gray-600">Ingen treff for «{searchTerm}». Tøm søk eller opprett en ny quiz.</div>
             ) : (
               filteredGames?.map(game => (
-                <div key={String(game.uuid)} className="glass rounded-xl p-6 shadow bg-white hover:shadow-lg transition cursor-pointer" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
-                  <div className="text-lg font-bold text-blue-700 mb-2">{game.name}</div>
-                  <div className="text-sm text-gray-500 mb-1">{game.qcount} spørsmål</div>
-                  <div className="text-sm text-gray-500 mb-2">Av {game.created_by_name}</div>
+                <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-white hover:shadow-lg transition cursor-pointer overflow-hidden" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
+                  <div className="relative h-32">
+                    <img src={getPlaceholder(game)} alt="" className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent" />
+                    <div className="absolute top-2 left-2 flex gap-2">
+                      <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).qcount || 0} spørsmål</span>
+                      <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).playthroughs ?? 0} spillinger</span>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="text-lg font-bold text-blue-700">{game.name}</div>
+                    <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? 'Offentlig' : 'Privat'}</span>
+                  </div>
+                  <div className="text-sm text-gray-600 line-clamp-2 mb-2">{(game as any).description || 'Ingen beskrivelse'}</div>
+                  <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                    <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{(game as any).qcount || 0} spørsmål</span>
+                    <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z"/></svg>{(game as any).playthroughs ?? 0} spillinger</span>
+                    {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z"/></svg>{(game as any).status}</span>}
+                  </div>
+                  <div className="text-xs text-gray-500 mb-3">Av {game.created_by_name}</div>
                   <div className="flex gap-2">
                     <button className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>Start spill</button>
                     <button className="rounded-lg bg-white border-2 border-blue-300 px-4 py-2 text-blue-700 font-semibold shadow hover:bg-blue-50 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + (game.uuid as any));}}>Rediger</button>
+                  </div>
                   </div>
                 </div>
               ))
@@ -251,13 +317,69 @@ const Home = ({ startGame, edit }: HomeProps) => {
       >
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex-1">
-            <div className="text-2xl font-bold text-blue-900 mb-2">{games?.find(game => game.uuid === selectedGameId)?.name}</div>
-            <div className="text-gray-700 mb-2">by {games?.find(game => game.uuid === selectedGameId)?.created_by_name}</div>
-            <div className="text-gray-500 mb-4">{games?.find(game => game.uuid === selectedGameId)?.qcount} spørsmål</div>
-            <button className="rounded-lg border-2 border-blue-300 px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 transition" onClick={() => navigate('edit/' + selectedGameId)}>Rediger quiz</button>
+            {(() => {
+              const g = games?.find(game => game.uuid === selectedGameId) as any;
+              if (!g) return null;
+              const isPublic = (g.isPublic ?? 0) === 1;
+              return (
+                <>
+                  <div className="relative h-40 mb-4 rounded-xl overflow-hidden">
+                    <img src={getPlaceholder(g)} alt="" className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent" />
+                    <div className="absolute top-2 left-2 flex gap-2">
+                      <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{g.qcount || 0} spørsmål</span>
+                      <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{g.playthroughs ?? 0} spillinger</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="text-2xl font-bold text-blue-900">{g.name}</div>
+                    <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${isPublic ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{isPublic ? 'Offentlig' : 'Privat'}</span>
+                  </div>
+                  <div className="text-gray-700 mb-2">Av {g.created_by_name || '—'}</div>
+                  {g.description && <div className="text-gray-800 mb-3">{g.description}</div>}
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700 mb-4">
+                    <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{g.qcount || 0} spørsmål</span>
+                    <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z"/></svg>{g.playthroughs ?? 0} spillinger</span>
+                    {g.status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z"/></svg>Status: {g.status}</span>}
+                    {g.starttime && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v13a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 15H5V10h14v9z"/></svg>Sist startet: {g.starttime}</span>}
+                  </div>
+                  <button className="rounded-lg border-2 border-blue-300 px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 transition" onClick={() => navigate('edit/' + selectedGameId)}>Rediger quiz</button>
+
+                  <div className="mt-6">
+                    <div className="text-lg font-bold text-gray-900 mb-2">Tilgjengelige upgrades</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {upgrades.map((u, idx) => (
+                        <div key={idx} className={`rounded-xl border-2 ${u.premium ? 'border-purple-200' : 'border-blue-200'} bg-white/90 p-3 flex items-center gap-3 shadow-sm`}>
+                          <img src={u.image} alt={u.header} className="h-10 w-10 rounded-lg object-cover" />
+                          <div className="flex-1">
+                            <div className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                              {u.header}
+                              {u.premium && <span className="text-xs font-bold text-purple-700 bg-purple-100 rounded-full px-2 py-0.5">Premium</span>}
+                            </div>
+                            <div className="text-xs text-gray-600 line-clamp-2">{u.description}</div>
+                          </div>
+                          <div className="text-xs font-semibold text-blue-700 whitespace-nowrap">{u.price}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 text-sm text-gray-600">
+                      Alle upgrades er tilgjengelige i spillet. Noen krever <span className="font-semibold text-purple-700">Premium</span>.
+                    </div>
+                    <div className="mt-2">
+                      <button onClick={() => navigate('/')} className="rounded-xl bg-white px-4 py-2 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">Se alle oppgraderinger</button>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div className="text-3xl font-bold text-purple-700 mb-2">{newGamePin}</div>
+            <div className="text-xs uppercase tracking-wide text-gray-700">PIN</div>
+            <div className="text-4xl font-extrabold text-purple-700 mb-2">{newGamePin}</div>
+            <div className="flex gap-2">
+              <button className="rounded-lg bg-white border-2 border-purple-300 px-3 py-1 text-purple-700 text-sm font-semibold shadow hover:bg-purple-50 transition" onClick={() => navigator.clipboard?.writeText(newGamePin)}>Kopier PIN</button>
+              <button className="rounded-lg bg-white border-2 border-blue-300 px-3 py-1 text-blue-700 text-sm font-semibold shadow hover:bg-blue-50 transition" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/join/${newGamePin}`)}>Kopier invitasjonslenke</button>
+            </div>
             <button className="rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-8 py-4 text-lg font-bold text-white shadow-xl hover:scale-105 transition" onClick={() => createNewGameInstance(selectedGameId || '0', newGamePin)} disabled={watingForCreateGame}>
               {watingForCreateGame ? 'Starter...' : 'Start spill'}
             </button>

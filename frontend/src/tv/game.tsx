@@ -7,11 +7,9 @@ import Alternatives from "./gameAlts";
 import GamePlayers from "./gamePlayers";
 import Podium from "./podium";
 import QuestionText from "./questionText";
+import { useParams } from "react-router-dom";
 
 interface TvViewProps {
-  gameId: String;
-  gamePin: String;
-  gameInstanceId: String;
   stopGame: () => void
 }
 
@@ -38,7 +36,8 @@ export interface Player {
   colour: String;
 }
 
-const TVGamePlayView = ({gameId, gameInstanceId, gamePin, stopGame}: TvViewProps) => {
+const TVGamePlayView = ({ stopGame }: TvViewProps) => {
+  const { gamePin, gameInstanceId, gameId } = useParams<{ gameId: string, gameInstanceId: string, gamePin: string }>();
 
   const [questions, setQuestions] = useState<Array<Question>>([]);
   const [currentQ, setCurrentQ] = useState(0); 
