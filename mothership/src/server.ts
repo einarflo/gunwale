@@ -1,6 +1,11 @@
 import express, { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload, JwtHeader, SigningKeyCallback } from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
+import { PrismaClient } from '@prisma/client';
+
+
+const prisma = new PrismaClient();
+
 
 const { KEYCLOAK_REALM = '', KEYCLOAK_URL = '', CLIENT_ID = '' } = process.env;
 

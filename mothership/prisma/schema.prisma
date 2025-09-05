@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model game {
+  id              Int     @id @unique(map: "game_id_uindex") @default(autoincrement())
+  name            String  @db.VarChar(255)
+  created_by      String? @db.VarChar(255)
+  description     String? @db.VarChar(255)
+  status          String? @db.VarChar(255)
+  players         Int?
+  currentquestion String? @db.VarChar(250)
+  starttime       String? @db.VarChar(250)
+  deleted         String? @db.VarChar(100)
+  isPublic        String? @db.VarChar(255)
+  uuid            String? @db.VarChar(255)
+}
+
+model game_instance {
+  id              Int     @id @unique(map: "game_instance_id_uindex") @default(autoincrement())
+  game_id         String  @db.VarChar(255)
+  game_pin        String  @db.VarChar(255)
+  created_at      String? @db.VarChar(255)
+  is_deleted      String? @db.VarChar(255)
+  status          String? @db.VarChar(255)
+  currentquestion Int?
+  created_by      String? @db.VarChar(255)
+  starttime       String? @db.VarChar(255)
+}
+
+model game_instance_answers {
+  id                      Int     @id @unique(map: "game_instance_answers_id_uindex") @default(autoincrement())
+  game_instance_id        String? @db.VarChar(255)
+  game_instance_player_id String? @db.VarChar(255)
+  game_question_id        String? @db.VarChar(255)
+  game_id                 String? @db.VarChar(255)
+  points                  String? @db.VarChar(255)
+  alternative             String? @db.VarChar(255)
+  correct                 String? @db.VarChar(255)
+}
+
+model game_instance_players {
+  id               Int     @id @unique(map: "game_instance_players_id_uindex") @default(autoincrement())
+  game_id          String  @db.VarChar(255)
+  game_instance_id String  @db.VarChar(255)
+  username         String  @db.VarChar(255)
+  score            String  @db.VarChar(255)
+  colour           String? @db.VarChar(255)
+  lottery          String? @db.VarChar(255)
+  spending         String? @db.VarChar(255)
+}
+
+model game_instance_upgrades {
+  id                      Int     @id @unique(map: "game_instance_upgrades_id_uindex") @default(autoincrement())
+  game_instance_id        String? @db.VarChar(255)
+  game_instance_player_id String? @db.VarChar(255)
+  game_id                 String? @db.VarChar(255)
+  price                   String? @db.VarChar(255)
+  level                   String? @db.VarChar(255)
+  type                    String? @db.VarChar(255)
+}
+
+model game_question {
+  id             Int     @id @unique(map: "game_question_id_uindex") @default(autoincrement())
+  game_id        Int
+  number_in_line String? @db.VarChar(255)
+  status         String? @db.VarChar(255)
+  score          String? @db.VarChar(255)
+  text           String? @db.VarChar(1000)
+  description    String? @db.VarChar(1000)
+  alt1           String? @db.VarChar(1000)
+  alt2           String? @db.VarChar(1000)
+  alt3           String? @db.VarChar(1000)
+  alt4           String? @db.VarChar(1000)
+  correct        String? @db.VarChar(255)
+  time           String? @db.VarChar(255)
+  deleted        String? @db.VarChar(100)
+}
