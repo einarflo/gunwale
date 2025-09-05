@@ -12,9 +12,11 @@ interface CreateViewProps {
 }
 
 export interface Game {
+    created_by_name: String;
     favorite?: String;
     popular?: String;
     id: String;
+    uuid?: String;
     name: String;
     description: String;
     qcount: String;

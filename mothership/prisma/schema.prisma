@@ -14,12 +14,13 @@ model game {
   created_by      String? @db.VarChar(255)
   description     String? @db.VarChar(255)
   status          String? @db.VarChar(255)
-  players         Int?
+  playthroughs    Int     @default(0)
   currentquestion String? @db.VarChar(250)
   starttime       String? @db.VarChar(250)
   deleted         String? @db.VarChar(100)
-  isPublic        String? @db.VarChar(255)
-  uuid            String? @db.VarChar(255)
+  isPublic        Int     @default(0)
+  uuid            String  @db.VarChar(255)
+  created_by_name String? @db.VarChar(255)
 }
 
 model game_instance {
@@ -68,7 +69,7 @@ model game_instance_upgrades {
 
 model game_question {
   id             Int     @id @unique(map: "game_question_id_uindex") @default(autoincrement())
-  game_id        Int
+  game_id        String  @db.VarChar(255)
   number_in_line String? @db.VarChar(255)
   status         String? @db.VarChar(255)
   score          String? @db.VarChar(255)
@@ -81,4 +82,11 @@ model game_question {
   correct        String? @db.VarChar(255)
   time           String? @db.VarChar(255)
   deleted        String? @db.VarChar(100)
+  uuid           String? @db.VarChar(255)
+}
+
+model favourite_games {
+  id      Int    @id @default(autoincrement())
+  user_id String @db.VarChar(255)
+  game_id String @db.VarChar(255)
 }

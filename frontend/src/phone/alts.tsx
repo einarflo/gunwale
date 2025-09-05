@@ -72,7 +72,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     post(`/game_instance_answers/${gameInstancePlayerId}/`, {
       game_instance_id: gameInstanceId,
       game_instance_player_id: gameInstancePlayerId,
-      game_question_id: question.id,
+      game_question_id: (question.uuid as any),
       game_id: gameId,
       points: points.toString(),
       alternative: answer,

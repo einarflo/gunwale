@@ -2,7 +2,7 @@ import { Game, Spinner } from "./selectGame";
 import Modal from "react-modal";
 import { useEffect, useState } from "react";
 import randomstring from 'randomstring';
-import { get, post } from "../api";
+import { get, post, put } from "../api";
 import GlobalStyles from '../components/landing/GlobalStyles';
 import AnimatedGradientBackground from '../components/landing/AnimatedGradientBackground';
 import { useNavigate } from "react-router-dom";
@@ -26,6 +26,8 @@ const Home = ({ startGame, edit }: HomeProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [games, setGames] = useState<Array<Game>>()
+  const [deletedGames, setDeletedGames] = useState<Array<Game>>([])
+  const [showTrash, setShowTrash] = useState(false)
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -59,12 +61,12 @@ const Home = ({ startGame, edit }: HomeProps) => {
 
   const createNewGameInstance = (gameId: String, gamePin: String) => {
     setWaitingForCreateGame(true);
-                        post(`/game_instance/`, JSON.stringify({
+                        post(`/game_instance/`, {
                                 game_id: gameId,
                                 game_pin: gamePin,
                                 status: 'created',
                                 created_by: userId
-                        }) , { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+                        })
         .then(res => {
           console.log('gameInstanceId:', res.data);
 
@@ -78,6 +80,14 @@ const Home = ({ startGame, edit }: HomeProps) => {
           setWaitingForCreateGame(false);
         });
 
+  }
+
+  const loadDeletedGames = () => {
+    get(`/games/trash`).then(res => setDeletedGames(res.data || [])).catch(() => setDeletedGames([]))
+  }
+
+  const restoreGame = (selector: String) => {
+    put(`/games/${selector}/restore`).then(() => { loadDeletedGames(); getGamesForUserId(userId || ''); })
   }
 
   // Example: games with favorite/popular flags (replace with real data)
@@ -134,11 +144,14 @@ const Home = ({ startGame, edit }: HomeProps) => {
               <div className="text-xl font-semibold text-purple-700 mb-2 mt-4">Favoritter</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {favoriteGames.map(game => (
-                  <div key={String(game.id)} className="glass rounded-xl p-6 shadow bg-purple-50 hover:shadow-lg transition cursor-pointer border-2 border-purple-300" onClick={() => {setSelectedGameId(game.id); setModalIsOpen(true)}}>
+                  <div key={String(game.uuid)} className="glass rounded-xl p-6 shadow bg-purple-50 hover:shadow-lg transition cursor-pointer border-2 border-purple-300" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
                     <div className="text-lg font-bold text-purple-700 mb-2">{game.name}</div>
                     <div className="text-sm text-gray-500 mb-1">{game.qcount} spørsmål</div>
-                    <div className="text-sm text-gray-500 mb-2">Av {game.username}</div>
-                    <button className="rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + game.id);}}>Rediger</button>
+                    <div className="text-sm text-gray-500 mb-2">Av {game.created_by_name}</div>
+                    <div className="flex gap-2">
+                      <button className="rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>Start spill</button>
+                      <button className="rounded-lg bg-white border-2 border-purple-300 px-4 py-2 text-purple-700 font-semibold shadow hover:bg-purple-50 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + (game.uuid as any));}}>Rediger</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -149,11 +162,14 @@ const Home = ({ startGame, edit }: HomeProps) => {
               <div className="text-xl font-semibold text-yellow-700 mb-2 mt-4">Populære</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {popularGames.map(game => (
-                  <div key={String(game.id)} className="glass rounded-xl p-6 shadow bg-yellow-50 hover:shadow-lg transition cursor-pointer border-2 border-yellow-300" onClick={() => {setSelectedGameId(game.id); setModalIsOpen(true)}}>
+                  <div key={String(game.uuid)} className="glass rounded-xl p-6 shadow bg-yellow-50 hover:shadow-lg transition cursor-pointer border-2 border-yellow-300" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
                     <div className="text-lg font-bold text-yellow-700 mb-2">{game.name}</div>
                     <div className="text-sm text-gray-500 mb-1">{game.qcount} spørsmål</div>
-                    <div className="text-sm text-gray-500 mb-2">Av {game.username}</div>
-                    <button className="rounded-lg bg-gradient-to-r from-yellow-400 to-pink-400 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + game.id);}}>Rediger</button>
+                    <div className="text-sm text-gray-500 mb-2">Av {game.created_by_name}</div>
+                    <div className="flex gap-2">
+                      <button className="rounded-lg bg-gradient-to-r from-yellow-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>Start spill</button>
+                      <button className="rounded-lg bg-white border-2 border-yellow-300 px-4 py-2 text-yellow-700 font-semibold shadow hover:bg-yellow-50 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + (game.uuid as any));}}>Rediger</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -165,13 +181,29 @@ const Home = ({ startGame, edit }: HomeProps) => {
               <div className="flex justify-center items-center h-32"><Spinner /></div>
             ) : error ? (
               <div className="text-red-500">En feil oppstod</div>
+            ) : (!games || games.length === 0) ? (
+              <div className="md:col-span-3">
+                <div className="rounded-2xl bg-white/90 p-8 border-2 border-blue-200 text-center shadow">
+                  <div className="text-2xl font-bold text-blue-800 mb-2">Ingen spill enda</div>
+                  <div className="text-gray-600 mb-6">Lag din første quiz eller oppdag eksempler for å komme i gang.</div>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button onClick={() => navigate('/home/create')} className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-6 py-3 text-white font-bold shadow hover:scale-105 transition">Opprett ny quiz</button>
+                    <button onClick={() => navigate('/home/discover')} className="rounded-xl bg-white px-6 py-3 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">Oppdag quizer</button>
+                  </div>
+                </div>
+              </div>
+            ) : (filteredGames && filteredGames.length === 0) ? (
+              <div className="md:col-span-3 text-center text-gray-600">Ingen treff for «{searchTerm}». Tøm søk eller opprett en ny quiz.</div>
             ) : (
               filteredGames?.map(game => (
-                <div key={String(game.id)} className="glass rounded-xl p-6 shadow bg-white hover:shadow-lg transition cursor-pointer" onClick={() => {setSelectedGameId(game.id); setModalIsOpen(true)}}>
+                <div key={String(game.uuid)} className="glass rounded-xl p-6 shadow bg-white hover:shadow-lg transition cursor-pointer" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
                   <div className="text-lg font-bold text-blue-700 mb-2">{game.name}</div>
                   <div className="text-sm text-gray-500 mb-1">{game.qcount} spørsmål</div>
-                  <div className="text-sm text-gray-500 mb-2">Av {game.username}</div>
-                  <button className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + game.id);}}>Rediger</button>
+                  <div className="text-sm text-gray-500 mb-2">Av {game.created_by_name}</div>
+                  <div className="flex gap-2">
+                    <button className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>Start spill</button>
+                    <button className="rounded-lg bg-white border-2 border-blue-300 px-4 py-2 text-blue-700 font-semibold shadow hover:bg-blue-50 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + (game.uuid as any));}}>Rediger</button>
+                  </div>
                 </div>
               ))
             )}
@@ -219,10 +251,10 @@ const Home = ({ startGame, edit }: HomeProps) => {
       >
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex-1">
-            <div className="text-2xl font-bold text-blue-900 mb-2">{games?.find(game => game.id === selectedGameId)?.name}</div>
-            <div className="text-gray-700 mb-2">by {games?.find(game => game.id === selectedGameId)?.username}</div>
-            <div className="text-gray-500 mb-4">{games?.find(game => game.id === selectedGameId)?.qcount} spørsmål</div>
-            <button className="rounded-lg border-2 border-blue-300 px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 transition" onClick={() => edit(selectedGameId || '')}>Rediger quiz</button>
+            <div className="text-2xl font-bold text-blue-900 mb-2">{games?.find(game => game.uuid === selectedGameId)?.name}</div>
+            <div className="text-gray-700 mb-2">by {games?.find(game => game.uuid === selectedGameId)?.created_by_name}</div>
+            <div className="text-gray-500 mb-4">{games?.find(game => game.uuid === selectedGameId)?.qcount} spørsmål</div>
+            <button className="rounded-lg border-2 border-blue-300 px-4 py-2 text-blue-600 font-medium hover:bg-blue-50 transition" onClick={() => navigate('edit/' + selectedGameId)}>Rediger quiz</button>
           </div>
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <div className="text-3xl font-bold text-purple-700 mb-2">{newGamePin}</div>
@@ -232,9 +264,34 @@ const Home = ({ startGame, edit }: HomeProps) => {
           </div>
         </div>
       </Modal>
+      <div className="mx-auto max-w-6xl px-6 py-6">
+        <button
+          onClick={() => { const ns = !showTrash; setShowTrash(ns); if (ns) loadDeletedGames(); }}
+          className="rounded-xl bg-white px-5 py-2 text-gray-700 font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition"
+        >
+          {showTrash ? 'Skjul papirkurv' : 'Vis papirkurv'}
+        </button>
+        {showTrash && (
+          <div className="mt-4">
+            <div className="text-lg font-semibold text-gray-700 mb-2">Slettede quizer</div>
+            {deletedGames.length === 0 ? (
+              <div className="text-gray-500">Ingen slettede quizer</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {deletedGames.map(g => (
+                  <div key={String(g.uuid || g.id)} className="glass rounded-xl p-6 shadow bg-white border-2 border-gray-200">
+                    <div className="text-lg font-bold text-blue-700 mb-2">{g.name}</div>
+                    <div className="text-sm text-gray-500 mb-1">{(g as any).qcount || 0} spørsmål</div>
+                    <button className="rounded-lg bg-green-600 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={() => restoreGame((g.uuid as any) || g.id)}>Gjenopprett</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 };
 
 export default Home;
-

@@ -16,7 +16,8 @@ interface TvViewProps {
 }
 
 export interface Question {
-  id: String;
+  uuid: String;
+  id?: String; // legacy numeric id; prefer uuid
   game_id: String;
   number_in_line: String,
   alt1: String,
@@ -96,7 +97,7 @@ const TVGamePlayView = ({gameId, gameInstanceId, gamePin, stopGame}: TvViewProps
       status: status,
       currentquestion: "",
       starttime: "",
-    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+    })
     .then(res => {
       console.log(res);
     })
@@ -110,7 +111,7 @@ const TVGamePlayView = ({gameId, gameInstanceId, gamePin, stopGame}: TvViewProps
       currentquestion: q,
       starttime: time,
       status: "started"
-    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+    })
     .then(res => {
       console.log(res);
     })

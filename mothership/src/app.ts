@@ -1,5 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { gamesRouter } from './routes/games';
+import { gameQuestionsRouter, gameQuestionByIdRouter } from './routes/gameQuestions';
+import { gameInstancesRouter } from './routes/gameInstances';
 import { requireAuth } from './middleware/auth';
 import { logger } from './lib/logger';
 import crypto from 'crypto';
@@ -9,6 +11,7 @@ export function createApp() {
 
   // Body parsing
   app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
   // CORS (allow local frontend during development)
   app.use((req: Request, res: Response, next: NextFunction) => {
@@ -55,6 +58,10 @@ export function createApp() {
 
   // Routes
   app.use('/games', gamesRouter);
+  app.use('/game_question', gameQuestionsRouter);
+  app.use('/game_question_by_id', gameQuestionByIdRouter);
+  app.use('/game_instance', gameInstancesRouter);
+  // game_question routes are wired below
 
   return app;
 }

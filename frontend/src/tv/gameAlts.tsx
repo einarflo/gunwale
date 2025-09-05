@@ -38,7 +38,7 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
     get(`/game_instance_answers/${gameInstanceId}/`)
       .then(res => {
         if (res.data) {
-          setAnswers(res.data.filter((a: Answer) => a.game_question_id == question.id));
+          setAnswers(res.data.filter((a: Answer) => a.game_question_id == (question.uuid as any)));
         } 
         setShowDistribution(true);
       })
