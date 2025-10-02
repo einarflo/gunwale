@@ -1,10 +1,10 @@
 import { CurrentQuestionCount, Logo, Player, Start, Stop, Tvrapper } from "./game";
 import logo from '../images/tavl-white.png';
-import styled from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { useEffect, useState } from "react";
 import { Spinner } from "./selectGame";
 import TopLeftLogo from "../components/TopLeftLogo";
-import { selectableColors } from "../phone/waiting";
+import { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "../phone/waiting";
 // Use WebSocket as source of truth for players
 import { useSocket } from "../context/SocketContext";
 
@@ -61,7 +61,10 @@ const CurrentScores = ({ gameInstanceId, next, stop, currentQuestionCount }: Cur
         { players?.length === 0 ? 
             <div>No players ...</div>
           : 
-            players?.sort((a: Player, b: Player) => Number(b.score) - Number(a.score)).slice(0,5).map(player => <ScoreEntry hex={selectableColors[Number(player.colour) || 0]}><Name>{player.username}</Name><Score>{player.score}</Score></ScoreEntry>)}
+            players?.sort((a: Player, b: Player) => Number(b.score) - Number(a.score)).slice(0,5).map(player => {
+              const idx = Number(player.colour) || 0;
+              return <ScoreEntry hex={selectableColors[idx]} text={textColors[idx]} animated={animatedColorIndices.has(idx)} multicolor={idx === MULTICOLOR_INDEX}><Name>{player.username}</Name><Score>{player.score}</Score></ScoreEntry>
+            })}
       </ContentPlayers>
       <Start onClick={next}>Next</Start>
       <Stop onClick={stop}>Stop</Stop>
@@ -90,7 +93,19 @@ const ContentPlayers = styled.div`
     font-family: "Coll";
 `;
 
-const ScoreEntry = styled.div.attrs((props: {hex: any}) => props)`
+const MoveBackgroundPosition = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
+
+const MultiColorScroll = keyframes`
+  0% { background-position: 50% 0%; }
+  50% { background-position: 50% 100%; }
+  100% { background-position: 50% 0%; }
+`;
+
+const ScoreEntry = styled.div.attrs((props: {hex: any, text?: string, animated?: boolean, multicolor?: boolean}) => props)<{hex: any, text?: string, animated?: boolean, multicolor?: boolean}>`
   height: 50px;
   margin: 20px;
   font-size: 2rem;
@@ -104,8 +119,17 @@ const ScoreEntry = styled.div.attrs((props: {hex: any}) => props)`
   margin-left: auto;
   left: 50%;
   font-family: "Coll";
-  background-color: ${props => (props.hex || " #9C8AFA")};
-  color: white;
+  background: ${props => (props.hex || " #9C8AFA")};
+  ${props => props.animated && props.multicolor && css`
+      background-size: 100% 1000%;
+      animation: ${MultiColorScroll} 17.5s linear infinite;
+  `}
+  ${props => props.animated && !props.multicolor && css`
+      background-size: 150%;
+      animation: ${MoveBackgroundPosition} 6s ease-in-out infinite;
+      filter: drop-shadow(0 0 1px rgba(255, 200, 0, .3));
+  `}
+  color: ${props => props.text || 'white'};
   padding: 5px;
   display: flex;
   justify-content: space-between;

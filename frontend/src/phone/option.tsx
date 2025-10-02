@@ -15,7 +15,7 @@ const OptionButton = ({ description, select, colour, hide }: OptionProps) => {
 const Option = styled.div.attrs((props: {hide: boolean}) => props)`
   height: 155px;
   width: 100%;
-  background-color: ${props => (props.color)};
+  background: ${props => (props.color)};
   border-radius: 20px;
   margin: 10px;
   padding: 10px;

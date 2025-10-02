@@ -5,7 +5,7 @@ import Alts from "./alts";
 import Result from "./result";
 import whiteLogo from '../images/tavl-white.png';
 import { Logo } from "../Splash";
-import Waiting, { selectableColors } from "./waiting";
+import Waiting, { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "./waiting";
 import { MobileNav } from "../landing";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
@@ -94,7 +94,7 @@ const PhoneGameView = () => {
 
     // Waiting for game to start
   if (!gameStarted) {
-    return <Waiting points={points} gameStarted={() => setGameStarted(true)} gamepin={gamePin} colorForUser={colorForUser} setColorForUser={setColorForUser} />
+    return <Waiting points={points} setPoints={setPoints} gameStarted={() => setGameStarted(true)} gamepin={gamePin} colorForUser={colorForUser} setColorForUser={setColorForUser} />
   }
 
   // view score when timer ends
@@ -117,7 +117,7 @@ const PhoneGameView = () => {
     <GameWrapper onClick={() => setGameEnded(false)}>
       <MobileNav>
         <TopLeftLogo />
-        <TopRightPoints points={points} color={selectableColors[colorForUser]}/>
+        <TopRightPoints points={points} color={selectableColors[colorForUser]} textColor={textColors[colorForUser]} animate={animatedColorIndices.has(colorForUser)} multicolor={colorForUser === MULTICOLOR_INDEX}/>
       </MobileNav>
       <Logo src={whiteLogo}/>
     </GameWrapper>

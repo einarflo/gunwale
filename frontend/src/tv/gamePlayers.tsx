@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 // Use WS as the source of truth for players
 import { useSocket } from "../context/SocketContext";
 import { Player } from "./game";
 import QRCode from "react-qr-code";
 import whiteLogo from '../images/tavl-white.png';
-import { selectableColors } from "../phone/waiting";
+import { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "../phone/waiting";
 
 interface GamePlayersProps {
   gameInstanceId?: string;
@@ -62,7 +62,10 @@ const GamePlayers = ({ gameInstanceId, startGame, gamePin, stopGame}: GamePlayer
               { players?.length === 0 ? 
                 <PlayerName>Waiting for players ...</PlayerName>
               : 
-                players?.map(player => <PlayerName hex={selectableColors[Number(player.colour) || 0]}>{player.username}</PlayerName>)}
+                players?.map(player => {
+                  const idx = Number(player.colour) || 0;
+                  return <PlayerName hex={selectableColors[idx]} text={textColors[idx]} animated={animatedColorIndices.has(idx)} multicolor={idx === MULTICOLOR_INDEX}>{player.username}</PlayerName>
+                })}
             </ContentPlayers>
             
 
@@ -114,6 +117,18 @@ const pulse = keyframes`
   100% {
     opacity: 20%;
   }
+`;
+
+const MoveBackgroundPosition = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
+
+const MultiColorScroll = keyframes`
+  0% { background-position: 50% 0%; }
+  50% { background-position: 50% 100%; }
+  100% { background-position: 50% 0%; }
 `;
 
 const TavlLogoWhite = styled.img`
@@ -195,11 +210,20 @@ const Pin = styled.div`
     animation-iteration-count: infinite;
 `;
 
-const PlayerName = styled.div.attrs((props: {hex: any}) => props)`
+const PlayerName = styled.div.attrs((props: {hex: any, text?: string, animated?: boolean, multicolor?: boolean}) => props)<{hex: any, text?: string, animated?: boolean, multicolor?: boolean}>`
     padding: 10px;
     margin: 10px;
-    background-color: ${props => (props.hex || " #9C8AFA")};
-    color: white;
+    background: ${props => (props.hex || " #9C8AFA")};
+    ${props => props.animated && props.multicolor && css`
+      background-size: 100% 1000%;
+      animation: ${MultiColorScroll} 17.5s linear infinite;
+    `}
+    ${props => props.animated && !props.multicolor && css`
+      background-size: 150%;
+      animation: ${MoveBackgroundPosition} 6s ease-in-out infinite;
+      filter: drop-shadow(0 0 1px rgba(255, 200, 0, .3));
+    `}
+    color: ${props => props.text || 'white'};
     border-radius: 10px;
     width: fit-content;
     display: inline-box;

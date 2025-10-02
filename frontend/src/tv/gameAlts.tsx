@@ -1,5 +1,5 @@
 import { CurrentQuestionCount, Question, Start, Stop, Tvrapper } from "./game";
-import styled from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { useEffect, useState } from "react";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { selectableColors } from "../phone/waiting";
@@ -193,7 +193,7 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
 const Column = styled.div.attrs((props: {height: any}) => props)`
   color: white;
   display: flex;
-  background-color: ${props => (props.color)};
+  background: ${props => (props.color)};
   width: 25%;
   justify-content: center;
   margin: 10px;
@@ -265,10 +265,21 @@ const Timer = styled.div`
   text-align: center;
 `;
 
+const MoveBackgroundPosition = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
+
 const QText = styled.div`
   padding:20px;
   margin: 5px;
-  background-color: ${props => (props.color)};
+  background: ${props => (props.color)};
+  ${props => typeof props.color === 'string' && props.color.includes('repeating-linear-gradient') && css`
+    background-size: 150%;
+    animation: ${MoveBackgroundPosition} 6s ease-in-out infinite;
+    filter: drop-shadow(0 0 1px rgba(255, 200, 0, .3));
+  `}
   border-radius: 20px;
   height: 100%;
   color: white;

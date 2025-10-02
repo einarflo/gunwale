@@ -5,7 +5,7 @@ import { GameWrapper, MobileSpinner } from "./game";
 import { ItemImage, ItemImageMobile, MobileNav } from "../landing";
 import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
-import { selectableColors } from "./waiting";
+import { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "./waiting";
 import { GameContext } from "../GameContext";
 import { useSocket } from "../context/SocketContext";
 import one from '../images/upgrades/1.png';
@@ -139,7 +139,7 @@ const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyf
       <GameWrapper>
           <MobileNav>
             <TopLeftLogo />
-            <TopRightPoints points={points} color={selectableColors[color]}/>
+          <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
           </MobileNav>
           <Text>Get ready!</Text>
           <MobileSpinner/>
@@ -151,7 +151,7 @@ const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyf
     <GameWrapper>
       <MobileNav>
         <TopLeftLogo />
-        <TopRightPoints points={points} color={selectableColors[color]}/>
+          <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
       </MobileNav>
         <UpgradeContainer>
           <PowerUp onClick={purchaseFifityFifty}>

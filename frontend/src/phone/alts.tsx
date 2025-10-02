@@ -8,7 +8,7 @@ import { Text } from "./result"
 import { MobileNav } from "../landing"
 import TopLeftLogo from "../components/TopLeftLogo"
 import TopRightPoints from "../components/TopRightPoints"
-import { selectableColors } from "./waiting"
+import { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "./waiting"
 import { GameContext } from "../GameContext"
 import { useSocket } from "../context/SocketContext";
 import one from '../images/upgrades/1.png';
@@ -178,7 +178,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     <GameWrapper>
         <MobileNav>
           <TopLeftLogo />
-          <TopRightPoints points={points} color={selectableColors[color]}/>
+          <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
         </MobileNav>
         <Text>Waiting for your score...</Text>
         <MobileSpinner/>
@@ -191,7 +191,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     <GameWrapper style={{ background: answeredCorrectly ? 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(0,164,67,1) 0%, rgba(34,214,135,1) 100%)' : 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(255,39,39,1) 0%, rgba(247,89,89,1) 100%)' }}>
         <MobileNav>
           <TopLeftLogo />
-          <TopRightPoints points={points} color={selectableColors[color]}/>
+          <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
         </MobileNav>
         <Text>{answeredCorrectly ? 'Correct' : 'Nope!'}</Text>
         <Text>You got {answeredCorrectly ? roundPoints : 0} points</Text>
@@ -204,7 +204,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     <GameWrapper>
       <MobileNav>
         <TopLeftLogo />
-        <TopRightPoints points={points} color={selectableColors[color]}/>
+        <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
       </MobileNav>
       
       <PowerUpContainer>
