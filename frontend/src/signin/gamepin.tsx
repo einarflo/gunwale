@@ -89,7 +89,7 @@ const GamePin = ({ setGameId, setGameInstanceId, setGamePin }: GamePinProps) => 
                                     }
                                 }}/>
                                 <PrimaryButtonLocal onClick={() => setPin(enteredGamePin)}>PLAY</PrimaryButtonLocal>
-                                <Footer>or create a new game&nbsp;<div onClick={() => navigate('/home/login')} style={{ color: "#3b82f6", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
+                                <Footer>or create a new game&nbsp;<div onClick={() => navigate('/home')} style={{ color: "#3b82f6", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
                             </>
                         )}
                 </Content>
@@ -102,6 +102,7 @@ const GamePinWrapper = styled.div`
     height: 100vh;
     width: 100vw;
     height: 100dvh;
+    overflow: hidden;
 `;
 
 
@@ -242,8 +243,8 @@ const GlowLeft = styled.div`
 
 const GlowRight = styled.div`
     position: absolute;
-    bottom: -15%;
-    right: -10%;
+    bottom: 5%;
+    right: 0%;
     width: 55vw;
     height: 55vw;
     border-radius: 50%;

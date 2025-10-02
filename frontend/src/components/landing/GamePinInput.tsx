@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface GamePinInputProps {
     playMode: () => void;
@@ -8,6 +9,7 @@ interface GamePinInputProps {
 export default function GamePinInput({ playMode, setGamePin }: GamePinInputProps) {
     const [gamePin, _setGamePin] = useState("");
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const handleStart = () => {
         if (!gamePin.trim()) {
@@ -17,8 +19,7 @@ export default function GamePinInput({ playMode, setGamePin }: GamePinInputProps
         setError("");
         // TODO: Implement navigation to game with pin
         // For now, just call playMode
-        setGamePin(gamePin);
-        playMode()
+        navigate('/join/' + gamePin);
     };
 
     return (

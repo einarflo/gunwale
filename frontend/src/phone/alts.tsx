@@ -10,6 +10,7 @@ import TopLeftLogo from "../components/TopLeftLogo"
 import TopRightPoints from "../components/TopRightPoints"
 import { selectableColors } from "./waiting"
 import { GameContext } from "../GameContext"
+import { useSocket } from "../context/SocketContext";
 import one from '../images/upgrades/1.png';
 import two from '../images/upgrades/2.png';
 import three from '../images/upgrades/3.png';
@@ -18,7 +19,7 @@ import five from '../images/upgrades/5.png';
 import six from '../images/upgrades/6.png';
 import seven from '../images/upgrades/7.png';
 import eight from '../images/upgrades/8.png';
-import { put, post } from "../api";
+// All interactions moved to WebSocket
 
 interface AltsProps {
   points: number;
@@ -33,7 +34,8 @@ interface AltsProps {
 }
 
 const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buyStop, color }: AltsProps) => {
-  const { gameInstancePlayerId, gameInstanceId, gameId } = useContext(GameContext);
+  const { gameInstancePlayerId, gameInstanceId, gameId, nickname } = useContext(GameContext);
+  const { socket } = useSocket();
 
   const [roundPoints, setRoundPoints] = useState(0);
   const [score, setScore] = useState(1000);
@@ -55,34 +57,26 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
   const [stopTime, setStopTime] = useState(false);
 
 
-  // POST points to server 
+  // Score update via WebSocket (server persists and broadcasts)
   const setUserPoints = (points: number) => {
-    put(`/game_instance_players/${gameInstancePlayerId}/`, {
-      score: points.toString(),
-    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log("Error when updating user points");
+    if (!gameInstanceId) return;
+    socket.emit('score_update', { gameInstanceId: String(gameInstanceId), score: points }, (resp: any) => {
+      if (!resp?.ok) console.log('WS score_update failed', resp?.error);
     });
   }
 
   const pushAnswer = (points: number, answer: string, correct: boolean) => {
-    post(`/game_instance_answers/${gameInstancePlayerId}/`, {
-      game_instance_id: gameInstanceId,
-      game_instance_player_id: gameInstancePlayerId,
-      game_question_id: (question.uuid as any),
-      game_id: gameId,
-      points: points.toString(),
+    if (!gameInstanceId || !gameInstancePlayerId || !gameId) return;
+    socket.emit('answer_submit', {
+      gameInstanceId: String(gameInstanceId),
+      playerId: String(gameInstancePlayerId),
+      gameId: String(gameId),
+      gameQuestionId: String(question.uuid),
+      points: String(points),
       alternative: answer,
       correct: correct ? '1' : '0',
-    }, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log("Error when updating user points");
+    }, (resp: any) => {
+      if (!resp?.ok) console.log('WS answer_submit failed', resp?.error);
     });
   }
 
@@ -107,6 +101,19 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
       questionTimeEnd();
     }, (Math.max(1, Number(question.time ?? 20)) * 1000))
   }, [])
+
+  // Allow host to end question early via WS broadcast
+  useEffect(() => {
+    if (!gameInstanceId) return;
+    socket.emit('join_game', String(gameInstanceId));
+    const onEnd = (payload: any) => {
+      if (payload?.gameId === String(gameInstanceId)) {
+        questionTimeEnd();
+      }
+    };
+    socket.on('question_end', onEnd);
+    return () => { socket.off('question_end', onEnd); };
+  }, [socket, gameInstanceId]);
 
   const questionTimeEnd = () => {
     if (!answerSelectedRef.current) {
@@ -159,6 +166,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     if (answer === question?.correct) {
       // POST new point score to server
       setUserPoints(points + score);
+      // server broadcasts player_update on score_update
       // Set the state
       setRoundPoints(score)
     }

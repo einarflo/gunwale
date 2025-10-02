@@ -2,6 +2,8 @@ import express, { Request, Response, NextFunction } from 'express';
 import { gamesRouter } from './routes/games';
 import { gameQuestionsRouter, gameQuestionByIdRouter } from './routes/gameQuestions';
 import { gameInstancesRouter } from './routes/gameInstances';
+import { gameInstancePlayersRouter } from './routes/gameInstancePlayers';
+import { gameInstanceAnswersRouter } from './routes/gameInstanceAnswers';
 import { requireAuth } from './middleware/auth';
 import { logger } from './lib/logger';
 import crypto from 'crypto';
@@ -61,6 +63,10 @@ export function createApp() {
   app.use('/game_question', gameQuestionsRouter);
   app.use('/game_question_by_id', gameQuestionByIdRouter);
   app.use('/game_instance', gameInstancesRouter);
+  app.use('/game_instance_players', gameInstancePlayersRouter);
+  // Legacy alias used by frontend to list players by instance id
+  app.use('/game_instance_players_id', gameInstancePlayersRouter);
+  app.use('/game_instance_answers', gameInstanceAnswersRouter);
   // game_question routes are wired below
 
   return app;

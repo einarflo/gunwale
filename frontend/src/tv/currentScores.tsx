@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { Spinner } from "./selectGame";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { selectableColors } from "../phone/waiting";
-import { get } from "../api";
+// Use WebSocket as source of truth for players
+import { useSocket } from "../context/SocketContext";
 
 interface CurrentScoresProps {
   gameInstanceId?: string;
@@ -17,22 +18,24 @@ interface CurrentScoresProps {
 const CurrentScores = ({ gameInstanceId, next, stop, currentQuestionCount }: CurrentScoresProps) => {
   const [players, setPlayers] = useState<Array<Player>>([]);
   const [loading, setLoading] = useState(false);
+  const { socket } = useSocket();
 
 
   useEffect(() => {
     if (!gameInstanceId) return;
+    const fetchPlayers = () => {
+      socket.emit('get_players', { gameInstanceId: String(gameInstanceId) }, (resp: any) => {
+        if (resp?.ok && Array.isArray(resp.players)) setPlayers(resp.players);
+        setLoading(false);
+      });
+    };
     setLoading(true);
-      get(`/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`)
-        .then(res => {
-          if (res.data) {
-            setPlayers(res.data);
-            setLoading(false);
-        }})
-        .catch(err => {
-          console.log("Error when getting player list");
-          setLoading(false);
-        });
-  }, [gameInstanceId])
+    fetchPlayers();
+    socket.emit('join_game', String(gameInstanceId));
+    const onPlayerUpdate = (data: any) => { if (data?.gameId === String(gameInstanceId)) fetchPlayers(); };
+    socket.on('player_update', onPlayerUpdate);
+    return () => { socket.off('player_update', onPlayerUpdate); };
+  }, [socket, gameInstanceId])
 
   if (loading) {
     <Tvrapper>

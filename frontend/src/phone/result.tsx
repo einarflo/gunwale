@@ -7,7 +7,7 @@ import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { selectableColors } from "./waiting";
 import { GameContext } from "../GameContext";
-import { get } from "../api";
+import { useSocket } from "../context/SocketContext";
 import one from '../images/upgrades/1.png';
 import two from '../images/upgrades/2.png';
 import three from '../images/upgrades/3.png';
@@ -31,7 +31,8 @@ interface ResultProps {
 }
 
 const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyfif, setPoints, buyStop, stop, color }: ResultProps) => {
-  const { gamePin } = useContext(GameContext);
+  const { gamePin, gameInstanceId } = useContext(GameContext);
+  const { socket } = useSocket();
   
   const [getReady, setGetReady] = useState(false);
 
@@ -60,31 +61,25 @@ const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyf
   }
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      get(`/game_instance/${gamePin}/?hash=${Math.random() * 21991919393914999419}`)
-      .then(res => {
-        if (res.data["status"] === 'started') {
-          if (res.data["currentquestion"] === currentQ.toString()) {
-
-            // Start countdown to next question
-            countdown(res.data["starttime"]);
-            setGetReady(true);
-            
-            clearInterval(interval)
-            
-            
-          }
+    if (!gameInstanceId) return;
+    socket.emit('join_game', String(gameInstanceId));
+    const onStatus = (payload: { gameId?: string; status?: string; index?: number; starttime?: string }) => {
+      if (payload?.gameId !== String(gameInstanceId)) return;
+      if (payload?.status === 'started' && String(payload?.index ?? '') === String(currentQ)) {
+        if (payload?.starttime) {
+          countdown(payload.starttime);
+          setGetReady(true);
         }
-        if (res.data["status"] === 'finished'){
-          gameFinished()
-        }
-      })
-      .catch(err => {
-        console.log("Error when getting game status");
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [countdown, currentQ, gameFinished, gamePin]);
+      }
+      if (payload?.status === 'finished') {
+        gameFinished();
+      }
+    };
+    socket.on('game_status', onStatus);
+    return () => {
+      socket.off('game_status', onStatus);
+    };
+  }, [socket, gameInstanceId, currentQ, countdown, gameFinished]);
 
 
 

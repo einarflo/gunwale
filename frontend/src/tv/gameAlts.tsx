@@ -1,10 +1,9 @@
-import { CurrentQuestionCount, Logo, Question, Start, Stop, Tvrapper } from "./game";
-import logo from '../images/tavl-white.png';
+import { CurrentQuestionCount, Question, Start, Stop, Tvrapper } from "./game";
 import styled from "styled-components";
 import { useEffect, useState } from "react";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { selectableColors } from "../phone/waiting";
-import { get } from "../api";
+import { useSocket } from "../context/SocketContext";
 
 interface AlternativesProps {
   question: Question;
@@ -14,16 +13,19 @@ interface AlternativesProps {
   gameInstanceId?: string;
 }
 
-interface Answer {
-  alternative: string;
-  game_question_id: string;
-}
+interface Answer { alternative: string; game_question_id: string }
+type AnswerCounts = { [key: string]: number };
 
 const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, gameInstanceId }: AlternativesProps) => {
   const [showAnswers, setShowAnswers] = useState(false);
   const [answers, setAnswers] = useState<Array<Answer>>();
+  const [counts, setCounts] = useState<AnswerCounts>({ '1': 0, '2': 0, '3': 0, '4': 0 });
   const [altTimeLeft, setAltTimeLeft] = useState(20); 
   const [showDistribution, setShowDistribution] = useState(false);
+  const { socket } = useSocket();
+  const [totalPlayers, setTotalPlayers] = useState(0);
+  const [answeredCount, setAnsweredCount] = useState(0);
+  const answeredSetRef = (function(){ const s = new Set<string>(); return { current: s } })() as { current: Set<string> };
 
   const option = (text: string | null | undefined, number: number, color: string, correct: boolean) => {
     return(
@@ -33,20 +35,17 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
     )
   }
 
-  // Get all questions for the current game Id
+  // Fetch answers via WS (in-memory on server)
   const getAnswersForGameInstanceId = () => {
     if (!gameInstanceId) { setShowDistribution(true); return; }
-    get(`/game_instance_answers/${gameInstanceId}/`)
-      .then(res => {
-        if (res.data) {
-          setAnswers(res.data.filter((a: Answer) => String(a.game_question_id) === String(question.uuid)));
-        } 
-        setShowDistribution(true);
-      })
-      .catch(err => {
-        setShowDistribution(true);
-        console.log("Error when getting answers for game instance with id ", gameInstanceId);
-      });
+    socket.emit('get_answer_counts', { gameInstanceId: String(gameInstanceId), gameQuestionId: String(question.uuid) }, (resp: any) => {
+      if (resp?.ok) {
+        setCounts(resp.counts || { '1':0,'2':0,'3':0,'4':0 });
+        setAnsweredCount(Number(resp.totalResponded || 0));
+        setTotalPlayers(Number(resp.totalPlayers || 0));
+      }
+      setShowDistribution(true);
+    });
   }
 
   const next = () => {
@@ -58,6 +57,11 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
         getAnswersForGameInstanceId()
       } else {
         setShowAnswers(true);
+        setAltTimeLeft(0);
+        // Notify players to end question early
+        if (gameInstanceId) {
+          socket.emit('question_end', { gameInstanceId: String(gameInstanceId), gameQuestionId: String(question.uuid) });
+        }
       }
     }
   }
@@ -69,16 +73,82 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
   useEffect(() => {
     const countdown = setInterval(() => {
       setAltTimeLeft((prev) => {
+        if (showAnswers || prev <= 0) return 0;
         const next = prev - 1;
-        if (next < 2) {
+        if (next <= 0) {
           setShowAnswers(true);
+          return 0;
         }
         return next;
       });
     }, 1000);
 
     return () => clearInterval(countdown)
-  }, [question?.time])
+  }, [question?.time, showAnswers])
+  
+  // Reset answers when question changes
+  useEffect(() => {
+    setAnswers([]);
+    setShowDistribution(false);
+    setShowAnswers(false);
+    answeredSetRef.current.clear();
+    setAnsweredCount(0);
+  }, [question?.uuid])
+
+  // Subscribe to incremental answer updates via WS
+  useEffect(() => {
+    if (!gameInstanceId) return;
+    socket.emit('join_game', String(gameInstanceId));
+    // initial total players
+    const fetchPlayers = () => {
+      socket.emit('get_players', { gameInstanceId: String(gameInstanceId) }, (resp: any) => {
+        if (resp?.ok && Array.isArray(resp.players)) setTotalPlayers(resp.players.length);
+      });
+    };
+    fetchPlayers();
+    const onAnswerUpdate = (data: any) => {
+      if (data?.gameId !== String(gameInstanceId)) return;
+      if (String(data?.gameQuestionId || '') !== String(question.uuid)) return;
+      setAnswers((prev) => ([...(prev || []), { alternative: String(data.alternative), game_question_id: String(question.uuid) }]));
+      const pid = data?.playerId ? String(data.playerId) : undefined;
+      if (pid && !answeredSetRef.current.has(pid)) {
+        answeredSetRef.current.add(pid);
+        setAnsweredCount((c) => c + 1);
+      } else if (!pid) {
+        setAnsweredCount((c) => c + 1);
+      }
+      if (totalPlayers > 0 && answeredSetRef.current.size >= totalPlayers) {
+        setShowAnswers(true);
+        setAltTimeLeft(0);
+      }
+    };
+    const onAnswerCounts = (data: any) => {
+      if (data?.gameId !== String(gameInstanceId)) return;
+      if (String(data?.gameQuestionId || '') !== String(question.uuid)) return;
+      if (data?.counts) setCounts(data.counts);
+      if (typeof data?.totalResponded === 'number') setAnsweredCount(data.totalResponded);
+      if (typeof data?.totalPlayers === 'number') setTotalPlayers(data.totalPlayers);
+    };
+    const onPlayerUpdate = (data: any) => {
+      if (data?.gameId === String(gameInstanceId)) fetchPlayers();
+    };
+    socket.on('answer_update', onAnswerUpdate);
+    socket.on('answer_counts', onAnswerCounts);
+    socket.on('player_update', onPlayerUpdate);
+    const onQuestionEnd = (payload: any) => {
+      if (payload?.gameId === String(gameInstanceId)) {
+        setShowAnswers(true);
+        setAltTimeLeft(0);
+      }
+    };
+    socket.on('question_end', onQuestionEnd);
+    return () => {
+      socket.off('answer_update', onAnswerUpdate);
+      socket.off('answer_counts', onAnswerCounts);
+      socket.off('player_update', onPlayerUpdate);
+      socket.off('question_end', onQuestionEnd);
+    };
+  }, [socket, gameInstanceId, question?.uuid, totalPlayers])
   
   return (
     <Tvrapper>
@@ -91,14 +161,17 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
           </ContentQuestions>
           :
           <Distribution>
-            <Column height={((answers?.filter(a => a.alternative == '1' ).length || 0)/(answers?.length || 1)*100) + '%'} color={selectableColors[0]}>{ answers?.filter(a => a.alternative == '1' ).length }</Column>
-            <Column height={((answers?.filter(a => a.alternative == '2' ).length || 0)/(answers?.length || 1)*100) + '%'} color={selectableColors[1]}>{ answers?.filter(a => a.alternative == '2' ).length }</Column>
-            <Column height={((answers?.filter(a => a.alternative == '3' ).length || 0)/(answers?.length || 1)*100) + '%'} color={selectableColors[2]}>{ answers?.filter(a => a.alternative == '3' ).length }</Column>
-            <Column height={((answers?.filter(a => a.alternative == '4' ).length || 0)/(answers?.length || 1)*100) + '%'} color={selectableColors[3]}>{ answers?.filter(a => a.alternative == '4' ).length }</Column>
+            <Column height={(((counts['1']||0)/Math.max(1, answeredCount))*100) + '%'} color={selectableColors[0]}>{ counts['1']||0 }</Column>
+            <Column height={(((counts['2']||0)/Math.max(1, answeredCount))*100) + '%'} color={selectableColors[1]}>{ counts['2']||0 }</Column>
+            <Column height={(((counts['3']||0)/Math.max(1, answeredCount))*100) + '%'} color={selectableColors[2]}>{ counts['3']||0 }</Column>
+            <Column height={(((counts['4']||0)/Math.max(1, answeredCount))*100) + '%'} color={selectableColors[3]}>{ counts['4']||0 }</Column>
           </Distribution>
       }
       
-      { altTimeLeft > 0 && <Timer>{altTimeLeft}</Timer> }
+      { !showDistribution && altTimeLeft > 0 && (<Timer>{altTimeLeft}</Timer>) }
+      { !showDistribution && (
+        <AnswersBubble title="Answers received">{answeredCount}/{totalPlayers}</AnswersBubble>
+      ) }
       <Alts>
         <AltsContainer>
         <Top>
@@ -140,7 +213,7 @@ const Distribution = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   width: 75vw;
-  height: 250%;
+  height: 25%;
   align-items: end;
 `;
 
@@ -154,6 +227,18 @@ export const Top = styled.div`
 
 export const Bot = styled.div`
  display: flex;
+`;
+
+const AnswersBubble = styled.div`
+  background: #9C8AFA;
+  padding: 15px;
+  border-radius: 15px;
+  left: 2%;
+  bottom: 55%;
+  font-size: 1.2em;
+  position: absolute;
+  color: white;
+  text-align: center;
 `;
 
 const Q = styled.div`
@@ -170,14 +255,13 @@ width: 100%;
 const Timer = styled.div`
   background: #9C8AFA;
   padding: 15px;
-  border-radius: 40px;
+  border-radius: 15px;
   left: 2%;
-  bottom: 55%;
+  bottom: 65%;
   width: fit-content;
   font-size: 2em;
   position: absolute;
   color: white;
-  width: 40px;
   text-align: center;
 `;
 
@@ -186,9 +270,9 @@ const QText = styled.div`
   margin: 5px;
   background-color: ${props => (props.color)};
   border-radius: 20px;
-  height: 70px;
+  height: 100%;
   color: white;
-  font-size: 2em;
+  font-size: 2.5em;
   line-height: 2;
 `;
 

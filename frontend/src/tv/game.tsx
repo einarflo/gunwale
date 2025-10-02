@@ -1,6 +1,6 @@
 import moment from "moment";
 import { useCallback, useEffect, useState } from "react";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 import { get, put } from "../api";
 import CurrentScores from "./currentScores";
 import Alternatives from "./gameAlts";
@@ -8,6 +8,11 @@ import GamePlayers from "./gamePlayers";
 import Podium from "./podium";
 import QuestionText from "./questionText";
 import { useParams } from "react-router-dom";
+import { useSocket } from "../context/SocketContext";
+import GlobalStyles from "../components/landing/GlobalStyles";
+import AnimatedGradientBackgroundLight from "../components/landing/AnimatedGradientBackground-light";
+import Tutorial from "./tutorial";
+import Countdown from "./countdown";
 
 interface TvViewProps {
   stopGame: () => void;
@@ -37,8 +42,8 @@ export interface Player {
 }
 
 const TVGamePlayView = ({ stopGame }: TvViewProps) => {
-
-  const { gamePin, gameInstanceId, gameId } = useParams<{ gamePin: string, gameInstanceId: string, gameId: string }>();
+  const { gamePin, gameInstanceId, gameId } = useParams<{ gamePin: string; gameInstanceId: string; gameId: string }>();
+  const { socket } = useSocket();
 
   const [questions, setQuestions] = useState<Array<Question>>([]);
   const [currentQ, setCurrentQ] = useState(0); 
@@ -47,6 +52,8 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   
   const [started, setStarted] = useState(false);
   const [showScoreBoard, setShowScoreBoard] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [preCountdown, setPreCountdown] = useState(false);
     
   // Get all questions for the current game Id
   const getQuestionsForGameId = (id?: string) => {
@@ -79,10 +86,15 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
     setShowScoreBoard(true)
   }
 
-  // When start button is cliked
+  // When start button is cliked -> show tutorial first
   const startGame = () => {
-    setGameQuestion(0, moment().add(3, 'seconds').format('HH:mm:ss'));
     setStarted(true);
+    setShowTutorial(true);
+  }
+
+  const beginAfterTutorial = () => {
+    setShowTutorial(false);
+    setGameQuestion(0, moment().add(3, 'seconds').format('HH:mm:ss'));
     showQuestion(0);
   }
 
@@ -97,16 +109,18 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
     if (!gameInstanceId) return;
     put(`/game_instance/${gameInstanceId}/`, {
       status: status,
-      currentquestion: "",
+      // currentquestion: "",
       starttime: "",
     })
     .then(res => {
       console.log(res);
+      socket.emit('join_game', String(gameInstanceId));
+      socket.emit('game_status', { gameId: String(gameInstanceId), status });
     })
     .catch(() => {
       console.log("Something fishy is going on");
     });
-  },[gameInstanceId])
+  },[gameInstanceId, socket])
 
   const setGameQuestion = (q: number, time: string) => {
     if (!gameInstanceId) return;
@@ -117,6 +131,8 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
     })
     .then(res => {
       console.log(res);
+      socket.emit('join_game', String(gameInstanceId));
+      socket.emit('game_status', { gameId: String(gameInstanceId), index: q, starttime: time, status: 'started' });
     })
     .catch(err => {
       console.log("Something fishy is going on");
@@ -124,15 +140,20 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   }
 
   const showQuestion = (q: number) => {
-    setLoading(true);
+    // Pre-countdown (3s) BEFORE starting question -> then question text (1s)
+    setPreCountdown(true);
 
-    // Do API call setting the current Q and time for start
     if (questions.length > q) {
-      setGameQuestion(q, moment().add(4, 'seconds').format('HH:mm:ss'))
-      
-      const holla = setTimeout(() => {
-        setLoading(false);
-        clearTimeout(holla);
+      // After 3s countdown, schedule starttime (+1s) and show question text for 1s
+      setTimeout(() => {
+        // Now we mark question as started in 1s to keep phones in sync
+        setGameQuestion(q, moment().add(3, 'seconds').format('HH:mm:ss'))
+        setPreCountdown(false);
+        setLoading(true);
+        const holla = setTimeout(() => {
+          setLoading(false);
+          clearTimeout(holla);
+        }, 3000);
       }, 3000);
     }
 
@@ -140,52 +161,53 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   }
 
   useEffect(() => {
+    if (gameInstanceId) socket.emit('join_game', String(gameInstanceId));
     getQuestionsForGameId(gameId);
     setGameStatus("created");
-  }, [gameId, setGameStatus]);
+  }, [gameId, gameInstanceId, setGameStatus, socket]);
 
-  // Show list of players that have joined the game
+  let content: JSX.Element;
   if (!started) {
-    return <GamePlayers startGame={startGame} stopGame={onStopGame}  gameInstanceId={gameInstanceId} gamePin={gamePin} />
+    content = (<GamePlayers startGame={startGame} stopGame={onStopGame}  gameInstanceId={gameInstanceId} gamePin={gamePin} />);
+  } else if (showTutorial) {
+    content = (<Tutorial
+      gamePin={gamePin}
+      onContinue={beginAfterTutorial}
+      onCancel={() => {
+        setShowTutorial(false);
+        setStarted(false);
+        if (gameInstanceId) {
+          socket.emit('join_game', String(gameInstanceId));
+          socket.emit('game_status', { gameId: String(gameInstanceId), status: 'created' });
+        }
+      }}
+    />);
+  } else if (preCountdown) {
+    content = (<Countdown />);
+  } else if (loading && questions.length > currentQ) {
+    content = (<QuestionText question={questions[currentQ]?.text} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>);
+  } else if (showScoreBoard && questions.length > currentQ+1) {
+    content = (<CurrentScores gameInstanceId={gameInstanceId} next={next} stop={stopGame} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>);
+  } else if (!showScoreBoard && questions.length > currentQ) {
+    content = (<Alternatives gameInstanceId={gameInstanceId} question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>);
+  } else {
+    content = (<Podium finish={onStopGame} gameInstanceId={gameInstanceId}/>);
   }
 
-  // Show the question with countdown bar
-  if (loading && questions.length > currentQ) {
-    return <QuestionText question={questions[currentQ]?.text} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
-  }
-
-  if (showScoreBoard && questions.length > currentQ+1) {
-    return <CurrentScores gameInstanceId={gameInstanceId} next={next} stop={stopGame} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
-  }
-
-  if (!showScoreBoard && questions.length > currentQ) {
-    return <Alternatives gameInstanceId={gameInstanceId} question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>
-  }
-
-  return <Podium finish={onStopGame} gameInstanceId={gameInstanceId}/>
+  return (
+    <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
+      <GlobalStyles />
+      <AnimatedGradientBackgroundLight />
+      {content}
+    </div>
+  );
 }
-
-const backgroundAnimation = keyframes`
-    0% {background-position: 0% 50%}
-    50% {background-position: 100% 50%}
-    100% {background-position: 0% 50%}
-`;
 
 export const Tvrapper = styled.div`
     height: 100vh;
     height: 100dvh;
     width: 100vw;
-    background: white;
-    //background: rgb(28,0,65);
-    //background: linear-gradient(180deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
-    //background: linear-gradient(-45deg, rgba(28,0,65,1) 0%, rgba(45,56,112,1) 0%, rgba(21,2,43,1) 100%);
-    //background: linear-gradient(-45deg, #EE7752, #E73C7E, #23A6D5, #23D5AB);
-    //background: linear-gradient(-45deg, #203046 0%, #030006 100%);
-    //background-size: 400% 400%;
-    animation-name: ${backgroundAnimation};
-    animation-duration: 15s;
-    animation-iteration-count: infinite;
-    animation-timing-function: ease;
+    background: transparent;
 `;
 
 export const Start = styled.div`

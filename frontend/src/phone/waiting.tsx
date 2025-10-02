@@ -4,7 +4,7 @@ import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { HeaderMobile, MobileHeader, MobileNav } from "../landing";
 import { GameContext } from "../GameContext";
-import { get, put } from "../api";
+import { useSocket } from "../context/SocketContext";
 
 interface WaitingProps {
   points: number;
@@ -22,34 +22,33 @@ export const selectableColors = [
 ]
 
 const Waiting = ({ points, gameStarted, gamepin, colorForUser, setColorForUser }: WaitingProps) => {
-  const { gameInstancePlayerId } = useContext(GameContext);
+  const { gameInstancePlayerId, gameInstanceId } = useContext(GameContext);
+  const { socket, connected } = useSocket();
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      get(`/game_instance/${gamepin}/?hash=${Math.random() * 21991919393914999419}`)
-      .then(res => {
-        if (res.data["status"] !== "created") {
+    // Prefer WebSocket event for status changes
+    if (gameInstanceId) {
+      socket.emit('join_game', String(gameInstanceId));
+      const onStatus = (payload: { gameId?: string; status?: string }) => {
+        if (payload?.gameId === String(gameInstanceId) && payload?.status && payload.status !== 'created') {
           gameStarted();
         }
-      })
-      .catch(err => {
-        console.log("Error when getting game status");
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [gameStarted, gamepin]);
+      };
+      socket.on('game_status', onStatus);
+      return () => {
+        socket.off('game_status', onStatus);
+      };
+    }
+  }, [socket, gameInstanceId, gameStarted]);
 
 
   const setColor = (number: number) => {
     setColorForUser(number);
-    put(`/game_instance_players/${gameInstancePlayerId}/`, JSON.stringify({
-      colour: number.toString(),
-    }), { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log("Error when updating user color");
+    if (!gameInstanceId) return;
+    socket.emit('color_update', { gameInstanceId: String(gameInstanceId), colour: number }, (resp: any) => {
+      if (!resp?.ok) {
+        console.log('WS color_update failed', resp?.error);
+      }
     });
   }
 

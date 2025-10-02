@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { Spinner } from "./selectGame";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { selectableColors } from "../phone/waiting";
-import { get } from "../api";
+// Use WebSocket as source of truth for players
+import { useSocket } from "../context/SocketContext";
 
 
 interface PodiumProps {
@@ -16,22 +17,25 @@ interface PodiumProps {
 const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
   const [players, setPlayers] = useState<Array<Player>>([]);
   const [loading, setLoading] = useState(false);
+  const { socket } = useSocket();
 
 
   useEffect(() => {
     if (!gameInstanceId) return;
     setLoading(true);
-      get(`/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`)
-        .then(res => {
-          if (res.data) {
-            setPlayers(res.data);
-            setLoading(false);
-        }})
-        .catch(err => {
-          console.log("Error when getting player list");
-          setLoading(false);
-        });
-  }, [gameInstanceId])
+    const fetchPlayers = () => {
+      socket.emit('get_players', { gameInstanceId: String(gameInstanceId) }, (resp: any) => {
+        if (resp?.ok && Array.isArray(resp.players)) setPlayers(resp.players);
+        setLoading(false);
+      });
+    };
+    fetchPlayers();
+    socket.emit('join_game', String(gameInstanceId));
+    // Optional: keep podium reactive if scores change before finish
+    const onPlayerUpdate = (data: any) => { if (data?.gameId === String(gameInstanceId)) fetchPlayers(); };
+    socket.on('player_update', onPlayerUpdate);
+    return () => { socket.off('player_update', onPlayerUpdate); };
+  }, [socket, gameInstanceId])
 
   // Do a call to set game over
 

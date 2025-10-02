@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SocketProvider } from './context/SocketContext';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
@@ -36,6 +36,19 @@ const App = () => {
   const [gameInstanceId, setGameInstanceId] = useState<string | undefined>();
 
   const { keycloak, login, logout } = useKeycloak();
+
+  // Minimal auth guard wrapper that triggers Keycloak login when needed
+  const RequireAuth = ({ children }: { children: JSX.Element }) => {
+    useEffect(() => {
+      if (!keycloak?.authenticated) {
+        login();
+      }
+    }, [keycloak?.authenticated]);
+    if (!keycloak?.authenticated) {
+      return <Authorizing />;
+    }
+    return children;
+  };
 
   const exitGame = () => {
     setNickname(undefined);
@@ -77,17 +90,15 @@ const App = () => {
         }
       />
       <Route path="/home" element={
-        keycloak?.authenticated ? (
+        <RequireAuth>
           <TVView
-            username={keycloak.tokenParsed?.preferred_username || ''}
+            username={keycloak?.tokenParsed?.preferred_username || ''}
             logout={() => {
               logout();
               navigate('/');
             }}
           />
-        ) : (
-          <Navigate to="/" replace />
-        )
+        </RequireAuth>
       }>
         <Route index element={<Home />} />
         <Route path="create" element={<CreateGame />} />
@@ -96,7 +107,11 @@ const App = () => {
         <Route path="update/:gameId" element={<UpdateGame />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
-      <Route path="host/:gameId/instance/:gameInstanceId/pin/:gamePin" element={<TVGamePlayView stopGame={() => navigate('/home')}/>} />
+      <Route path="host/:gameId/instance/:gameInstanceId/pin/:gamePin" element={
+        <RequireAuth>
+          <TVGamePlayView stopGame={() => navigate('/home')}/>
+        </RequireAuth>
+      } />
       <Route
         path="/join/:gamePin?"
         element={
@@ -149,4 +164,3 @@ export interface GameInstancePlayer {
   lottery: string;
   spending: string;
 }
-

@@ -44,7 +44,7 @@ export const KeycloakProvider = ({ children }: { children: ReactNode }) => {
 
   const logoutCallback = useCallback(() => {
     if (isInitialized && typeof memoKeycloak.logout === 'function') {
-      memoKeycloak.logout();
+      memoKeycloak.logout({ redirectUri: `${window.location.origin}` });
     } else {
       console.warn('Keycloak is not initialized yet.');
     }
