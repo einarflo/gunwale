@@ -32,7 +32,7 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
   }, [autoPlay]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 text-gray-800 selection:bg-blue-400/30">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 text-gray-800 selection:bg-blue-400/30 overflow-x-hidden">
       <GlobalStyles />
       <AnimatedGradientBackground />
       <Header signIn={signIn} playMode={playMode} />

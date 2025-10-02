@@ -5,21 +5,21 @@ export default function AnimatedGradientBackground() {
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       {/* Playful animated gradient blobs */}
       <div
-        className="absolute -top-40 -left-40 h-[70vw] w-[70vw] rounded-full blur-3xl opacity-40"
+        className="absolute top-40 left-40 h-[70vw] w-[70vw] rounded-full blur-3xl opacity-40"
         style={{ 
           background: "radial-gradient(circle, rgba(var(--g1),0.4), transparent 70%)",
           animation: "glowPulse 6s ease-in-out infinite"
         }}
       />
       <div
-        className="absolute -top-20 right-[-15%] h-[60vw] w-[60vw] rounded-full blur-3xl opacity-35"
+        className="absolute top-5 right-[1%] h-[60vw] w-[60vw] rounded-full blur-3xl opacity-35"
         style={{ 
           background: "radial-gradient(circle, rgba(var(--g2),0.3), transparent 65%)",
           animation: "glowPulse 8s ease-in-out infinite 1s"
         }}
       />
       <div
-        className="absolute bottom-[-20%] left-1/4 h-[75vw] w-[75vw] rounded-full blur-3xl opacity-40"
+        className="absolute bottom-[0%] left-1/4 h-[75vw] w-[75vw] rounded-full blur-3xl opacity-40"
         style={{ 
           background: "radial-gradient(circle, rgba(var(--g3),0.3), transparent 60%)",
           animation: "glowPulse 10s ease-in-out infinite 2s"
