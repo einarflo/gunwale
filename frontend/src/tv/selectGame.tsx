@@ -3,21 +3,21 @@ import styled, { keyframes } from "styled-components";
 import Header from '../components/landing/Header';
 
 interface CreateViewProps {
-    username: String;
+    username: string;
     logout: () => void;
 }
 
 export interface Game {
-    created_by_name: String;
-    favorite?: String;
-    popular?: String;
-    id: String;
-    uuid?: String;
-    name: String;
-    description: String;
-    qcount: String;
-    plays: String;
-    username: String;
+    created_by_name: string;
+    favorite?: string;
+    popular?: string;
+    id: string;
+    uuid?: string;
+    name: string;
+    description: string;
+    qcount: string;
+    plays: string;
+    username: string;
 }
 
 const TVView = ({ username, logout }: CreateViewProps) => {

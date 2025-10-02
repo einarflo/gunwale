@@ -5,7 +5,7 @@ import { Game } from "./selectGame";
 interface GameListItemProps {
     game: Game;
     onClick: () => void;
-    edit: (id: String) => void;
+    edit: (id: string) => void;
 }
 
 const GameListItem = ({game, onClick, edit}: GameListItemProps) => {

@@ -21,14 +21,14 @@ import eight from '../images/upgrades/8.png';
 import { put, post } from "../api";
 
 interface AltsProps {
-  points: number
-  setPoints: (points: number) => void
-  answered: () => void
-  question: Question
+  points: number;
+  setPoints: (points: number) => void;
+  answered: () => void;
+  question: Question;
   fif: boolean;
-  buyfif: () => void
+  buyfif: () => void;
   stop: boolean;
-  buyStop: () => void
+  buyStop: () => void;
   color: number;
 }
 
@@ -51,7 +51,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
   const answerSelectedRef = useRef(answerSelected);
   answerSelectedRef.current = answerSelected;
 
-  const [hide, setHide] = useState<String[]>([]);
+  const [hide, setHide] = useState<string[]>([]);
   const [stopTime, setStopTime] = useState(false);
 
 
@@ -68,7 +68,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     });
   }
 
-  const pushAnswer = (points: number, answer: String, correct: boolean) => {
+  const pushAnswer = (points: number, answer: string, correct: boolean) => {
     post(`/game_instance_answers/${gameInstancePlayerId}/`, {
       game_instance_id: gameInstanceId,
       game_instance_player_id: gameInstancePlayerId,
@@ -89,7 +89,8 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
   // Points counter
   useEffect(() => {
     // Maks 1000 poeng - fordelt på antall sekunder - delt opp i 100 (pga. 10 ms)
-    const subtract = 1000 / question.time / 100
+    const timeSec = Math.max(1, Number(question.time ?? 20));
+    const subtract = 1000 / timeSec / 100;
     const countdown = setInterval(() => {
       // Minimum score 115
       if (score > 115 && !stopTime) {
@@ -104,7 +105,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     setTimeout(() => {
       // COMMENT OUT FOR DEBUG
       questionTimeEnd();
-    }, (question.time * 1000))
+    }, (Math.max(1, Number(question.time ?? 20)) * 1000))
   }, [])
 
   const questionTimeEnd = () => {
@@ -203,15 +204,15 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
         <PowerUpIcon src={two} has={stop} onClick={() => usStop()}/>
         <PowerUpIcon src={four} has={false} onClick={() => {}}/>
       </PowerUpContainer>
-      <TimeBar time={(question.time).toString()} stop={stopTime}/>
+      <TimeBar time={String(Math.max(1, Number(question.time ?? 20)))} stop={stopTime}/>
       <AltsContainer>
       <Top>
-        <OptionButton hide={hide.includes("1")} description={question?.alt1} select={() => selectOption('1')} colour={selectableColors[0]} />
-        <OptionButton hide={hide.includes("2")} description={question?.alt2} select={() => selectOption('2')} colour={selectableColors[1]} />
+        <OptionButton hide={hide.includes("1")} description={(question?.alt1 ?? '') as string} select={() => selectOption('1')} colour={selectableColors[0]} />
+        <OptionButton hide={hide.includes("2")} description={(question?.alt2 ?? '') as string} select={() => selectOption('2')} colour={selectableColors[1]} />
       </Top>
       <Bot>
-        <OptionButton hide={hide.includes("3")} description={question?.alt3} select={() => selectOption('3')} colour={selectableColors[2]} />
-        <OptionButton hide={hide.includes("4")} description={question?.alt4} select={() => selectOption('4')} colour={selectableColors[3]} />
+        <OptionButton hide={hide.includes("3")} description={(question?.alt3 ?? '') as string} select={() => selectOption('3')} colour={selectableColors[2]} />
+        <OptionButton hide={hide.includes("4")} description={(question?.alt4 ?? '') as string} select={() => selectOption('4')} colour={selectableColors[3]} />
         </Bot>
       </AltsContainer>
 

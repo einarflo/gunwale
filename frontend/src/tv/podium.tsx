@@ -9,7 +9,7 @@ import { get } from "../api";
 
 
 interface PodiumProps {
-  gameInstanceId: String;
+  gameInstanceId?: string;
   finish: () => void;
 }
 
@@ -19,6 +19,7 @@ const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
 
 
   useEffect(() => {
+    if (!gameInstanceId) return;
     setLoading(true);
       get(`/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`)
         .then(res => {

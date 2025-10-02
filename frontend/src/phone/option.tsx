@@ -1,10 +1,10 @@
 import styled from "styled-components";
 
 interface OptionProps {
-    description: String,
-    select: () => void,
-    colour: string,
-    hide: boolean,
+    description: string;
+    select: () => void;
+    colour: string;
+    hide: boolean;
 }
 
 const OptionButton = ({ description, select, colour, hide }: OptionProps) => {

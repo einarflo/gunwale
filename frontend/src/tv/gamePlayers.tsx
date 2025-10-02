@@ -7,8 +7,8 @@ import whiteLogo from '../images/tavl-white.png';
 import { selectableColors } from "../phone/waiting";
 
 interface GamePlayersProps {
-  gameInstanceId: String;
-  gamePin: String;
+  gameInstanceId?: string;
+  gamePin?: string;
   stopGame: () => void;
   startGame: () => void;
 }
@@ -17,6 +17,7 @@ const GamePlayers = ({ gameInstanceId, startGame, gamePin, stopGame}: GamePlayer
   const [players, setPlayers] = useState<Array<Player>>([]);
 
   useEffect(() => {
+    if (!gameInstanceId) return;
     const refreshPlayerListInterval = setInterval(() => {
       get(`/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`)
         .then(res => {
@@ -40,7 +41,7 @@ const GamePlayers = ({ gameInstanceId, startGame, gamePin, stopGame}: GamePlayer
             <QRCode 
               size={512} 
               style={{ height: "auto", maxWidth: "200px", width: "200px", border: '6px solid white', borderRadius: '4px' }}
-              value={'https://ovh.tavl.no/join/' + gamePin}
+              value={'https://ovh.tavl.no/join/' + (gamePin || '')}
               viewBox={`0 0 512 512`}
             />
             </QR>

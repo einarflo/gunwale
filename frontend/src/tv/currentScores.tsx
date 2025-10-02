@@ -8,10 +8,10 @@ import { selectableColors } from "../phone/waiting";
 import { get } from "../api";
 
 interface CurrentScoresProps {
-  gameInstanceId: String,
-  currentQuestionCount: string,
-  next: () => void,
-  stop: () => void,
+  gameInstanceId?: string;
+  currentQuestionCount: string;
+  next: () => void;
+  stop: () => void;
 }
 
 const CurrentScores = ({ gameInstanceId, next, stop, currentQuestionCount }: CurrentScoresProps) => {
@@ -20,6 +20,7 @@ const CurrentScores = ({ gameInstanceId, next, stop, currentQuestionCount }: Cur
 
 
   useEffect(() => {
+    if (!gameInstanceId) return;
     setLoading(true);
       get(`/game_instance_players_id/${gameInstanceId}/?hash=${Math.random() * 21991919393914999419}`)
         .then(res => {

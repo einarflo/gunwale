@@ -4,8 +4,8 @@ import styled, { keyframes } from "styled-components";
 import TopLeftLogo from "../components/TopLeftLogo";
 
 interface QuestionTextProps {
-  question: String | undefined,
-  currentQuestionCount: string,
+  question: string | null | undefined;
+  currentQuestionCount: string;
 }
 
 const QuestionText = ({ question, currentQuestionCount }: QuestionTextProps) => {

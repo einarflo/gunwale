@@ -11,12 +11,12 @@ interface AlternativesProps {
   currentQuestionCount: string;
   nextQuestion: () => void;
   stopGame: () => void;
-  gameInstanceId: String;
+  gameInstanceId?: string;
 }
 
 interface Answer {
-  alternative: String;
-  game_question_id: String;
+  alternative: string;
+  game_question_id: string;
 }
 
 const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, gameInstanceId }: AlternativesProps) => {
@@ -25,7 +25,7 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
   const [altTimeLeft, setAltTimeLeft] = useState(20); 
   const [showDistribution, setShowDistribution] = useState(false);
 
-  const option = (text: String, number: number, color: string, correct: boolean) => {
+  const option = (text: string | null | undefined, number: number, color: string, correct: boolean) => {
     return(
       <Option onClick={() => {}} style={{ opacity: !showAnswers ? '100%' : correct ? '100%' : '30%' }}>
           <QText color={color}>{text}</QText>
@@ -35,10 +35,11 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
 
   // Get all questions for the current game Id
   const getAnswersForGameInstanceId = () => {
+    if (!gameInstanceId) { setShowDistribution(true); return; }
     get(`/game_instance_answers/${gameInstanceId}/`)
       .then(res => {
         if (res.data) {
-          setAnswers(res.data.filter((a: Answer) => a.game_question_id == (question.uuid as any)));
+          setAnswers(res.data.filter((a: Answer) => String(a.game_question_id) === String(question.uuid)));
         } 
         setShowDistribution(true);
       })
@@ -62,22 +63,22 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
   }
 
   useEffect(() => {
-    setAltTimeLeft(question?.time || 20);
+    setAltTimeLeft(Number(question?.time ?? 20));
   }, [question?.time])
 
   useEffect(() => {
     const countdown = setInterval(() => {
-      setAltTimeLeft(altTimeLeft - 1)
-      
-      console.log(altTimeLeft)
-      if (altTimeLeft < 2) {
-        setShowAnswers(true);
-        // Do something so players can see if it is correct
-      }
-    }, (1000));
+      setAltTimeLeft((prev) => {
+        const next = prev - 1;
+        if (next < 2) {
+          setShowAnswers(true);
+        }
+        return next;
+      });
+    }, 1000);
 
     return () => clearInterval(countdown)
-  }, [altTimeLeft, question?.time])
+  }, [question?.time])
   
   return (
     <Tvrapper>

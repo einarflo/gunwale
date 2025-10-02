@@ -10,34 +10,35 @@ import QuestionText from "./questionText";
 import { useParams } from "react-router-dom";
 
 interface TvViewProps {
-  stopGame: () => void
+  stopGame: () => void;
 }
 
 export interface Question {
-  uuid: String;
-  id?: String; // legacy numeric id; prefer uuid
-  game_id: String;
-  number_in_line: String,
-  alt1: String,
-  alt2: String,
-  alt3: String,
-  alt4: String,
-  text: String,
-  correct: String,
-  status: String,
-  score: String,
-  time: number,
+  uuid: string;
+  id?: string; // legacy numeric id; prefer uuid
+  game_id: string;
+  number_in_line?: string | null;
+  alt1?: string | null;
+  alt2?: string | null;
+  alt3?: string | null;
+  alt4?: string | null;
+  text?: string | null;
+  correct?: string | null;
+  status?: string | null;
+  score?: string | null;
+  time?: string | number | null;
 }
 
 export interface Player {
-  admin: String;
-  username: String;
-  score: String;
-  colour: String;
+  admin?: string | null;
+  username: string;
+  score: string; // numeric string
+  colour?: string | null; // index to selectableColors
 }
 
 const TVGamePlayView = ({ stopGame }: TvViewProps) => {
-  const { gamePin, gameInstanceId, gameId } = useParams<{ gameId: string, gameInstanceId: string, gamePin: string }>();
+
+  const { gamePin, gameInstanceId, gameId } = useParams<{ gamePin: string, gameInstanceId: string, gameId: string }>();
 
   const [questions, setQuestions] = useState<Array<Question>>([]);
   const [currentQ, setCurrentQ] = useState(0); 
@@ -48,7 +49,8 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   const [showScoreBoard, setShowScoreBoard] = useState(false);
     
   // Get all questions for the current game Id
-  const getQuestionsForGameId = (id: String) => {
+  const getQuestionsForGameId = (id?: string) => {
+    if (!id) return;
     get(`/game_question/${id}/`)
       .then(res => {
         if (res.data) {
@@ -91,7 +93,8 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
     stopGame();
   }
 
-  const setGameStatus = useCallback((status: String) => {
+  const setGameStatus = useCallback((status: string) => {
+    if (!gameInstanceId) return;
     put(`/game_instance/${gameInstanceId}/`, {
       status: status,
       currentquestion: "",
@@ -103,9 +106,10 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
     .catch(() => {
       console.log("Something fishy is going on");
     });
-  },[gameId])
+  },[gameInstanceId])
 
   const setGameQuestion = (q: number, time: string) => {
+    if (!gameInstanceId) return;
     put(`/game_instance/${gameInstanceId}/`, {
       currentquestion: q,
       starttime: time,
@@ -136,7 +140,7 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   }
 
   useEffect(() => {
-    getQuestionsForGameId(gameId)
+    getQuestionsForGameId(gameId);
     setGameStatus("created");
   }, [gameId, setGameStatus]);
 
