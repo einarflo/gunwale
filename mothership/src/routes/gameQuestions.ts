@@ -15,7 +15,8 @@ async function resolveGame(selector: string) {
 }
 
 // List questions for a game (selector can be numeric id or uuid)
-gameQuestionsRouter.get('/:selector', requireAuth(), async (req: Request, res: Response) => {
+// Public endpoint — no auth required
+gameQuestionsRouter.get('/:selector', async (req: Request, res: Response) => {
   const selector = req.params.selector;
   try {
     const game = await resolveGame(selector);

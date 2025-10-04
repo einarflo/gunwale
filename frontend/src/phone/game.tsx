@@ -5,22 +5,28 @@ import Alts from "./alts";
 import Result from "./result";
 import whiteLogo from '../images/tavl-white.png';
 import { Logo } from "../Splash";
+import logo from '../images/tavl-logo.png';
 import Waiting, { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "./waiting";
 import { MobileNav } from "../landing";
-import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { GameContext } from "../GameContext";
 import { get } from "../api";
+import { updatePhoneSession, loadPhoneSession } from "../storage/session";
 //import Waiting from "./waiting";
 import { useWakeLock } from 'react-screen-wake-lock';
+import { useSocket } from "../context/SocketContext";
+import { useNavigate } from "react-router-dom";
 
 const PhoneGameView = () => {
-  const { gameId, gamePin } = useContext(GameContext);
+  const { gameId, gamePin, gameInstanceId, gameInstancePlayerId, exitGame } = useContext(GameContext);
+  const { socket } = useSocket();
+  const navigate = useNavigate();
 
   // Maybe get user from session storage? and some way to reset it
   const [points, setPoints] = useState(0);
   const [currentQ, setCurrentQ] = useState(0);
   const [gameEnded, setGameEnded] = useState(false);
+  const [placement, setPlacement] = useState<{ rank: number; total: number } | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [answered, setAnswered] = useState(true);
   const [questions, setQuestions] = useState<Array<Question>>([]);
@@ -63,6 +69,54 @@ const PhoneGameView = () => {
     request();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
+
+  // Listen for finished status to end game and compute placement
+  useEffect(() => {
+    if (!gameInstanceId) return;
+    const onStatus = (payload: { gameId?: string; status?: string }) => {
+      if (payload?.gameId === String(gameInstanceId) && payload?.status === 'finished') {
+        setGameEnded(true);
+      }
+    };
+    socket.emit('join_game', String(gameInstanceId));
+    socket.on('game_status', onStatus);
+    return () => { socket.off('game_status', onStatus); };
+  }, [socket, gameInstanceId]);
+
+  // Compute placement by asking server for players when game ends
+  useEffect(() => {
+    if (!gameEnded) return;
+    if (!gameInstanceId) return;
+    try {
+      socket.emit('join_game', String(gameInstanceId));
+      socket.emit('get_players', { gameInstanceId: String(gameInstanceId) }, (resp: any) => {
+        if (resp?.ok && Array.isArray(resp.players)) {
+          const list = [...resp.players].sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+          const idx = list.findIndex((p) => String(p?.id || '') === String(gameInstancePlayerId || ''));
+          setPlacement({ rank: idx >= 0 ? idx + 1 : 0, total: list.length });
+        }
+      });
+    } catch (_) {}
+  }, [gameEnded, gameInstanceId, gameInstancePlayerId, socket]);
+
+  // Initialize points from saved session (if any)
+  useEffect(() => {
+    try {
+      const sess = loadPhoneSession();
+      if (sess && typeof sess.points === 'number') setPoints(sess.points);
+      if (sess && typeof sess.colour === 'number') setColorForUser(sess.colour);
+    } catch (_) {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist dynamic session bits for reconnect (points/colour)
+  useEffect(() => {
+    try { updatePhoneSession({ points }); } catch (_) {}
+  }, [points]);
+
+  useEffect(() => {
+    try { updatePhoneSession({ colour: colorForUser }); } catch (_) {}
+  }, [colorForUser]);
 
   const setAnswer = () => {
     setAnswered(true);
@@ -114,12 +168,44 @@ const PhoneGameView = () => {
   }
 
   return(
-    <GameWrapper onClick={() => setGameEnded(false)}>
+    <GameWrapper>
       <MobileNav>
-        <TopLeftLogo />
+        <img alt="Tavl logo" className="h-10 mt-4 ml-4" src={logo} />
         <TopRightPoints points={points} color={selectableColors[colorForUser]} textColor={textColors[colorForUser]} animate={animatedColorIndices.has(colorForUser)} multicolor={colorForUser === MULTICOLOR_INDEX}/>
       </MobileNav>
-      <Logo src={whiteLogo}/>
+      {gameEnded ? (
+        <EndSection>
+          <ConfettiLayer>
+            {Array.from({ length: 28 }).map((_, i) => {
+              const left = (i * (100 / 27));
+              const colors = ['#ffffff', '#fde047', '#22d3ee', '#fb7185', '#a78bfa'];
+              const size = (i % 3) === 0 ? 8 : 6;
+              const delay = (i % 10) * 250;
+              const duration = 3200 + (i % 7) * 450;
+              return (
+                <ConfettiPiece
+                  key={`c-${i}`}
+                  style={{ left: `${left}%`, background: colors[i % colors.length], width: `${size}px`, height: `${Math.round(size*1.6)}px`, animationDelay: `${delay}ms`, animationDuration: `${duration}ms` }}
+                />
+              );
+            })}
+          </ConfettiLayer>
+          <CelebrationTitle>
+            {placement && placement.rank <= 3 ? (placement.rank === 1 ? '🥇' : placement.rank === 2 ? '🥈' : '🥉') : '🎉'}
+            &nbsp;Well played!
+          </CelebrationTitle>
+          <PlacementBadge style={{ background: selectableColors[colorForUser], color: textColors[colorForUser] }}>
+            {placement ? `#${placement.rank} of ${placement.total}` : 'Calculating placement...'}
+          </PlacementBadge>
+          <ButtonRow>
+            <ActionButton onClick={() => navigate('/join')}>Join another game</ActionButton>
+            <GhostButton onClick={() => (exitGame ? exitGame() : navigate('/'))}>Exit</GhostButton>
+          </ButtonRow>
+          <BottomWatermark src={whiteLogo} alt="tavl" />
+        </EndSection>
+      ) : (
+        <Logo src={whiteLogo}/>
+      )}
     </GameWrapper>
   )
 }
@@ -180,6 +266,99 @@ border-radius: 50%;
 border-top-color: #fff;
 animation: spin 1s ease-in-out infinite;
 -webkit-animation: ${rotate} 1s ease-in-out infinite;
+`;
+
+const ActionButton = styled.button`
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+`;
+
+const GhostButton = styled.button`
+  appearance: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: transparent;
+  color: #fff;
+  font-weight: 800;
+  border: 2px solid rgba(255,255,255,0.7);
+  cursor: pointer;
+`;
+
+// Celebration UI for game end
+const EndSection = styled.div`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  text-align: center;
+  min-height: calc(100dvh - 120px);
+  padding: 12px 16px 90px;
+`;
+
+const CelebrationTitle = styled.div`
+  font-family: 'Coll';
+  font-weight: 900;
+  font-size: 2.4rem;
+  margin-bottom: 6px;
+  color: #ffffff;
+  text-shadow: 0 4px 18px rgba(0,0,0,0.35);
+`;
+
+const PlacementBadge = styled.div`
+  display: inline-block;
+  margin-top: 4px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+`;
+
+const confettiFall = keyframes`
+  0% { transform: translateY(-8vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(95vh) rotate(540deg); opacity: 1; }
+`;
+
+const ConfettiLayer = styled.div`
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+`;
+
+const ConfettiPiece = styled.span`
+  position: absolute;
+  top: -8vh;
+  width: 6px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: ${confettiFall};
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+`;
+
+const BottomWatermark = styled.img`
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 56px;
+  opacity: 0.25;
 `;
 
 

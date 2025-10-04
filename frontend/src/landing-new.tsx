@@ -4,6 +4,7 @@ import GlobalStyles from "./components/landing/GlobalStyles";
 import AnimatedGradientBackground from "./components/landing/AnimatedGradientBackground";
 import Header from "./components/landing/Header";
 import Hero from "./components/landing/Hero";
+import GamePinInput from "./components/landing/GamePinInput";
 import UpgradesSection from "./components/landing/UpgradesSection";
 import FeatureGrid from "./components/landing/FeatureGrid";
 import ProductSticky from "./components/landing/ProductSticky";
@@ -36,6 +37,10 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
       <GlobalStyles />
       <AnimatedGradientBackground />
       <Header signIn={signIn} playMode={playMode} />
+      {/* Mobile: GamePin banner flush under header */}
+      <div className="md:hidden">
+        <GamePinInput playMode={playMode} setGamePin={setGamePin} />
+      </div>
       <Hero signIn={signIn} playMode={playMode} setGamePin={setGamePin} />
       <UpgradesSection upgrades={upgrades} selectedUpgrade={selectedUpgrade} setSelectedUpgrade={setSelectedUpgrade} setAutoPlay={setAutoPlay} autoPlay={autoPlay} />
       <FeatureGrid />

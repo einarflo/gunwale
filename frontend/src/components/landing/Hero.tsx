@@ -30,8 +30,10 @@ export default function Hero({ signIn, playMode, setGamePin }: HeroProps) {
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </button>
         </div>
-        {/* Høyre: CTA-boks */}
-         <GamePinInput playMode={playMode} setGamePin={setGamePin} />
+        {/* Høyre: CTA-boks (desktop/tablet) */}
+         <div className="hidden md:block">
+           <GamePinInput playMode={playMode} setGamePin={setGamePin} />
+         </div>
       </div>
 
       {/* Featured quizzes section */}

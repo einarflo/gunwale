@@ -11,13 +11,16 @@ interface TopRightProps {
 }
 
 const TopRightPoints = ({ points, color, textColor, animate, multicolor }: TopRightProps) => {
-    const { nickname } = useContext(GameContext);
-    return (
-        <Wrapper hex={color} animate={animate} multicolor={multicolor}>
-            <Username text={textColor}>{nickname}</Username>
-            <Points hex={color}>{points}</Points>
-        </Wrapper>
-    );
+  const { nickname } = useContext(GameContext);
+  return (
+    <Wrapper hex={color} animate={animate} multicolor={multicolor}>
+      <NameBlock text={textColor} title={nickname || ''}>{nickname || ''}</NameBlock>
+      <PointsBox>
+        <PointsValue>{Math.max(0, Number(points || 0))}</PointsValue>
+        <PointsLabel>pts</PointsLabel>
+      </PointsBox>
+    </Wrapper>
+  );
 };
 
 export default TopRightPoints;
@@ -34,34 +37,56 @@ const MultiColorScroll = keyframes`
   100% { background-position: 50% 0%; }
 `;
 
-const Points = styled.div.attrs((props: {hex: any}) => props)`
-  color: #6A71FA;
-  background: white;
-  font-family: "Coll";
-  text-align: center;
-  border-radius: 10px;
-  margin: 5px;
-`;
-
-const Username = styled.div.attrs((props: {text?: string}) => props)<{text?: string}>`
+const NameBlock = styled.div.attrs((props: {text?: string}) => props)<{text?: string}>`
   color: ${props => props.text || 'white'};
   font-family: "Coll";
-  text-align: center;
-  font-size: 1.2rem;
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1.1;
+  max-width: 130px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const PointsBox = styled.div`
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  background: #ffffff;
+  color: #1f2937;
+  border-radius: 12px;
+  padding: 6px 10px;
+  min-width: 84px;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+`;
+
+const PointsValue = styled.span`
+  font-family: 'Coll';
+  font-weight: 900;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #3b82f6;
+`;
+
+const PointsLabel = styled.span`
+  font-family: 'Coll';
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #6b7280;
 `;
 
 const Wrapper = styled.div.attrs((props: {hex: any, animate?: boolean, multicolor?: boolean}) => props)<{hex: any, animate?: boolean, multicolor?: boolean}>`
-  margin-top: 15px;
-  padding-right: 30px;
-  padding-left: 30px;
-  height 55px;
-  margin-bottom: 15px;
-  margin-right: 20px;
   position: absolute;
   right: 0;
-  background: #6A71FA;
+  top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 14px;
+  margin-right: 10px;
+  border-radius: 14px;
   background: ${props => (props.hex)};
   ${props => props.animate && props.multicolor && css`
       background-size: 100% 1000%;
@@ -72,6 +97,6 @@ const Wrapper = styled.div.attrs((props: {hex: any, animate?: boolean, multicolo
       animation: ${MoveBackgroundPosition} 6s ease-in-out infinite;
       filter: drop-shadow(0 0 1px rgba(255, 200, 0, .3));
   `}
-  border-radius: 10px;
-  max-width: 140px;
+  max-width: 80vw;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.15);
 `;

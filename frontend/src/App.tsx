@@ -17,6 +17,10 @@ import EditQuestion from './tv/editQuestion';
 import UpdateGame from './tv/updateGameName';
 import ProfilePage from './tv/profilePage';
 import TVGamePlayView from './tv/game';
+import { loadPhoneSession, clearPhoneSession } from './storage/session';
+import { get } from './api';
+import { connectSocket } from './api/socket';
+import { useSocket } from './context/SocketContext';
 
 const appHeight = () => {
   const doc = document.documentElement
@@ -36,6 +40,17 @@ const App = () => {
   const [gameInstanceId, setGameInstanceId] = useState<string | undefined>();
 
   const { keycloak, login, logout } = useKeycloak();
+  const { socket } = useSocket();
+
+  // Reconnect prompt state
+  const [reconnectOffer, setReconnectOffer] = useState<null | {
+    gamePin: string;
+    gameId: string;
+    gameInstanceId: string;
+    username: string;
+    points?: number;
+    colour?: number;
+  }>(null);
 
   // Minimal auth guard wrapper that triggers Keycloak login when needed
   const RequireAuth = ({ children }: { children: JSX.Element }) => {
@@ -56,7 +71,76 @@ const App = () => {
     setGamePin(undefined);
     setGameId(undefined);
     setGameInstanceId(undefined);
+    clearPhoneSession();
     navigate('/');
+  };
+
+  // Check for resumable session on app load
+  useEffect(() => {
+    const sess = loadPhoneSession();
+    if (!sess) return;
+    // Only offer if we don't already have an active phone context
+    if (nickname || gameInstancePlayerId || gameId || gameInstanceId) return;
+    // Verify game instance still active
+    get(`/game_instance/${sess.gamePin}/`)
+      .then(res => {
+        const data = res.data || {};
+        const status = String(data?.status || '');
+        if (status && status !== 'finished') {
+          setReconnectOffer({
+            gamePin: sess.gamePin,
+            gameId: sess.gameId,
+            gameInstanceId: sess.gameInstanceId,
+            username: sess.username,
+            points: sess.points,
+            colour: sess.colour,
+          });
+        } else {
+          clearPhoneSession();
+        }
+      })
+      .catch(() => {
+        // could not validate; ignore
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const acceptReconnect = () => {
+    if (!reconnectOffer) return;
+    const { gamePin: pin, gameId: gid, gameInstanceId: giid, username: uname, points: pts, colour } = reconnectOffer;
+    // Seed context
+    setGamePin(pin);
+    setGameId(gid);
+    setGameInstanceId(giid);
+    setNickname(uname);
+    // Ensure socket connection
+    try { if (!socket.connected) connectSocket(); } catch (_) {}
+    // Rejoin player in WS and restore score/colour
+    socket.emit('join_player', { gameInstanceId: String(giid), gameId: String(gid), username: String(uname) }, (resp: any) => {
+      if (resp?.ok && resp.playerId) {
+        setGameInstancePlayerId(resp.playerId);
+        socket.emit('join_game', String(giid));
+        if (typeof colour === 'number') {
+          socket.emit('color_update', { gameInstanceId: String(giid), colour });
+        }
+        if (typeof pts === 'number') {
+          socket.emit('score_update', { gameInstanceId: String(giid), score: pts });
+        }
+        setReconnectOffer(null);
+        // Navigate to play
+        navigate('/play');
+      } else {
+        // Failed to rejoin; clear and send to join
+        setReconnectOffer(null);
+        clearPhoneSession();
+        navigate('/join');
+      }
+    });
+  };
+
+  const declineReconnect = () => {
+    setReconnectOffer(null);
+    clearPhoneSession();
   };
 
   return (
@@ -71,6 +155,20 @@ const App = () => {
         exitGame: exitGame as () => void
       }}
     >
+    {/* Reconnect modal */}
+    {reconnectOffer ? (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 20, width: '90%', maxWidth: 380, boxShadow: '0 12px 32px rgba(0,0,0,0.25)' }}>
+          <div style={{ fontFamily: 'Coll', fontSize: '1.2rem', fontWeight: 800, marginBottom: 8 }}>Fortsett spill?</div>
+          <div style={{ color: '#374151', marginBottom: 16 }}>Vi fant et pågående spill ({reconnectOffer.gamePin}). Vil du fortsette som {reconnectOffer.username}?</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={declineReconnect} style={{ flex: 1, padding: '10px 12px', borderRadius: 10, border: '2px solid #e5e7eb', background: '#fff', color: '#111827', cursor: 'pointer' }}>Nei takk</button>
+            <button onClick={acceptReconnect} style={{ flex: 1, padding: '10px 12px', borderRadius: 10, border: 'none', background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', color: '#fff', cursor: 'pointer' }}>Fortsett</button>
+          </div>
+        </div>
+      </div>
+    ) : null}
+
     <Routes>
       <Route path="/authorizing" element={<Authorizing />} />
       <Route

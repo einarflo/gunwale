@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { connectSocket } from "../api/socket";
 import { GameContext } from "../GameContext";
 import { useSocket } from "../context/SocketContext";
+import { savePhoneSession } from "../storage/session";
 
 interface UsernameProps {
   setNickname: (name: string | undefined) => void;
@@ -51,6 +52,21 @@ const Username = ({ setNickname, setGameInstancePlayerId }: UsernameProps) => {
               setGameInstancePlayerId(resp.playerId);
               socket.emit('join_game', String(gameInstanceId || ''));
               socket.emit('player_update', { gameId: String(gameInstanceId || ''), event: 'join_ack', player: { id: resp.playerId, username: enteredNickname, score: '0' } });
+              // Persist minimal session for reconnect
+              try {
+                if (gamePin && gameId && gameInstanceId && enteredNickname) {
+                  savePhoneSession({
+                    v: 1,
+                    gamePin: String(gamePin),
+                    gameId: String(gameId),
+                    gameInstanceId: String(gameInstanceId),
+                    username: String(enteredNickname),
+                    points: 0,
+                    colour: 0,
+                    savedAt: Date.now(),
+                  });
+                }
+              } catch (_) {}
               setLoading(false);
               navigate('/play');
             } else {
