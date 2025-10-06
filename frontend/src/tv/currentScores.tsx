@@ -3,6 +3,7 @@ import styled, { css, keyframes } from "styled-components";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "./selectGame";
 import TopLeftLogo from "../components/TopLeftLogo";
+import { useI18n } from "../i18n/I18nProvider";
 import { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "../phone/waiting";
 // Use WebSocket as source of truth for players
 import { useSocket } from "../context/SocketContext";
@@ -22,6 +23,7 @@ const CurrentScores = ({ gameInstanceId, next, stop, currentQuestionCount }: Cur
   const { socket } = useSocket();
   const prevOrderRef = useRef<string[]>([]);
   const [rankChange, setRankChange] = useState<Record<string, 'up' | 'down'>>({});
+  const { t } = useI18n();
 
 
   useEffect(() => {
@@ -86,7 +88,7 @@ const CurrentScores = ({ gameInstanceId, next, stop, currentQuestionCount }: Cur
       <TopLeftLogo/>
       <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>
       <ContentPlayers>
-        <Header><span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">Scoreboard</span></Header>
+        <Header><span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">{t('tv.scoreboard') || 'Scoreboard'}</span></Header>
         { players?.length === 0 ? 
             <div>No players ...</div>
           : 

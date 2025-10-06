@@ -6,6 +6,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 import { KeycloakProvider } from './auth/KeycloakProvider';
+import { I18nProvider } from './i18n/I18nProvider';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -21,9 +22,11 @@ appHeight()
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <KeycloakProvider>
-        <App />
-      </KeycloakProvider>
+      <I18nProvider>
+        <KeycloakProvider>
+          <App />
+        </KeycloakProvider>
+      </I18nProvider>
     </BrowserRouter>
   </React.StrictMode>,
 );

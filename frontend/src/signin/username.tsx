@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { connectSocket } from "../api/socket";
 import { GameContext } from "../GameContext";
 import { useSocket } from "../context/SocketContext";
+import { useI18n } from "../i18n/I18nProvider";
 import { savePhoneSession } from "../storage/session";
 
 interface UsernameProps {
@@ -20,6 +21,7 @@ const Username = ({ setNickname, setGameInstancePlayerId }: UsernameProps) => {
     
     const [username, setUsername] = useState<string | undefined>("");
     const [validationError, setValidationError] = useState<string | undefined>("");
+    const { t } = useI18n();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
@@ -29,7 +31,7 @@ const Username = ({ setNickname, setGameInstancePlayerId }: UsernameProps) => {
     const validateName = (input: any) => {
       // Sjekk lengden på strengen
       if (input && input.length > 50) {
-        setValidationError("Username too long!");
+        setValidationError(t('username.tooLong'));
         return false;
       }
       return true;
@@ -122,15 +124,15 @@ const Username = ({ setNickname, setGameInstancePlayerId }: UsernameProps) => {
                     }}
                     onClick={() => navigate('/join/' + gamePin)}
                 >
-                    ← Back
+                    ← {t('common.back')}
                 </button>
                 <Content>
                         <Logo src={logo} />
                         {loading ? <Spinner/> : (
                             <>
-                                {error && <ErrorText>Already taken. Try another pls?</ErrorText>}
+                                {error && <ErrorText>{t('username.errorTaken')}</ErrorText>}
                                 {validationError && <ErrorText>{validationError}</ErrorText>}
-                                <TextInputField placeholder="Username" onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value.toString())} onKeyPress={(e: any)  => {
+                                <TextInputField placeholder={t('username.label') || 'Username'} onChange={(e: { target: { value: String; }; }) => setUsername(e.target.value.toString())} onKeyPress={(e: any)  => {
                                     if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
                                         setValidationError("");
                                         if (validateName(username)) {
@@ -143,7 +145,7 @@ const Username = ({ setNickname, setGameInstancePlayerId }: UsernameProps) => {
                                     if (validateName(username)) {
                                         checkAndSetNickName(username)
                                     }
-                                }}>PLAY</PrimaryButton>
+                                }}>{t('join.play') || 'PLAY'}</PrimaryButton>
                             </>
                         )}
                 </Content>

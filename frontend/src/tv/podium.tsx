@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { put } from "../api";
 import { Spinner } from "./selectGame";
 import TopLeftLogo from "../components/TopLeftLogo";
+import { useI18n } from "../i18n/I18nProvider";
 import { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "../phone/waiting";
 // Use WebSocket as source of truth for players
 import { useSocket } from "../context/SocketContext";
@@ -19,6 +20,7 @@ const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
   const [players, setPlayers] = useState<Array<Player>>([]);
   const [loading, setLoading] = useState(false);
   const { socket } = useSocket();
+  const { t } = useI18n();
 
 
   useEffect(() => {
@@ -86,7 +88,7 @@ const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
       </ConfettiScreenLayer>
       
       <ContentPlayers>
-        <Header><span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">Winners!</span></Header>
+        <Header><span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">{t('tv.podium.title') || 'Winners!'}</span></Header>
         { players?.length === 0 ? (
             <div>No players ...</div>
           ) : (
@@ -134,7 +136,7 @@ const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
             })()
           )}
       </ContentPlayers>
-      <Start onClick={finish}>Finish</Start>
+      <Start onClick={finish}>{t('common.finish') || 'Finish'}</Start>
       <BottomLogo src={logo} alt="Tavl" />
     </Tvrapper>
   )

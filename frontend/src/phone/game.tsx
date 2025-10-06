@@ -15,12 +15,14 @@ import { updatePhoneSession, loadPhoneSession } from "../storage/session";
 //import Waiting from "./waiting";
 import { useWakeLock } from 'react-screen-wake-lock';
 import { useSocket } from "../context/SocketContext";
+import { useI18n } from "../i18n/I18nProvider";
 import { useNavigate } from "react-router-dom";
 
 const PhoneGameView = () => {
   const { gameId, gamePin, gameInstanceId, gameInstancePlayerId, exitGame } = useContext(GameContext);
   const { socket } = useSocket();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   // Maybe get user from session storage? and some way to reset it
   const [points, setPoints] = useState(0);
@@ -194,14 +196,14 @@ const PhoneGameView = () => {
           }
           <CelebrationTitle>
             {placement && placement.rank <= 3 ? (placement.rank === 1 ? '🥇' : placement.rank === 2 ? '🥈' : '🥉') : '🎉'}
-            &nbsp;Well played!
+            &nbsp;{t('game.over')}
           </CelebrationTitle>
           <PlacementBadge style={{ background: selectableColors[colorForUser], color: textColors[colorForUser] }}>
-            {placement ? `#${placement.rank} of ${placement.total}` : 'Calculating placement...'}
+            {placement ? t('game.placement', { rank: placement.rank, total: placement.total }) : t('game.placement.pending')}
           </PlacementBadge>
           <ButtonRow>
-            <ActionButton onClick={() => navigate('/join')}>Join another game</ActionButton>
-            <GhostButton onClick={() => (exitGame ? exitGame() : navigate('/'))}>Exit</GhostButton>
+            <ActionButton onClick={() => navigate('/join')}>{t('common.joinAnother')}</ActionButton>
+            <GhostButton onClick={() => (exitGame ? exitGame() : navigate('/'))}>{t('common.exit')}</GhostButton>
           </ButtonRow>
           <BottomWatermark src={whiteLogo} alt="tavl" />
         </EndSection>

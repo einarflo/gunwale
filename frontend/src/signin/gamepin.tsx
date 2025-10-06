@@ -4,6 +4,7 @@ import TopLeftLogo from "../components/TopLeftLogo";
 import logo from '../images/tavl-logo.png';
 import { useNavigate, useParams } from "react-router-dom";
 import { get } from "../api";
+import { useI18n } from "../i18n/I18nProvider";
 
 interface GamePinProps {
   setGameId: (id: string) => void;
@@ -17,6 +18,7 @@ const GamePin = ({ setGameId, setGameInstanceId, setGamePin }: GamePinProps) => 
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
+    const { t } = useI18n();
 
     useEffect(() => {
         if (gamePin) {
@@ -75,21 +77,21 @@ const GamePin = ({ setGameId, setGameInstanceId, setGamePin }: GamePinProps) => 
                     }}
                     onClick={() => navigate('/')}
                 >
-                    ← Back
+                    ← {t('common.back')}
                 </button>
                 <Content>
 
                         <Logo src={logo}/>
                         {loading ? <Spinner /> : (
                             <>
-                                {error && <ErrorText>Wrong game pin. Try another pls?</ErrorText>}
-                                <TextInputField autoFocus={false} tabIndex={0} placeholder="Game pin" type={"number"} value={enteredGamePin} onChange={(e: { target: { value: String; }; }) => setEnteredGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
+                                {error && <ErrorText>{t('join.errorInvalid')}</ErrorText>}
+                                <TextInputField autoFocus={false} tabIndex={0} placeholder={t('join.label')} type={"number"} value={enteredGamePin} onChange={(e: { target: { value: String; }; }) => setEnteredGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
                                     if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
                                       setPin(enteredGamePin)
                                     }
                                 }}/>
-                                <PrimaryButtonLocal onClick={() => setPin(enteredGamePin)}>PLAY</PrimaryButtonLocal>
-                                <Footer>or create a new game&nbsp;<div onClick={() => navigate('/home')} style={{ color: "#3b82f6", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
+                                <PrimaryButtonLocal onClick={() => setPin(enteredGamePin)}>{t('join.play') || 'PLAY'}</PrimaryButtonLocal>
+                                <Footer>{t('join.orCreate') || 'or create a new game'}&nbsp;<div onClick={() => navigate('/home')} style={{ color: "#3b82f6", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>{t('join.here') || 'here'}</div>.</Footer>
                             </>
                         )}
                 </Content>
@@ -255,4 +257,3 @@ const GlowRight = styled.div`
 `;
 
 export default GamePin;
-

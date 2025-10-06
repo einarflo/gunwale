@@ -3,6 +3,7 @@ import styled, { css, keyframes } from "styled-components";
 import logo from '../images/tavl-logo.png';
 import TopRightPoints from "../components/TopRightPoints";
 import { HeaderMobile, MobileHeader, MobileNav } from "../landing";
+import { useI18n } from "../i18n/I18nProvider";
 import { GameContext } from "../GameContext";
 import { useSocket } from "../context/SocketContext";
 import upgrades from "../data/upgrades";
@@ -126,6 +127,7 @@ const colorCosts: Record<number, number> = {
 const Waiting = ({ points, setPoints, gameStarted, gamepin, colorForUser, setColorForUser }: WaitingProps) => {
   const { gameInstancePlayerId, gameInstanceId } = useContext(GameContext);
   const { socket, connected } = useSocket();
+  const { t } = useI18n();
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -188,7 +190,7 @@ const Waiting = ({ points, setPoints, gameStarted, gamepin, colorForUser, setCol
           </TickText>
         </Ticker>
       </BlueWrapper>
-      <HeaderMobile>Select your color</HeaderMobile>
+      <HeaderMobile>{t('waiting.selectColor')}</HeaderMobile>
       <ColorGrid>
         {(() => {
           const order = selectableColors.map((_, i) => i).sort((a, b) => ((colorCosts[a] || 0) - (colorCosts[b] || 0)) || (a - b));

@@ -2,6 +2,7 @@ import { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { upgrades } from "../data/upgrades";
+import { useI18n } from "../i18n/I18nProvider";
 
 interface TutorialProps {
   gamePin?: string;
@@ -10,6 +11,7 @@ interface TutorialProps {
 }
 
 const Tutorial = ({ gamePin, onContinue, onCancel }: TutorialProps) => {
+  const { t } = useI18n();
   const [idx, setIdx] = useState(0);
 
   const steps = [
@@ -72,13 +74,13 @@ const Tutorial = ({ gamePin, onContinue, onCancel }: TutorialProps) => {
       {/* Corner-aligned actions like the rest of TV views */}
       {(onCancel || idx > 0) && (
         <CornerLeft onClick={onCancel ? onCancel : () => setIdx(i => Math.max(0, i - 1))}>
-          {onCancel ? 'Back to lobby' : 'Back'}
+          {onCancel ? t('tutorial.backToLobby') : t('common.back')}
         </CornerLeft>
       )}
       {idx < steps.length - 1 ? (
-        <CornerRight onClick={() => setIdx(i => Math.min(steps.length - 1, i + 1))}>Next</CornerRight>
+        <CornerRight onClick={() => setIdx(i => Math.min(steps.length - 1, i + 1))}>{t('common.next')}</CornerRight>
       ) : (
-        <CornerRight onClick={onContinue}>Begin</CornerRight>
+        <CornerRight onClick={onContinue}>{t('common.begin')}</CornerRight>
       )}
     </Wrapper>
   );

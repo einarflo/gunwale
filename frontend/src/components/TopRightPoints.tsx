@@ -1,6 +1,7 @@
 import styled, { css, keyframes } from 'styled-components';
 import { useContext } from 'react';
 import { GameContext } from '../GameContext';
+import { useI18n } from '../i18n/I18nProvider';
 
 interface TopRightProps {
     points: number;
@@ -12,12 +13,13 @@ interface TopRightProps {
 
 const TopRightPoints = ({ points, color, textColor, animate, multicolor }: TopRightProps) => {
   const { nickname } = useContext(GameContext);
+  const { t } = useI18n();
   return (
     <Wrapper hex={color} animate={animate} multicolor={multicolor}>
       <NameBlock text={textColor} title={nickname || ''}>{nickname || ''}</NameBlock>
       <PointsBox>
         <PointsValue>{Math.max(0, Number(points || 0))}</PointsValue>
-        <PointsLabel>pts</PointsLabel>
+        <PointsLabel>{t('common.pts')}</PointsLabel>
       </PointsBox>
     </Wrapper>
   );
