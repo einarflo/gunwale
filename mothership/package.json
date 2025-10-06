@@ -17,6 +17,7 @@
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.0.1",
     "mysql2": "^3.14.4",
+    "stripe": "^19.1.0",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {

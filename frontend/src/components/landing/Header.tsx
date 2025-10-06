@@ -29,7 +29,7 @@ export default function Header({ signIn, playMode }: HeaderProps) {
           <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
           <div onClick={() => navigate("/home")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.library')}</div>
           <div onClick={() => navigate("/home/profile")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.profile')}</div>
-          <div onClick={() => navigate("/tv")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.upgrades')}</div>
+          <div onClick={() => navigate("/home/upgrades")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.upgrades')}</div>
         </nav>
         ) : (
         <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
@@ -100,7 +100,7 @@ export default function Header({ signIn, playMode }: HeaderProps) {
                 <div className="text-sm text-gray-700 font-semibold mb-1">{username}</div>
                 <button onClick={() => { navigate('/home'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.library')}</button>
                 <button onClick={() => { navigate('/home/profile'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.profile')}</button>
-                <button onClick={() => { navigate('/tv'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.upgrades')}</button>
+                <button onClick={() => { navigate('/home/upgrades'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.upgrades')}</button>
                 <div className="h-px bg-blue-100 my-1" />
                 <button onClick={() => { navigate('/join'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-blue-700">{t('header.join')}</button>
                 <button onClick={() => { logout(); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-red-50 text-red-600">{t('header.signout')}</button>

@@ -17,10 +17,15 @@ import EditQuestion from './tv/editQuestion';
 import UpdateGame from './tv/updateGameName';
 import ProfilePage from './tv/profilePage';
 import TVGamePlayView from './tv/game';
+import UpgradesPage from './tv/upgradesPage';
 import { loadPhoneSession, clearPhoneSession } from './storage/session';
 import { get } from './api';
 import { connectSocket } from './api/socket';
 import { useSocket } from './context/SocketContext';
+import StripeReturn from './tv/stripeReturn';
+import BillingSuccess from './tv/billingSuccess';
+import BillingError from './tv/billingError';
+import Purchase from './tv/purchase';
 
 const appHeight = () => {
   const doc = document.documentElement
@@ -171,6 +176,8 @@ const App = () => {
 
     <Routes>
       <Route path="/authorizing" element={<Authorizing />} />
+      <Route path="/stripe-return" element={<RequireAuth><StripeReturn /></RequireAuth>} />
+      <Route path="/purchase" element={<Purchase />} />
       <Route
         path="/"
         element={
@@ -199,11 +206,14 @@ const App = () => {
         </RequireAuth>
       }>
         <Route index element={<Home />} />
+        <Route path="upgrades" element={<UpgradesPage />} />
         <Route path="create" element={<CreateGame />} />
         <Route path="edit/:gameId" element={<EditGame />} />
         <Route path="edit/:gameId/question/:questionId" element={<EditQuestion />} />
         <Route path="update/:gameId" element={<UpdateGame />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="billing/success" element={<BillingSuccess />} />
+        <Route path="billing/error" element={<BillingError />} />
       </Route>
       <Route path="host/:gameId/instance/:gameInstanceId/pin/:gamePin" element={
         <RequireAuth>
