@@ -106,7 +106,7 @@ const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
                   <Reveal key={'w'} delayMs={delayForPos(0)}>
                     <WinnerBanner hex={hex} text={text} animated={animated} multicolor={multicolor}>
                       <WinnerCrown>🏆</WinnerCrown>
-                      <WinnerName text={text}>1. {p.username}</WinnerName>
+                      <WinnerName text={text}>{p.username}</WinnerName>
                       <WinnerScore text={text}>{p.score}</WinnerScore>
                     </WinnerBanner>
                   </Reveal>
@@ -117,7 +117,13 @@ const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
                 const idx = Number(p.colour)||0;
                 rows.push(
                   <Reveal key={`r-${i}`} delayMs={delayForPos(i)}>
-                    <ScoreEntry hex={selectableColors[idx]} text={textColors[idx]} animated={animatedColorIndices.has(idx)} multicolor={idx===MULTICOLOR_INDEX}>
+                    <ScoreEntry
+                      hex={selectableColors[idx]}
+                      text={textColors[idx]}
+                      animated={animatedColorIndices.has(idx)}
+                      multicolor={idx===MULTICOLOR_INDEX}
+                      idx={idx}
+                    >
                       <Name>{i+1}. {p.username}</Name>
                       <Score>{p.score}</Score>
                     </ScoreEntry>
@@ -167,7 +173,7 @@ const MultiColorScroll = keyframes`
   100% { background-position: 50% 0%; }
 `;
 
-const ScoreEntry = styled.div.attrs((props: {hex: any, text?: string, animated?: boolean, multicolor?: boolean}) => props)<{hex: any, text?: string, animated?: boolean, multicolor?: boolean}>`
+const ScoreEntry = styled.div.attrs((props: {hex: any, text?: string, animated?: boolean, multicolor?: boolean, idx?: number}) => props)<{hex: any, text?: string, animated?: boolean, multicolor?: boolean, idx?: number}>`
   height: 50px;
   margin: 20px;
   font-size: 2rem;
@@ -181,16 +187,15 @@ const ScoreEntry = styled.div.attrs((props: {hex: any, text?: string, animated?:
   margin-left: auto;
   left: 50%;
   font-family: "Coll";
-  background: ${props => (props.hex || " #9C8AFA")};
-  ${props => props.animated && props.multicolor && css`
-      background-size: 100% 1000%;
-      animation: ${MultiColorScroll} 17.5s linear infinite;
-  `}
-  ${props => props.animated && !props.multicolor && css`
-      background-size: 150%;
-      animation: ${MoveBackgroundPosition} 6s ease-in-out infinite;
-      filter: drop-shadow(0 0 1px rgba(255, 200, 0, .3));
-  `}
+  background: ${props => (props.hex || 'linear-gradient(90deg, #6A71FA 0%, #9C8AFA 100%)')};
+    ${props => props.animated && props.multicolor && css`
+        background-size: 100% 1000%;
+        animation: ${MultiColorScroll} 17.5s linear infinite;
+    `}
+    ${props => props.animated && !props.multicolor && css`
+        background-size: 150%;
+        animation: ${MoveBackgroundPosition} 6s ease-in-out infinite;
+    `}
   color: ${props => props.text || 'white'};
   padding: 5px;
   display: flex;
@@ -265,6 +270,26 @@ const BottomLogo = styled.img`
 `;
 
 // Extra animations (declare before usage)
+const Spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const HueRotate = keyframes`
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+`;
+
+const ShimmerDiag = keyframes`
+  0% { background-position: 0% 0%; }
+  50% { background-position: 150% 150%; }
+  100% { background-position: 0% 0%; }
+`;
+
+const StripesScroll = keyframes`
+  0% { background-position: 0 0; }
+  100% { background-position: 200px 200px; }
+`;
 const pulseGlow = keyframes`
   0% { box-shadow: 0 16px 40px rgba(0,0,0,0.12), 0 0 0 4px rgba(255,255,255,0.75), 0 0 32px rgba(147,51,234,0.18), 0 0 28px rgba(59,130,246,0.18); }
   50% { box-shadow: 0 20px 52px rgba(0,0,0,0.14), 0 0 0 6px rgba(255,255,255,0.85), 0 0 48px rgba(147,51,234,0.28), 0 0 44px rgba(59,130,246,0.28); }
@@ -288,14 +313,14 @@ const WinnerBanner = styled.div.attrs((props: {hex: any, text?: string, animated
   margin: 12px 0 6px;
   border-radius: 16px;
   background: ${props => (props.hex || 'linear-gradient(90deg, #6A71FA 0%, #9C8AFA 100%)')};
-  ${props => props.animated && props.multicolor && css`
-      background-size: 100% 1000%;
-      animation: ${MultiColorScroll} 17.5s linear infinite;
-  `}
-  ${props => props.animated && !props.multicolor && css`
-      background-size: 150%;
-      animation: ${MoveBackgroundPosition} 6s ease-in-out infinite;
-  `}
+    ${props => props.animated && props.multicolor && css`
+        background-size: 100% 1000%;
+        animation: ${MultiColorScroll} 17.5s linear infinite;
+    `}
+    ${props => props.animated && !props.multicolor && css`
+        background-size: 150%;
+        animation: ${MoveBackgroundPosition} 6s ease-in-out infinite;
+    `}
   overflow: visible;
   box-shadow:
     0 16px 40px rgba(0,0,0,0.12),

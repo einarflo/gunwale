@@ -69,17 +69,17 @@ const Tutorial = ({ gamePin, onContinue, onCancel }: TutorialProps) => {
         {steps.map((s, i) => <Dot key={s.key} active={i === idx} />)}
       </Dots>
 
-      <Actions>
-        {onCancel && (
-          <Secondary onClick={onCancel}>Back to lobby</Secondary>
-        )}
-        {idx > 0 && <Secondary onClick={() => setIdx(i => Math.max(0, i - 1))}>Back</Secondary>}
-        {idx < steps.length - 1 ? (
-          <Continue onClick={() => setIdx(i => Math.min(steps.length - 1, i + 1))}>Next</Continue>
-        ) : (
-          <Continue onClick={onContinue}>Begin</Continue>
-        )}
-      </Actions>
+      {/* Corner-aligned actions like the rest of TV views */}
+      {(onCancel || idx > 0) && (
+        <CornerLeft onClick={onCancel ? onCancel : () => setIdx(i => Math.max(0, i - 1))}>
+          {onCancel ? 'Back to lobby' : 'Back'}
+        </CornerLeft>
+      )}
+      {idx < steps.length - 1 ? (
+        <CornerRight onClick={() => setIdx(i => Math.min(steps.length - 1, i + 1))}>Next</CornerRight>
+      ) : (
+        <CornerRight onClick={onContinue}>Begin</CornerRight>
+      )}
     </Wrapper>
   );
 };
@@ -184,8 +184,10 @@ const Tag = styled.span`
   font-size: 0.75rem;
 `;
 
-const Continue = styled.button`
-  margin-top: 24px;
+const CornerRight = styled.button`
+  position: absolute;
+  bottom: 2%;
+  right: 2%;
   background: linear-gradient(90deg, #3b82f6, #8b5cf6);
   color: white;
   font-weight: 800;
@@ -196,8 +198,10 @@ const Continue = styled.button`
   box-shadow: 0 12px 24px rgba(59, 130, 246, 0.25);
 `;
 
-const Secondary = styled.button`
-  margin-top: 24px;
+const CornerLeft = styled.button`
+  position: absolute;
+  bottom: 2%;
+  left: 2%;
   background: white;
   color: #1f2937;
   font-weight: 700;
@@ -205,12 +209,7 @@ const Secondary = styled.button`
   border-radius: 14px;
   padding: 12px 18px;
   cursor: pointer;
-`;
-
-const Actions = styled.div`
-  margin-top: 8px;
-  display: flex;
-  gap: 10px;
+  opacity: 0.9;
 `;
 
 const FadeIn = styled.div`

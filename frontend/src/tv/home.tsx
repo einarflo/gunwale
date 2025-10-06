@@ -1,6 +1,7 @@
 import { Game, Spinner } from "./selectGame";
 import Modal from "react-modal";
 import { useEffect, useMemo, useState } from "react";
+import styled from "styled-components";
 import randomstring from 'randomstring';
 import { get, post, put } from "../api";
 import GlobalStyles from '../components/landing/GlobalStyles';
@@ -226,7 +227,9 @@ const Home = () => {
           <div className="text-xl font-semibold text-gray-700 mb-4">Dine spill</div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
-              <div className="flex justify-center items-center h-32"><Spinner /></div>
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 flex justify-center items-center h-32">
+                <ListSpinner />
+              </div>
             ) : error ? (
               <div className="text-red-500">En feil oppstod</div>
             ) : (!games || games.length === 0) ? (
@@ -402,3 +405,9 @@ const Home = () => {
 };
 
 export default Home;
+
+// Spinner variant for light backgrounds
+const ListSpinner = styled(Spinner)`
+  border: 3px solid rgba(59,130,246,.25);
+  border-top-color: #3b82f6;
+`;

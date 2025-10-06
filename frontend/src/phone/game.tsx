@@ -170,11 +170,12 @@ const PhoneGameView = () => {
   return(
     <GameWrapper>
       <MobileNav>
-        <img alt="Tavl logo" className="h-10 mt-4 ml-4" src={logo} />
+        <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
         <TopRightPoints points={points} color={selectableColors[colorForUser]} textColor={textColors[colorForUser]} animate={animatedColorIndices.has(colorForUser)} multicolor={colorForUser === MULTICOLOR_INDEX}/>
       </MobileNav>
       {gameEnded ? (
         <EndSection>
+          { placement && placement.rank <= 3 && 
           <ConfettiLayer>
             {Array.from({ length: 28 }).map((_, i) => {
               const left = (i * (100 / 27));
@@ -190,6 +191,7 @@ const PhoneGameView = () => {
               );
             })}
           </ConfettiLayer>
+          }
           <CelebrationTitle>
             {placement && placement.rank <= 3 ? (placement.rank === 1 ? '🥇' : placement.rank === 2 ? '🥈' : '🥉') : '🎉'}
             &nbsp;Well played!
