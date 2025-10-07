@@ -74,7 +74,7 @@ const Purchase = () => {
             <div className="text-gray-700 mb-6">{error || (t('billing.fail.subtitle') || 'Your purchase could not be completed. You can try again or return to the Premium page.')}</div>
             <div className="flex gap-3">
               <button onClick={init} className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-6 py-3 text-white font-bold shadow hover:scale-105 transition">{t('billing.retry') || 'Try again'}</button>
-              <button onClick={() => navigate('/home/premium')} className="rounded-xl bg-white px-6 py-3 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">{t('billing.goPremium') || 'Premium page'}</button>
+              <button onClick={() => navigate('/home')} className="rounded-xl bg-white px-6 py-3 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">{t('billing.goPremium') || 'Premium page'}</button>
             </div>
           </div>
         </div>

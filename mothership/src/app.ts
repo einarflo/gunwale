@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { gamesRouter } from './routes/games';
 import { gameQuestionsRouter, gameQuestionByIdRouter } from './routes/gameQuestions';
 import { gameInstancesRouter } from './routes/gameInstances';
-import { billingRouter } from './routes/billing';
+import { billingRouter, stripeWebhookHandler } from './routes/billing';
 import { gameInstancePlayersRouter } from './routes/gameInstancePlayers';
 import { gameInstanceAnswersRouter } from './routes/gameInstanceAnswers';
 import { requireAuth } from './middleware/auth';
@@ -11,6 +11,9 @@ import crypto from 'crypto';
 
 export function createApp() {
   const app = express();
+
+  // Mount Stripe webhook BEFORE body parsers to preserve raw body for signature verification
+  app.post('/billing/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhookHandler as any);
 
   // Body parsing
   app.use(express.json());

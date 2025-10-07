@@ -40,6 +40,11 @@ services:
   websocket:
     restart: unless-stopped
     build: ./websocket-api
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      CLIENT_URL: https://ovh.tavl.no
+      API_URL: https://api.tavl.no
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.websocket.rule=Host(`ovh.tavl.no`) && PathPrefix(`/ws`)"
@@ -58,6 +63,7 @@ services:
       context: ./frontend
       args:
         REACT_APP_WS_URL: wss://ovh.tavl.no
+        REACT_APP_STRIPE_PUBLISHABLE_KEY: ${REACT_APP_STRIPE_PUBLISHABLE_KEY:-pk_test_replace_me}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`ovh.tavl.no`)"
@@ -128,6 +134,15 @@ services:
       DATABASE_PORT: 3306
       DATABASE_URL: mysql://{${MS_DB_USER}}:{${MS_DB_PASSWORD}}@mothership-db:3306/{${MS_DB_NAME}}
       NODE_ENV: production
+      ALLOWED_AUDIENCES: ${ALLOWED_AUDIENCES}
+      ALLOW_INSECURE_JWKS: ${ALLOW_INSECURE_JWKS}
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PRICE_ID: ${STRIPE_PRICE_ID}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      # Keycloak Admin (role assignment)
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
     depends_on:
       mothership-db:
         condition: service_healthy

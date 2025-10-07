@@ -15,7 +15,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  const { username, userId } = useKeycloak();
+  const { username, userId, isPremium } = useKeycloak();
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<String>();
@@ -54,46 +54,46 @@ const Home = () => {
       getGamesForUserId(userId);
     }
   }, [userId]);
-  
-    const getGamesForUserId = (id: String) => {
-      get(`/games/`)
-        .then(res => {
-          setLoading(false);
-          if (res.data) {
-            setGames(res.data);
-          }
-          else {
-            setError(true);
-          }
-        })
-        .catch(err => {
-          console.log("Error when getting games for user");
-          setLoading(false);
+
+  const getGamesForUserId = (id: String) => {
+    get(`/games/`)
+      .then(res => {
+        setLoading(false);
+        if (res.data) {
+          setGames(res.data);
+        }
+        else {
           setError(true);
-        });
-    }
+        }
+      })
+      .catch(err => {
+        console.log("Error when getting games for user");
+        setLoading(false);
+        setError(true);
+      });
+  }
 
 
 
   const createNewGameInstance = (gameId: String, gamePin: String) => {
     setWaitingForCreateGame(true);
-                        post(`/game_instance/`, {
-                                game_id: gameId,
-                                game_pin: gamePin,
-                                status: 'created',
-                                created_by: userId
-                        })
-        .then(res => {
-          console.log('gameInstanceId:', res.data);
+    post(`/game_instance/`, {
+      game_id: gameId,
+      game_pin: gamePin,
+      status: 'created',
+      created_by: userId
+    })
+      .then(res => {
+        console.log('gameInstanceId:', res.data);
 
-          setWaitingForCreateGame(false);
-          navigate(`/host/${gameId}/instance/${res.data}/pin/${gamePin}`);
-        })
-        .catch(err => {
-          console.log("Something fishy is going on");
-          //seterror(true);
-          setWaitingForCreateGame(false);
-        });
+        setWaitingForCreateGame(false);
+        navigate(`/host/${gameId}/instance/${res.data}/pin/${gamePin}`);
+      })
+      .catch(err => {
+        console.log("Something fishy is going on");
+        //seterror(true);
+        setWaitingForCreateGame(false);
+      });
 
   }
 
@@ -112,18 +112,24 @@ const Home = () => {
     game.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-    return (
+  return (
     <>
       <GlobalStyles />
       <AnimatedGradientBackground />
-      {/* Premium Upsell Banner - now a full-width bar under header */}
-      <div className="w-full sticky top-0 z-20">
-        <div
-          className="w-full flex items-center justify-center gap-4 py-3 px-4 bg-gradient-to-r from-blue-300 via-purple-300 to-blue-300 border-b-2 border-blue-400 shadow-lg relative cursor-pointer" >
-          <span className="inline-block rounded-full  px-3 py-1 text-base font-bold text-white shadow mr-2 bg-gradient-to-r from-purple-500 to-pink-500 ">{t('home.premium.badge') || 'Premium'}</span>
-          <span className="text-base font-semibold text-gray-900">{t('home.premium.text') || 'Upgrade to Premium – no ads, exclusive upgrades and more features'}</span>
+      {/* Premium Upsell Banner - only show if not premium */}
+      {!isPremium && (
+        <div className="w-full sticky top-0 z-20">
+          <div className="w-full flex items-center justify-center gap-4 py-3 px-4 bg-gradient-to-r from-blue-300 via-purple-300 to-blue-300 border-b-2 border-blue-400 shadow-lg relative">
+            <span className="text-base font-semibold text-gray-900">{t('home.premium.text') || 'Upgrade to Premium – no ads, exclusive upgrades and more features'}</span>
+            <button
+              onClick={() => navigate('/purchase')}
+              className="ml-4 shrink-0 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-4 py-2 text-white font-bold shadow hover:scale-105 transition"
+            >
+              {t('profile.subscription.startPremium') || 'Start Premium'}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       {/* Main Content */}
       <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="glass rounded-3xl p-8 shadow-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
@@ -159,7 +165,7 @@ const Home = () => {
               <div className="text-xl font-semibold text-purple-700 mb-2 mt-4">{t('home.favorites') || 'Favorites'}</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {favoriteGames.map(game => (
-                  <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-purple-50 hover:shadow-lg transition cursor-pointer border-2 border-purple-300 overflow-hidden" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
+                  <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-purple-50 hover:shadow-lg transition cursor-pointer border-2 border-purple-300 overflow-hidden" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                     <div className="relative h-32">
                       <img src={getPlaceholder(game)} alt="" className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 to-transparent" />
@@ -169,21 +175,21 @@ const Home = () => {
                       </div>
                     </div>
                     <div className="p-6">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="text-lg font-bold text-purple-700">{game.name}</div>
-                      <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
-                    </div>
-                    <div className="text-sm text-gray-600 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
-                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
-                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 5 0 100 10 5 5 0 000-10z"/></svg>{(game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
-                      {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z"/></svg>{(game as any).status}</span>}
-                    </div>
-                    <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
-                    <div className="flex gap-2">
-                      <button className="rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                      <button className="rounded-lg bg-white border-2 border-purple-300 px-4 py-2 text-purple-700 font-semibold shadow hover:bg-purple-50 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + (game.uuid as any));}}>{t('home.edit') || 'Edit'}</button>
-                    </div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="text-lg font-bold text-purple-700">{game.name}</div>
+                        <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
+                      </div>
+                      <div className="text-sm text-gray-600 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
+                      <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                        <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
+                        <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 5 0 100 10 5 5 0 000-10z" /></svg>{(game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
+                        {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z" /></svg>{(game as any).status}</span>}
+                      </div>
+                      <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
+                      <div className="flex gap-2">
+                        <button className="rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
+                        <button className="rounded-lg bg-white border-2 border-purple-300 px-4 py-2 text-purple-700 font-semibold shadow hover:bg-purple-50 transition" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -195,7 +201,7 @@ const Home = () => {
               <div className="text-xl font-semibold text-yellow-700 mb-2 mt-4">{t('home.popular') || 'Popular'}</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {popularGames.map(game => (
-                  <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-yellow-50 hover:shadow-lg transition cursor-pointer border-2 border-yellow-300 overflow-hidden" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
+                  <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-yellow-50 hover:shadow-lg transition cursor-pointer border-2 border-yellow-300 overflow-hidden" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                     <div className="relative h-32">
                       <img src={getPlaceholder(game)} alt="" className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/30 to-transparent" />
@@ -205,21 +211,21 @@ const Home = () => {
                       </div>
                     </div>
                     <div className="p-6">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="text-lg font-bold text-yellow-700">{game.name}</div>
-                      <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
-                    </div>
-                    <div className="text-sm text-gray-700 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
-                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
-                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z"/></svg>{(game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
-                      {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z"/></svg>{(game as any).status}</span>}
-                    </div>
-                    <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
-                    <div className="flex gap-2">
-                      <button className="rounded-lg bg-gradient-to-r from-yellow-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                      <button className="rounded-lg bg-white border-2 border-yellow-300 px-4 py-2 text-yellow-700 font-semibold shadow hover:bg-yellow-50 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + (game.uuid as any));}}>{t('home.edit') || 'Edit'}</button>
-                    </div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="text-lg font-bold text-yellow-700">{game.name}</div>
+                        <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
+                      </div>
+                      <div className="text-sm text-gray-700 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
+                      <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                        <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
+                        <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z" /></svg>{(game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
+                        {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z" /></svg>{(game as any).status}</span>}
+                      </div>
+                      <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
+                      <div className="flex gap-2">
+                        <button className="rounded-lg bg-gradient-to-r from-yellow-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
+                        <button className="rounded-lg bg-white border-2 border-yellow-300 px-4 py-2 text-yellow-700 font-semibold shadow hover:bg-yellow-50 transition" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -249,7 +255,7 @@ const Home = () => {
               <div className="md:col-span-3 text-center text-gray-600">{t('home.search.noMatches', { term: `«${searchTerm}»` }) || `No results for ${searchTerm}`}</div>
             ) : (
               filteredGames?.map(game => (
-                <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-white hover:shadow-lg transition cursor-pointer overflow-hidden" onClick={() => {setSelectedGameId(game.uuid as any); setModalIsOpen(true)}}>
+                <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-white hover:shadow-lg transition cursor-pointer overflow-hidden" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                   <div className="relative h-32">
                     <img src={getPlaceholder(game)} alt="" className="h-full w-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent" />
@@ -259,21 +265,21 @@ const Home = () => {
                     </div>
                   </div>
                   <div className="p-6">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="text-lg font-bold text-blue-700">{game.name}</div>
-                    <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
-                  </div>
-                  <div className="text-sm text-gray-600 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
-                  <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
-                    <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
-                    <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z"/></svg>{(game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
-                    {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z"/></svg>{(game as any).status}</span>}
-                  </div>
-                  <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
-                  <div className="flex gap-2">
-                    <button className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                    <button className="rounded-lg bg-white border-2 border-blue-300 px-4 py-2 text-blue-700 font-semibold shadow hover:bg-blue-50 transition" onClick={e => {e.stopPropagation(); navigate('edit/' + (game.uuid as any));}}>{t('home.edit') || 'Edit'}</button>
-                  </div>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="text-lg font-bold text-blue-700">{game.name}</div>
+                      <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
+                    </div>
+                    <div className="text-sm text-gray-600 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
+                    <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
+                      <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z" /></svg>{(game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
+                      {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z" /></svg>{(game as any).status}</span>}
+                    </div>
+                    <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
+                    <div className="flex gap-2">
+                      <button className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
+                      <button className="rounded-lg bg-white border-2 border-blue-300 px-4 py-2 text-blue-700 font-semibold shadow hover:bg-blue-50 transition" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -346,8 +352,8 @@ const Home = () => {
               </div>
               {g.description && <div className="text-gray-800">{g.description}</div>}
               <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700">
-                <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{g.qcount || 0} {t('home.questions') || 'questions'}</span>
-                <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z"/></svg>{g.playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
+                <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>{g.qcount || 0} {t('home.questions') || 'questions'}</span>
+                <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z" /></svg>{g.playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
               </div>
 
               {/* PIN + Actions */}

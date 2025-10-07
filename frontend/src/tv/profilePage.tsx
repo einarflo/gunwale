@@ -1,12 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useKeycloak } from "../auth/KeycloakProvider";
 import { useI18n } from "../i18n/I18nProvider";
+import { post } from "../api";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { keycloak, username, userId, isPremium, logout } = useKeycloak();
   const { t } = useI18n();
+  const [portalLoading, setPortalLoading] = useState(false);
 
   const tokenParsed = keycloak?.tokenParsed as any | undefined;
 
@@ -47,6 +49,25 @@ const ProfilePage = () => {
     if (!confirmed) return;
     await openAccount();
   };
+
+  const openPortal = useCallback(async () => {
+    try {
+      setPortalLoading(true);
+      const returnUrl = `${window.location.origin}/home/profile`;
+      const cancelUrl = `${window.location.origin}/home/profile`;
+      const res = await post(`/billing/create-portal-session`, { return_url: returnUrl, cancel_url: cancelUrl });
+      const url = (res.data as any)?.url || (res.data as any)?.session?.url;
+      if (url) {
+        window.location.href = url;
+      } else {
+        alert(t('billing.error') || 'Could not open billing portal');
+      }
+    } catch (e) {
+      alert(t('billing.error') || 'Could not open billing portal');
+    } finally {
+      setPortalLoading(false);
+    }
+  }, [t]);
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -103,6 +124,11 @@ const ProfilePage = () => {
               <button onClick={() => navigate('/purchase')} className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-5 py-2 text-white font-bold shadow hover:scale-105 transition">{t('profile.subscription.startPremium')}</button>
             )}
             <button onClick={() => navigate('/home/upgrades')} className="rounded-xl bg-white px-5 py-2 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">{t('profile.subscription.seePlans')}</button>
+            {isPremium && (
+              <button onClick={openPortal} disabled={portalLoading} className="rounded-xl bg-white px-5 py-2 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition disabled:opacity-60">
+                {portalLoading ? (t('billing.loading') || 'Loading…') : (t('billing.manage') || 'Manage subscription')}
+              </button>
+            )}
           </div>
         </div>
 

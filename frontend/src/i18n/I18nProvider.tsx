@@ -99,7 +99,7 @@ const bundles: Bundle = {
     'billing.fail.title': 'Payment not completed',
     'billing.fail.subtitle': 'Your purchase could not be completed. You can try again or return to the Premium page.',
     'billing.retry': 'Try again',
-    'billing.goPremium': 'Premium page',
+    'billing.goPremium': 'Home',
     // Profile
     'profile.title': 'Profile',
     'profile.subtitle': 'Manage your account and subscription',
@@ -221,7 +221,7 @@ const bundles: Bundle = {
     'billing.fail.title': 'Betaling ikke fullført',
     'billing.fail.subtitle': 'Kjøpet kunne ikke fullføres. Du kan prøve igjen eller gå tilbake til Premium-siden.',
     'billing.retry': 'Prøv igjen',
-    'billing.goPremium': 'Premium-side',
+    'billing.goPremium': 'Hjem',
     // Profile
     'profile.title': 'Profil',
     'profile.subtitle': 'Administrer kontoen din og abonnement',
