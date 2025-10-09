@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type React from 'react';
+import { useI18n } from '../../i18n/I18nProvider';
+import { get } from '../../api';
 
 type Props = {
   title: string;
   initialName?: string;
   initialDescription?: string;
   initialIsPublic?: boolean;
+  initialTags?: string[]; // slugs
   showImageUpload?: boolean;
   submitText?: string;
   cancelText?: string;
   errorText?: string;
-  onSubmit: (v: { name: string; description: string; isPublic: boolean; headerImage?: string | null }) => Promise<void> | void;
+  onSubmit: (v: { name: string; description: string; isPublic: boolean; tags: string[]; headerImage?: string | null }) => Promise<void> | void;
   onCancel: () => void;
 };
 
@@ -19,6 +22,7 @@ export default function GameForm({
   initialName = '',
   initialDescription = '',
   initialIsPublic = false,
+  initialTags = [],
   showImageUpload = false,
   submitText = 'Lagre',
   cancelText = 'Avbryt',
@@ -26,12 +30,33 @@ export default function GameForm({
   onSubmit,
   onCancel,
 }: Props) {
+  const { t } = useI18n();
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [allTags, setAllTags] = useState<Array<{ id: number; name: string; slug: string }>>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialTags.map(s => s.toLowerCase())));
+
+  // Load available tags
+  useEffect(() => {
+    let mounted = true;
+    fetchTags().then(list => { if (mounted) setAllTags(list); }).catch(() => setAllTags([]));
+    return () => { mounted = false };
+  }, []);
+
+  const fetchTags = async () => {
+    try { const res = await get('/tags'); return Array.isArray(res.data) ? res.data : []; } catch(_) { return []; }
+  };
+
+  const toggleTag = (slug: string) => {
+    const ns = new Set(selected);
+    const key = slug.toLowerCase();
+    if (ns.has(key)) ns.delete(key); else ns.add(key);
+    setSelected(ns);
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -47,7 +72,7 @@ export default function GameForm({
     setSubmitting(true);
     setError(null);
     try {
-      await onSubmit({ name, description, isPublic, headerImage });
+      await onSubmit({ name, description, isPublic, tags: Array.from(selected), headerImage });
     } catch (e) {
       setError(errorText);
     } finally {
@@ -92,6 +117,30 @@ export default function GameForm({
             <div className="text-xs text-gray-500">Vises øverst på quiz-siden.</div>
           </div>
         )}
+        {/* Tag selector */}
+        <div className="rounded-2xl bg-white/90 shadow p-6 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
+          <div className="font-bold text-lg text-gray-700 mb-2">Tags</div>
+          <div className="flex flex-wrap gap-2">
+            {allTags.length === 0 ? (
+              <div className="text-gray-500 text-sm">Laster…</div>
+            ) : (
+              allTags.map(tag => {
+                const active = selected.has(tag.slug.toLowerCase());
+                return (
+                  <button
+                    key={tag.slug}
+                    type="button"
+                    onClick={() => toggleTag(tag.slug)}
+                    className={`px-3 py-1 rounded-full text-sm font-semibold border-2 transition ${active ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'}`}
+                    title={tag.name}
+                  >
+                    {t('tags.' + tag.slug) || tag.name}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
         <div className="rounded-2xl bg-white/90 shadow p-6 flex gap-4 items-center justify-between bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
           <button
             onClick={handleSubmit}

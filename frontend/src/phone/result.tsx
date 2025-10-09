@@ -3,7 +3,6 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { GameWrapper, MobileSpinner } from "./game";
 import { ItemImage, ItemImageMobile, MobileNav } from "../landing";
-import TopLeftLogo from "../components/TopLeftLogo";
 import TopRightPoints from "../components/TopRightPoints";
 import { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "./waiting";
 import { GameContext } from "../GameContext";
@@ -16,6 +15,7 @@ import five from '../images/upgrades/5.png';
 import six from '../images/upgrades/6.png';
 import seven from '../images/upgrades/7.png';
 import eight from '../images/upgrades/8.png';
+import logo from '../images/tavl-logo.png';
 
 interface ResultProps {
   currentQ: number
@@ -28,9 +28,10 @@ interface ResultProps {
   stop: boolean;
   buyStop: () => void
   color: number;
+  hasNext?: boolean;
 }
 
-const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyfif, setPoints, buyStop, stop, color }: ResultProps) => {
+const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyfif, setPoints, buyStop, stop, color, hasNext }: ResultProps) => {
   const { gamePin, gameInstanceId } = useContext(GameContext);
   const { socket } = useSocket();
   
@@ -138,7 +139,7 @@ const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyf
     return (
       <GameWrapper>
           <MobileNav>
-            <TopLeftLogo />
+          <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
           <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
           </MobileNav>
           <Text>Get ready!</Text>
@@ -150,9 +151,10 @@ const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyf
   return(
     <GameWrapper>
       <MobileNav>
-        <TopLeftLogo />
-          <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
+        <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
+        <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
       </MobileNav>
+        {hasNext !== false && (
         <UpgradeContainer>
           <PowerUp onClick={purchaseFifityFifty}>
             <Top>
@@ -188,6 +190,7 @@ const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyf
             
           </PowerUp>
         </UpgradeContainer>
+        )}
     </GameWrapper>
   );
     

@@ -15,6 +15,22 @@ const stripe = require('stripe')(STRIPE_SECRET_KEY || 'sk_test_51Rv0aaD1ydfl2frE
 
 export const billingRouter = Router();
 
+// Helper to log Axios/HTTP errors with more context
+function logAxiosError(prefix: string, err: any, extra?: Record<string, any>) {
+  try {
+    const status = err?.response?.status;
+    const statusText = err?.response?.statusText;
+    const data = err?.response?.data;
+    const method = err?.config?.method;
+    const url = err?.config?.url;
+    const params = err?.config?.params;
+    logger.error(prefix, { status, statusText, method, url, params, data, message: err?.message, ...(extra || {}) });
+  } catch (_) {
+    // last-resort
+    logger.error(prefix, { message: (err && err.message) || String(err) });
+  }
+}
+
 billingRouter.post('/create-checkout-session', requireAuth(), async (req, res) => {
   const reqId = (req as any)?.id || undefined;
   try {
@@ -81,13 +97,7 @@ billingRouter.post('/create-checkout-session', requireAuth(), async (req, res) =
     }
     res.send({ clientSecret: session.client_secret });
   } catch (err: any) {
-    console.error('[billing][create-checkout-session] error', {
-      reqId,
-      message: err?.message,
-      statusCode: err?.statusCode,
-      stripeType: err?.type,
-      requestId: err?.requestId,
-    });
+    logAxiosError('[billing][create-checkout-session] error', err, { reqId });
     res.status(502).send({ error: 'Failed to create checkout session' });
   }
 });
@@ -213,6 +223,14 @@ export const stripeWebhookHandler = async (req: any, res: express.Response) => {
   const reqId = req?.id || undefined;
   let event: any = null;
   try {
+    try {
+      logger.info('[billing][webhook] received', {
+        reqId,
+        hasSignature: Boolean(req.headers?.['stripe-signature']),
+        isRawBody: Buffer.isBuffer(req.body),
+        rawLength: Buffer.isBuffer(req.body) ? (req.body as Buffer).length : undefined,
+      });
+    } catch {}
     if (STRIPE_WEBHOOK_SECRET && Buffer.isBuffer(req.body)) {
       const sig = req.headers['stripe-signature'] as string;
       event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
@@ -221,6 +239,9 @@ export const stripeWebhookHandler = async (req: any, res: express.Response) => {
       event = req.body;
       console.warn('[billing][webhook] using unverified body (dev mode). Configure STRIPE_WEBHOOK_SECRET and raw body for production.');
     }
+    try {
+      logger.info('[billing][webhook] event parsed', { reqId, id: event?.id, type: event?.type });
+    } catch {}
   } catch (err: any) {
     console.error('[billing][webhook] signature verification failed', { message: err?.message });
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -241,6 +262,7 @@ export const stripeWebhookHandler = async (req: any, res: express.Response) => {
     try {
       await prisma.webhook_events.update({ where: { stripe_event_id: event.id }, data: { status: ok ? 'processed' : 'failed', processed_at: new Date() } });
     } catch {}
+    try { logger.info('[billing][webhook] finished', { reqId, id: event?.id, type: event?.type, ok }); } catch {}
     return res.json({ received: true });
   };
 
@@ -251,13 +273,18 @@ export const stripeWebhookHandler = async (req: any, res: express.Response) => {
         const sessionId = session.id as string;
         const customerId = session.customer as string;
         const userId = session.metadata?.user_id as string | undefined;
+        try { logger.info('[billing][webhook] checkout.session.completed', { reqId, sessionId, customerId, userId }); } catch {}
         if (userId && customerId) {
           // Ensure mapping
-          await prisma.user_billing.upsert({
-            where: { user_id: userId },
-            create: { user_id: userId, stripe_customer_id: customerId, email: session.customer_details?.email || null },
-            update: { stripe_customer_id: customerId, email: session.customer_details?.email || null },
-          });
+          try {
+            await prisma.user_billing.upsert({
+              where: { user_id: userId },
+              create: { user_id: userId, stripe_customer_id: customerId, email: session.customer_details?.email || null },
+              update: { stripe_customer_id: customerId, email: session.customer_details?.email || null },
+            });
+          } catch (e: any) {
+            logger.error('[billing][webhook] user_billing upsert failed', { reqId, userId, customerId, message: e?.message });
+          }
         }
         // Update checkout session
         try {
@@ -265,7 +292,9 @@ export const stripeWebhookHandler = async (req: any, res: express.Response) => {
             where: { stripe_session_id: sessionId },
             data: { status: session.status || null, payment_status: session.payment_status || null, completed_at: new Date() },
           });
-        } catch {}
+        } catch (e: any) {
+          logger.warn('[billing][webhook] checkout_sessions update failed', { reqId, sessionId, message: e?.message });
+        }
         break;
       }
       case 'customer.subscription.created':
@@ -285,33 +314,38 @@ export const stripeWebhookHandler = async (req: any, res: express.Response) => {
         // Map customer -> user
         const mapping = await prisma.user_billing.findFirst({ where: { stripe_customer_id: customerId } });
         const userId = mapping?.user_id || null;
+        try { logger.info('[billing][webhook] subscription change', { reqId, type: event.type, stripeSubId, status, isActive, customerId, userId, priceId, qty }); } catch {}
 
         if (userId) {
-          await prisma.subscriptions.upsert({
-            where: { stripe_subscription_id: stripeSubId },
-            create: {
-              stripe_subscription_id: stripeSubId,
-              user_id: userId,
-              stripe_customer_id: customerId,
-              status,
-              price_id: priceId || '',
-              quantity: qty || 1,
-              current_period_start: currentStart,
-              current_period_end: currentEnd,
-              canceled_at: canceledAt,
-              is_active: isActive,
-            },
-            update: {
-              status,
-              price_id: priceId || undefined,
-              quantity: qty || undefined,
-              current_period_start: currentStart,
-              current_period_end: currentEnd,
-              canceled_at: canceledAt,
-              is_active: isActive,
-              updated_at: new Date(),
-            },
-          });
+          try {
+            await prisma.subscriptions.upsert({
+              where: { stripe_subscription_id: stripeSubId },
+              create: {
+                stripe_subscription_id: stripeSubId,
+                user_id: userId,
+                stripe_customer_id: customerId,
+                status,
+                price_id: priceId || '',
+                quantity: qty || 1,
+                current_period_start: currentStart,
+                current_period_end: currentEnd,
+                canceled_at: canceledAt,
+                is_active: isActive,
+              },
+              update: {
+                status,
+                price_id: priceId || undefined,
+                quantity: qty || undefined,
+                current_period_start: currentStart,
+                current_period_end: currentEnd,
+                canceled_at: canceledAt,
+                is_active: isActive,
+                updated_at: new Date(),
+              },
+            });
+          } catch (e: any) {
+            logger.error('[billing][webhook] subscriptions upsert failed', { reqId, stripeSubId, userId, message: e?.message });
+          }
         }
 
         // Keycloak role sync
@@ -320,24 +354,58 @@ export const stripeWebhookHandler = async (req: any, res: express.Response) => {
           const role = await getRealmRole(admin, 'premium');
           if (userId) {
             const has = await userHasRealmRole(admin, userId, 'premium');
+            logger.info('[billing][webhook] keycloak role check', { reqId, userId, isActive, hasPremium: has });
             if (isActive && !has) {
               await assignRealmRole(admin, userId, role);
+              logger.info('[billing][webhook] premium role assigned', { reqId, userId });
+              try {
+                await prisma.role_assignments_log.create({
+                  data: {
+                    user_id: userId,
+                    action: 'grant_premium',
+                    reason: 'webhook',
+                    context: {
+                      event_id: event?.id,
+                      stripe_subscription_id: stripeSubId,
+                      stripe_customer_id: customerId,
+                      status,
+                    } as any,
+                  },
+                });
+              } catch {}
             }
             if (!isActive && has) {
               // remove role when inactive
               try {
                 const url = `${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/users/${encodeURIComponent(userId)}/role-mappings/realm`;
                 await axios.delete(url, { headers: { Authorization: `Bearer ${admin}` }, data: [role] });
+                logger.info('[billing][webhook] premium role removed', { reqId, userId });
+                try {
+                  await prisma.role_assignments_log.create({
+                    data: {
+                      user_id: userId,
+                      action: 'revoke_premium',
+                      reason: 'webhook',
+                      context: {
+                        event_id: event?.id,
+                        stripe_subscription_id: stripeSubId,
+                        stripe_customer_id: customerId,
+                        status,
+                      } as any,
+                    },
+                  });
+                } catch {}
               } catch {}
             }
           }
         } catch (e: any) {
-          console.warn('[billing][webhook] keycloak sync failed', { message: e?.message });
+          logger.warn('[billing][webhook] keycloak sync failed', { reqId, message: e?.message });
         }
         break;
       }
       case 'invoice.payment_succeeded': {
         const inv = event.data.object as any;
+        try { logger.info('[billing][webhook] invoice.payment_succeeded', { reqId, invoiceId: inv?.id, customer: inv?.customer }); } catch {}
         try {
           await prisma.invoices.upsert({
             where: { stripe_invoice_id: inv.id },
@@ -365,11 +433,13 @@ export const stripeWebhookHandler = async (req: any, res: express.Response) => {
               period_end: inv.period_end ? new Date(inv.period_end * 1000) : null,
             },
           });
-        } catch {}
+        } catch (e: any) {
+          logger.warn('[billing][webhook] invoices upsert failed', { reqId, invoiceId: inv?.id, message: e?.message });
+        }
         break;
       }
       default:
-        // ignore other events for now
+        try { logger.info('[billing][webhook] ignored event', { reqId, type: event?.type, id: event?.id }); } catch {}
         break;
     }
     return finish(true);
@@ -385,7 +455,12 @@ billingRouter.post('/stripe/webhook', (req, res) => stripeWebhookHandler(req as 
 // ---- Revoke premium role manually (testing/admin) ----
 async function removeRealmRole(token: string, userId: string, roleRep: any) {
   const url = `${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/users/${encodeURIComponent(userId)}/role-mappings/realm`;
-  await axios.delete(url, { headers: { Authorization: `Bearer ${token}` }, data: [roleRep] });
+  try {
+    await axios.delete(url, { headers: { Authorization: `Bearer ${token}` }, data: [roleRep] });
+  } catch (e: any) {
+    logAxiosError('[billing][kc] removeRealmRole failed', e, { userId, role: roleRep?.name, url });
+    throw e;
+  }
 }
 
 billingRouter.post('/revoke-premium', requireAuth(), async (req, res) => {
@@ -431,25 +506,45 @@ async function getAdminAccessToken() {
     client_id: KEYCLOAK_ADMIN_CLIENT_ID,
     client_secret: KEYCLOAK_ADMIN_CLIENT_SECRET,
   });
-  const { data } = await axios.post(url, params);
-  return data.access_token as string;
+  try {
+    const { data } = await axios.post(url, params);
+    return data.access_token as string;
+  } catch (e: any) {
+    logAxiosError('[billing][kc] getAdminAccessToken failed', e, { url });
+    throw e;
+  }
 }
 
 async function getRealmRole(token: string, roleName: string) {
   const url = `${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/roles/${encodeURIComponent(roleName)}`;
-  const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-  return data; // { id, name, ... }
+  try {
+    const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+    return data; // { id, name, ... }
+  } catch (e: any) {
+    logAxiosError('[billing][kc] getRealmRole failed', e, { roleName, url });
+    throw e;
+  }
 }
 
 async function userHasRealmRole(token: string, userId: string, roleName: string) {
   const url = `${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/users/${encodeURIComponent(userId)}/role-mappings/realm`;
-  const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-  return Array.isArray(data) && data.some((r: any) => r?.name === roleName);
+  try {
+    const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+    return Array.isArray(data) && data.some((r: any) => r?.name === roleName);
+  } catch (e: any) {
+    logAxiosError('[billing][kc] userHasRealmRole failed', e, { userId, roleName, url });
+    throw e;
+  }
 }
 
 async function assignRealmRole(token: string, userId: string, roleRep: any) {
   const url = `${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/users/${encodeURIComponent(userId)}/role-mappings/realm`;
-  await axios.post(url, [roleRep], { headers: { Authorization: `Bearer ${token}` } });
+  try {
+    await axios.post(url, [roleRep], { headers: { Authorization: `Bearer ${token}` } });
+  } catch (e: any) {
+    logAxiosError('[billing][kc] assignRealmRole failed', e, { userId, role: roleRep?.name, url });
+    throw e;
+  }
 }
 
 billingRouter.post('/assign-premium', requireAuth(), async (req, res) => {
@@ -467,6 +562,9 @@ billingRouter.post('/assign-premium', requireAuth(), async (req, res) => {
       const role = await getRealmRole(admin, 'premium');
       await assignRealmRole(admin, userId, role);
       logger.info('[billing][assign-premium] role assigned', { reqId, userId });
+      try {
+        await prisma.role_assignments_log.create({ data: { user_id: userId, action: 'grant_premium', reason: 'manual', context: {} as any } });
+      } catch {}
     } else {
       logger.info('[billing][assign-premium] role already present', { reqId, userId });
     }

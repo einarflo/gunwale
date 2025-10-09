@@ -207,17 +207,28 @@ io.on('connection', (socket) => {
   socket.on('score_update', async (payload = {}, cb) => {
     try {
       const idx = socketIndex.get(socket.id);
-      if (!idx) return cb && cb({ ok: false, error: 'not_joined' });
+      if (!idx) {
+        console.warn(`[${now()}] score_update rejected: not_joined id=${socket.id}`);
+        return cb && cb({ ok: false, error: 'not_joined' });
+      }
       const { room, playerId } = idx;
-      if (String(payload?.gameInstanceId || '') !== room) return cb && cb({ ok: false, error: 'wrong_room' });
+      const payloadRoom = String(payload?.gameInstanceId || '');
+      if (payloadRoom !== room) {
+        console.warn(`[${now()}] score_update rejected: wrong_room id=${socket.id} payloadRoom=${payloadRoom} expected=${room}`);
+        return cb && cb({ ok: false, error: 'wrong_room' });
+      }
       const state = getRoomState(room);
       const p = state.players.get(playerId);
-      if (!p) return cb && cb({ ok: false, error: 'player_not_found' });
+      if (!p) {
+        console.warn(`[${now()}] score_update rejected: player_not_found room=${room} playerId=${playerId}`);
+        return cb && cb({ ok: false, error: 'player_not_found' });
+      }
 
       const current = Number(p.score || 0);
       let next = current;
       if (payload?.delta != null) next = current + Number(payload.delta);
       else if (payload?.score != null) next = Number(payload.score);
+      console.log(`[${now()}] score_update room=${room} playerId=${playerId} current=${current} -> next=${next}`);
       p.score = String(next);
 
       // Persist
@@ -245,16 +256,30 @@ io.on('connection', (socket) => {
   socket.on('color_update', async (payload = {}, cb) => {
     try {
       const idx = socketIndex.get(socket.id);
-      if (!idx) return cb && cb({ ok: false, error: 'not_joined' });
+      if (!idx) {
+        console.warn(`[${now()}] color_update rejected: not_joined id=${socket.id}`);
+        return cb && cb({ ok: false, error: 'not_joined' });
+      }
       const { room, playerId } = idx;
-      if (String(payload?.gameInstanceId || '') !== room) return cb && cb({ ok: false, error: 'wrong_room' });
+      const payloadRoom = String(payload?.gameInstanceId || '');
+      if (payloadRoom !== room) {
+        console.warn(`[${now()}] color_update rejected: wrong_room id=${socket.id} payloadRoom=${payloadRoom} expected=${room}`);
+        return cb && cb({ ok: false, error: 'wrong_room' });
+      }
       const colour = payload?.colour;
-      if (colour == null) return cb && cb({ ok: false, error: 'invalid_colour' });
+      if (colour == null) {
+        console.warn(`[${now()}] color_update rejected: invalid_colour id=${socket.id}`);
+        return cb && cb({ ok: false, error: 'invalid_colour' });
+      }
       const state = getRoomState(room);
       const p = state.players.get(playerId);
-      if (!p) return cb && cb({ ok: false, error: 'player_not_found' });
+      if (!p) {
+        console.warn(`[${now()}] color_update rejected: player_not_found room=${room} playerId=${playerId}`);
+        return cb && cb({ ok: false, error: 'player_not_found' });
+      }
 
       p.colour = String(colour);
+      console.log(`[${now()}] color_update room=${room} playerId=${playerId} colour=${p.colour}`);
 
       // Persist
       const API_URL = process.env.API_URL;

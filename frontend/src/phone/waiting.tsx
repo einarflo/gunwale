@@ -154,7 +154,7 @@ const Waiting = ({ points, setPoints, gameStarted, gamepin, colorForUser, setCol
 
 
   const setColor = (number: number) => {
-    const cost = colorCosts[number] || 0;
+    const cost = 0; //colorCosts[number] || 0;
     console.log('Setting color', number, 'cost', cost, 'current points', points);
     setColorForUser(number);
     if (!gameInstanceId) return;

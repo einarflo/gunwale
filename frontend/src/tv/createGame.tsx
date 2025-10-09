@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Ads from "../components/Ads";
-import { post } from "../api";
+import { post, put } from "../api";
 import { useKeycloak } from "../auth/KeycloakProvider";
 import { useNavigate } from "react-router-dom";
 import GameForm from './components/GameForm';
@@ -12,7 +12,7 @@ const CreateGame = () => {
 
     const [error, seterror] = useState(false);
 
-    const insertGame = async ({ name, description, isPublic }: { name: string; description: string; isPublic: boolean; headerImage?: string | null }) => {
+    const insertGame = async ({ name, description, isPublic, tags }: { name: string; description: string; isPublic: boolean; tags: string[]; headerImage?: string | null }) => {
       try {
         const res = await post(`/games`, {
           name,
@@ -23,6 +23,10 @@ const CreateGame = () => {
         });
         const created = res.data;
         const selector = created?.uuid || created?.id || created;
+        // Set tags (ignore failures)
+        if (Array.isArray(tags)) {
+          try { await put(`/tags/game/${selector}`, { slugs: tags }); } catch(_) {}
+        }
         navigate(`/home/edit/${selector}`);
       } catch (e) {
         seterror(true);

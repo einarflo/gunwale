@@ -208,6 +208,9 @@ const EditGame = () => {
               )}
             </div>
             <div className="flex gap-3 mt-4 md:mt-0">
+              <button onClick={() => navigate('/home')} className="rounded-xl bg-white px-5 py-2 text-gray-700 font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition">
+                Hjem
+              </button>
               <button onClick={newQuestion} className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-5 py-2 text-white font-bold shadow hover:scale-105 transition">
                 Nytt spørsmål
               </button>

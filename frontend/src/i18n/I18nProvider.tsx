@@ -7,13 +7,16 @@ type Bundle = Record<Lang, Dict>;
 
 const bundles: Bundle = {
   en: {
+    // Common
     'common.pts': 'pts',
     'common.back': 'Back',
     'common.begin': 'Begin',
     'common.next': 'Next',
     'common.exit': 'Exit',
+    'common.current': 'Current',
     'common.join': 'Join',
     'common.joinAnother': 'Join another game',
+    'common.loading': 'Loading…',
     'game.over': 'Well played!',
     'game.placement': 'You placed {{rank}}/{{total}}',
     'game.placement.pending': 'Calculating placement...',
@@ -29,7 +32,7 @@ const bundles: Bundle = {
     'header.upgrades': 'Upgrades',
     'header.pricing': 'Pricing',
     'header.library': 'Library',
-    'header.profile': 'Profile',
+    'header.profile': 'Edit profile',
     'header.language': 'Language',
     // Home
     'home.create': 'New quiz',
@@ -127,15 +130,26 @@ const bundles: Bundle = {
     'profile.details.issued': 'Issued',
     'profile.details.expires': 'Expires',
     'profile.details.resourceRoles': 'Resource roles',
+    // Tags
+    'tags.educational': 'Educational',
+    'tags.party': 'Party',
+    'tags.kids': 'Kids',
+    'tags.hard': 'Hard',
+    'tags.trivia': 'Trivia',
+    'tags.music': 'Music',
+    'tags.sports': 'Sports',
   },
   nb: {
+    // Common
     'common.pts': 'poeng',
     'common.back': 'Tilbake',
     'common.begin': 'Start',
     'common.next': 'Neste',
     'common.exit': 'Avslutt',
+    'common.current': 'Aktiv',
     'common.join': 'Bli med',
     'common.joinAnother': 'Bli med i et nytt spill',
+    'common.loading': 'Laster…',
     'game.over': 'Bra spilt!',
     'game.placement': 'Du ble nr. {{rank}} av {{total}}',
     'game.placement.pending': 'Beregner plassering…',
@@ -151,7 +165,7 @@ const bundles: Bundle = {
     'header.upgrades': 'Oppgraderinger',
     'header.pricing': 'Priser',
     'header.library': 'Bibliotek',
-    'header.profile': 'Profil',
+    'header.profile': 'Administrer profil',
     'header.language': 'Språk',
     // Home
     'home.create': 'Ny quiz',
@@ -249,6 +263,14 @@ const bundles: Bundle = {
     'profile.details.issued': 'Utstedt',
     'profile.details.expires': 'Utløper',
     'profile.details.resourceRoles': 'Ressurs-roller',
+    // Tags
+    'tags.educational': 'Lærende',
+    'tags.party': 'Party',
+    'tags.kids': 'Barn',
+    'tags.hard': 'Vanskelig',
+    'tags.trivia': 'Trivia',
+    'tags.music': 'Musikk',
+    'tags.sports': 'Sport',
   }
 };
 

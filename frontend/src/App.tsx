@@ -15,6 +15,7 @@ import CreateGame from './tv/createGame';
 import EditGame from './tv/editGame';
 import EditQuestion from './tv/editQuestion';
 import UpdateGame from './tv/updateGameName';
+import Discover from './tv/discover';
 import ProfilePage from './tv/profilePage';
 import TVGamePlayView from './tv/game';
 import UpgradesPage from './tv/upgradesPage';
@@ -208,6 +209,7 @@ const App = () => {
         <Route index element={<Home />} />
         <Route path="upgrades" element={<UpgradesPage />} />
         <Route path="create" element={<CreateGame />} />
+        <Route path="discover" element={<Discover />} />
         <Route path="edit/:gameId" element={<EditGame />} />
         <Route path="edit/:gameId/question/:questionId" element={<EditQuestion />} />
         <Route path="update/:gameId" element={<UpdateGame />} />

@@ -21,6 +21,7 @@ gamesRouter.get('/', requireAuth(), async (req: Request, res: Response) => {
     const enriched = await Promise.all(
       games.map(async (g) => {
         let qcount = 0;
+        let plays = 0;
         try {
           qcount = await prisma.game_question.count({
             where: { game_id: g.uuid, OR: [{ deleted: null }, { NOT: { deleted: '1' } }] },
@@ -28,13 +29,18 @@ gamesRouter.get('/', requireAuth(), async (req: Request, res: Response) => {
         } catch (e) {
           // ignore count failure; default 0
         }
+        try {
+          plays = await prisma.game_instance.count({ where: { game_id: g.uuid, OR: [{ is_deleted: null }, { NOT: { is_deleted: '1' } }] } });
+        } catch (e) {
+          // ignore
+        }
         return {
           ...g,
           qcount,
+          plays,
           username: g.created_by || null,
           favorite: undefined,
           popular: undefined,
-          plays: undefined,
         } as any;
       })
     );
@@ -43,6 +49,113 @@ gamesRouter.get('/', requireAuth(), async (req: Request, res: Response) => {
   } catch (err: any) {
     logger.error('Failed to list games', { error: err.message, userId });
     res.status(500).json({ message: 'Failed to list games', error: err.message });
+  }
+});
+
+// List soft-deleted games for current user
+gamesRouter.get('/trash', requireAuth(), async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  try {
+    const games = await prisma.game.findMany({ where: { created_by: userId ?? undefined, deleted: '1' } });
+    const enriched = await Promise.all(
+      games.map(async (g) => ({
+        ...g,
+        qcount: await prisma.game_question.count({ where: { game_id: g.uuid, deleted: '1' } }).catch(() => 0),
+        username: g.created_by || null,
+      }))
+    );
+    res.json(enriched);
+  } catch (err: any) {
+    res.status(500).json({ message: 'Failed to list deleted games', error: err.message });
+  }
+});
+
+// List public games (discover) - keep before "/:id" to avoid conflicts
+gamesRouter.get('/public', async (req: Request, res: Response) => {
+  const q = (req.query.q as string | undefined)?.trim();
+  const tagsParam = (req.query.tags as string | undefined)?.trim();
+  const mode = String((req.query.mode as string | undefined) || 'any').toLowerCase();
+  try {
+    let gameIdsFilter: string[] | null = null;
+    if (tagsParam) {
+      const slugs = [...new Set(tagsParam.split(',').map(s => s.trim().toLowerCase()).filter(Boolean))];
+      if (slugs.length) {
+        const tagRows = await prisma.tags.findMany({ where: { slug: { in: slugs } } });
+        const tagIds = tagRows.map(t => t.id);
+        if (tagIds.length) {
+          const rows = await prisma.game_tags.findMany({ where: { tag_id: { in: tagIds } }, select: { game_id: true, tag_id: true } });
+          if (mode === 'all') {
+            const counts = new Map<string, number>();
+            for (const r of rows) counts.set(r.game_id, (counts.get(r.game_id) || 0) + 1);
+            gameIdsFilter = [...counts.entries()].filter(([, c]) => c >= tagIds.length).map(([id]) => id);
+          } else {
+            gameIdsFilter = [...new Set(rows.map(r => r.game_id))];
+          }
+          if (gameIdsFilter.length === 0) {
+            return res.json([]);
+          }
+        }
+      }
+    }
+
+    const where: any = {
+      isPublic: 1,
+      OR: [{ deleted: null }, { NOT: { deleted: '1' } }],
+      ...(gameIdsFilter ? { uuid: { in: gameIdsFilter } } : {}),
+    };
+    if (q) {
+      where.AND = [
+        {
+          OR: [
+            { name: { contains: q } },
+            { description: { contains: q } },
+          ],
+        },
+      ];
+    }
+
+    const games = await prisma.game.findMany({ where });
+
+    // Collect tags for all returned games in a single query
+    const uuids = games.map(g => g.uuid).filter(Boolean) as string[];
+    const tagMap = new Map<string, Array<{ slug: string; name: string }>>();
+    if (uuids.length) {
+      const links = await prisma.game_tags.findMany({
+        where: { game_id: { in: uuids } },
+        include: { tags: true },
+      });
+      for (const l of links) {
+        if (!l?.game_id || !l?.tags) continue;
+        const arr = tagMap.get(l.game_id) || [];
+        arr.push({ slug: l.tags.slug, name: l.tags.name });
+        tagMap.set(l.game_id, arr);
+      }
+    }
+
+    const enriched = await Promise.all(
+      games.map(async (g) => {
+        let qcount = 0;
+        let favCount = 0;
+        let plays = 0;
+        try {
+          qcount = await prisma.game_question.count({
+            where: { game_id: g.uuid, OR: [{ deleted: null }, { NOT: { deleted: '1' } }] },
+          });
+        } catch (_) {}
+        try {
+          favCount = await prisma.favourite_games.count({ where: { game_id: g.uuid } });
+        } catch (_) {}
+        try {
+          plays = await prisma.game_instance.count({ where: { game_id: g.uuid, OR: [{ is_deleted: null }, { NOT: { is_deleted: '1' } }] } });
+        } catch (_) {}
+        const tags = tagMap.get(g.uuid) || [];
+        return { ...g, qcount, favCount, plays, tags } as any;
+      })
+    );
+    res.json(enriched);
+  } catch (err: any) {
+    logger.error('Failed to list public games', { error: err.message });
+    res.status(500).json({ message: 'Failed to list public games', error: err.message });
   }
 });
 
@@ -215,23 +328,6 @@ gamesRouter.get('/mine/list', requireAuth(), async (req: Request, res: Response)
     res.status(500).json({ message: 'Failed to list user games', error: err.message });
   }
 });
-// List soft-deleted games for current user
-gamesRouter.get('/trash', requireAuth(), async (req: Request, res: Response) => {
-  const userId = getUserId(req);
-  try {
-    const games = await prisma.game.findMany({ where: { created_by: userId ?? undefined, deleted: '1' } });
-    const enriched = await Promise.all(
-      games.map(async (g) => ({
-        ...g,
-        qcount: await prisma.game_question.count({ where: { game_id: g.uuid, deleted: '1' } }).catch(() => 0),
-        username: g.created_by || null,
-      }))
-    );
-    res.json(enriched);
-  } catch (err: any) {
-    res.status(500).json({ message: 'Failed to list deleted games', error: err.message });
-  }
-});
 
 // Restore a soft-deleted game
 gamesRouter.put('/:id/restore', requireAuth(), async (req: Request, res: Response) => {
@@ -252,3 +348,4 @@ gamesRouter.put('/:id/restore', requireAuth(), async (req: Request, res: Respons
     res.status(500).json({ message: 'Failed to restore game', error: err.message });
   }
 });
+// (moved '/public' route above '/:id' to avoid conflicts)

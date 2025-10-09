@@ -21,6 +21,8 @@ model game {
   isPublic        Int     @default(0)
   uuid            String  @db.VarChar(255)
   created_by_name String? @db.VarChar(255)
+  created_at      String? @db.VarChar(250)
+  updated_at      String? @db.VarChar(250)
 }
 
 model game_instance {
@@ -187,4 +189,26 @@ model webhook_events {
 
   @@index([status], map: "idx_webhook_events_status")
   @@index([type], map: "idx_webhook_events_type")
+}
+
+model game_tags {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  game_id    String   @db.VarChar(255)
+  tag_id     Int      @db.UnsignedInt
+  created_at DateTime @default(now()) @db.DateTime(0)
+  tags       tags     @relation(fields: [tag_id], references: [id], onDelete: Cascade, map: "fk_game_tags_tag")
+
+  @@unique([game_id, tag_id], map: "uq_game_tag")
+  @@index([game_id], map: "idx_game_tags_game")
+  @@index([tag_id], map: "idx_game_tags_tag")
+}
+
+model tags {
+  id          Int         @id @default(autoincrement()) @db.UnsignedInt
+  name        String      @unique(map: "uq_tags_name") @db.VarChar(64)
+  slug        String      @unique(map: "uq_tags_slug") @db.VarChar(64)
+  description String?     @db.VarChar(255)
+  created_at  DateTime    @default(now()) @db.DateTime(0)
+  updated_at  DateTime    @default(now()) @db.DateTime(0)
+  game_tags   game_tags[]
 }

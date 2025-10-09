@@ -27,21 +27,27 @@ const UpgradesPage = () => {
       </div>
 
       {/* Plans */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div className="rounded-2xl bg-white/90 shadow p-6 border-2 border-blue-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div className="rounded-2xl bg-white/90 shadow p-5 border-2 border-blue-100">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xl font-bold text-gray-900">{t('profile.subscription.free')}</div>
-            <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold bg-gray-100 text-gray-700">{t('profile.subscription.free')}</span>
+            {!isPremium && (
+              <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold bg-green-100 text-green-800">{t('profile.subscription.premium') ? t('common.current') || 'Current' : 'Current'}</span>
+            )}
           </div>
           <div className="text-gray-700">{t('profile.subscription.freeDesc')}</div>
           <div className="mt-4">
             <button onClick={() => navigate('/')} className="rounded-xl bg-white px-5 py-2 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">{t('profile.subscription.seePlans')}</button>
           </div>
         </div>
-        <div className="rounded-2xl bg-white/90 shadow p-6 border-2 border-purple-100">
+        <div className="rounded-2xl bg-white/90 shadow p-5 border-2 border-purple-100">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xl font-bold text-gray-900">{t('profile.subscription.premium')}</div>
-            <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold bg-green-100 text-green-800">{t('home.premium.badge') || 'Premium'}</span>
+            {isPremium ? (
+              <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold bg-green-100 text-green-800">{t('common.current') || 'Current'}</span>
+            ) : (
+              <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold bg-purple-100 text-purple-800">{t('home.premium.badge') || 'Premium'}</span>
+            )}
           </div>
           <div className="text-gray-700">{t('profile.subscription.premiumDesc')}</div>
           <div className="mt-4 flex gap-3">
@@ -72,22 +78,22 @@ const UpgradesPage = () => {
             </button>
           </div>
         </div>
-        <div className="text-sm text-gray-600 mb-6">
+        <div className="text-sm text-gray-600 mb-4">
           {t('upgrades.premiumIncludesFree') || 'Premium includes all Free upgrades'}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {visibleUpgrades.map((u, idx) => (
-            <div key={idx} className="rounded-2xl bg-white/90 shadow p-4 border-2 border-gray-100">
-              <div className={`rounded-xl overflow-hidden bg-gradient-to-r ${u.color || ''} mb-3`}>
-                <img src={u.image} alt="" className="w-full h-40 object-contain bg-white" />
+            <div key={idx} className="rounded-2xl bg-white/90 shadow p-3 border-2 border-gray-100">
+              <div className={`rounded-xl overflow-hidden bg-gradient-to-r ${u.color || ''} mb-2`}>
+                <img src={u.image} alt="" className="w-full h-28 object-contain bg-white" />
               </div>
               <div className="flex items-start justify-between gap-2 mb-1">
-                <div className="text-lg font-bold text-gray-900">{u.header}</div>
+                <div className="text-base font-bold text-gray-900">{u.header}</div>
                 {u.premium && (
                   <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-yellow-100 text-yellow-800">{t('home.premium.badge') || 'Premium'}</span>
                 )}
               </div>
-              <div className="text-sm text-gray-700 mb-3">{u.description}</div>
+              <div className="text-sm text-gray-700 mb-2">{u.description}</div>
               <div className="text-xs text-gray-500">{u.price}</div>
             </div>
           ))}

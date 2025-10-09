@@ -1,5 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { gamesRouter } from './routes/games';
+import { favoritesRouter } from './routes/favorites';
+import { tagsRouter } from './routes/tags';
 import { gameQuestionsRouter, gameQuestionByIdRouter } from './routes/gameQuestions';
 import { gameInstancesRouter } from './routes/gameInstances';
 import { billingRouter, stripeWebhookHandler } from './routes/billing';
@@ -72,6 +74,8 @@ export function createApp() {
   app.use('/game_instance_players_id', gameInstancePlayersRouter);
   app.use('/game_instance_answers', gameInstanceAnswersRouter);
   app.use('/billing', billingRouter);
+  app.use('/favorites', favoritesRouter);
+  app.use('/tags', tagsRouter);
   // game_question routes are wired below
 
   return app;

@@ -11,6 +11,7 @@ const UpdateGame = () => {
   const [initialName, setInitialName] = useState<string>("");
   const [initialDescription, setInitialDescription] = useState<string>("");
   const [initialIsPublic, setInitialIsPublic] = useState<boolean>(false);
+  const [initialTags, setInitialTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (!gameId) return;
@@ -23,15 +24,24 @@ const UpdateGame = () => {
         setInitialIsPublic((g.isPublic ?? 0) === 1);
       })
       .finally(() => setLoading(false));
+    // load tags
+    get(`/tags/game/${gameId}`)
+      .then(res => {
+        const rows = Array.isArray(res.data) ? res.data : [];
+        setInitialTags(rows.map((r: any) => String(r.slug)));
+      })
+      .catch(() => setInitialTags([]));
   }, [gameId]);
 
-  const saveGame = async ({ name, description, isPublic }: { name: string; description: string; isPublic: boolean; headerImage?: string | null }) => {
+  const saveGame = async ({ name, description, isPublic, tags }: { name: string; description: string; isPublic: boolean; tags: string[]; headerImage?: string | null }) => {
     if (!gameId) return;
     await put(`/games/${gameId}/`, {
       name,
       description,
       isPublic: isPublic ? 1 : 0,
     });
+    // update tags (ignore errors)
+    try { await put(`/tags/game/${gameId}`, { slugs: tags || [] }); } catch(_) {}
     navigate('/home/edit/' + gameId);
   };
 
@@ -48,6 +58,7 @@ const UpdateGame = () => {
               initialName={initialName}
               initialDescription={initialDescription}
               initialIsPublic={initialIsPublic}
+              initialTags={initialTags}
               submitText="Lagre"
               cancelText="Avbryt"
               onSubmit={saveGame as any}

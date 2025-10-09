@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import logo from '../../images/tavl-logo.png';
 import { ArrowRight, LogOut } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useKeycloak } from "../../auth/KeycloakProvider";
 import LanguageSwitcher from "../LanguageSwitcher";
@@ -16,7 +16,20 @@ export default function Header({ signIn, playMode }: HeaderProps) {
   const navigate = useNavigate();
   const { logout, username, isAuthenticated, login } = useKeycloak();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { t } = useI18n();
+
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!userMenuRef.current) return;
+      if (!userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setUserMenuOpen(false); };
+    document.addEventListener('click', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('click', onDocClick); document.removeEventListener('keydown', onKey); };
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 border-b-2 border-blue-200 bg-white/90 backdrop-blur-xl shadow-lg shadow-blue-100/50">
@@ -28,7 +41,7 @@ export default function Header({ signIn, playMode }: HeaderProps) {
         {username ? (
           <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
           <div onClick={() => navigate("/home")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.library')}</div>
-          <div onClick={() => navigate("/home/profile")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.profile')}</div>
+          <div onClick={() => navigate("/home/discover")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('home.discover')}</div>
           <div onClick={() => navigate("/home/upgrades")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.upgrades')}</div>
         </nav>
         ) : (
@@ -40,17 +53,15 @@ export default function Header({ signIn, playMode }: HeaderProps) {
         </nav>
         )}
         {/* Desktop actions */}
-        <div className="hidden sm:flex items-center gap-3">
-          {isAuthenticated && username && (
-            <span className="ml-2 text-sm text-gray-700 font-semibold truncate max-w-[120px]">{username}</span>
-          )}
-            <LanguageSwitcher />
-            <button 
-              onClick={() => navigate('/join')}
-              className="rounded-xl border-2 border-blue-300 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-all font-medium"
-            >
-              {t('header.join')}
-            </button>
+        <div className="hidden md:flex items-center gap-3">
+          {/* Show LanguageSwitcher only when logged out (when logged in it's inside the user dropdown) */}
+          {!isAuthenticated && <LanguageSwitcher />}
+          <button 
+            onClick={() => navigate('/join')}
+            className="rounded-xl border-2 border-blue-300 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-all font-medium"
+          >
+            {t('header.join')}
+          </button>
           {!isAuthenticated && (
             <button 
               onClick={login}
@@ -59,18 +70,38 @@ export default function Header({ signIn, playMode }: HeaderProps) {
               {t('header.signin')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           )}
-          {isAuthenticated && (
-            <button
-              onClick={logout}
-              className="inline-flex items-center gap-2 rounded-xl border-2 border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-all font-medium"
-            >
-              {t('header.signout')} <LogOut className="h-4 w-4" />
-            </button>
+          {isAuthenticated && username && (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(v => !v)}
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+                className="inline-flex items-center gap-2 rounded-xl border-2 border-blue-300 px-3 py-2 text-sm text-gray-800 hover:bg-blue-50 font-semibold max-w-[160px] truncate"
+                title={username}
+              >
+                <span className="truncate">{username}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+              </button>
+              {userMenuOpen && (
+                <div role="menu" className="absolute right-0 mt-2 w-60 rounded-xl border-2 border-blue-200 bg-white shadow-xl p-2 z-40">
+                  <button onClick={() => { navigate('/home/profile'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700 font-medium">
+                    {t('header.profile')}
+                  </button>
+                  <div className="px-3 py-2">
+                    <div className="text-xs text-gray-500 mb-1">{t('header.language')}</div>
+                    <LanguageSwitcher />
+                  </div>
+                  <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full inline-flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-red-50 text-red-600 font-medium">
+                    {t('header.signout')} <LogOut className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
         {/* Mobile hamburger */}
         <button
-          className="sm:hidden inline-flex items-center justify-center rounded-lg border border-blue-200 p-2 text-blue-600 hover:bg-blue-50"
+          className="md:hidden inline-flex items-center justify-center rounded-lg border border-blue-200 p-2 text-blue-600 hover:bg-blue-50"
           aria-label="Toggle menu"
           onClick={() => setMenuOpen(v => !v)}
         >
@@ -89,7 +120,7 @@ export default function Header({ signIn, playMode }: HeaderProps) {
       </div>
       {/* Mobile menu panel */}
       {menuOpen && (
-        <div className="sm:hidden border-t border-blue-200 bg-white/95 backdrop-blur-xl">
+        <div className="md:hidden border-t border-blue-200 bg-white/95 backdrop-blur-xl">
           <div className="mx-auto max-w-7xl px-4 py-3 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700 font-semibold">{t('header.language')}</div>
@@ -97,9 +128,9 @@ export default function Header({ signIn, playMode }: HeaderProps) {
             </div>
             {isAuthenticated ? (
               <>
-                <div className="text-sm text-gray-700 font-semibold mb-1">{username}</div>
+                <button onClick={() => { navigate('/home/profile'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700 font-semibold">{username}</button>
                 <button onClick={() => { navigate('/home'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.library')}</button>
-                <button onClick={() => { navigate('/home/profile'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.profile')}</button>
+                <button onClick={() => { navigate('/home/discover'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('home.discover')}</button>
                 <button onClick={() => { navigate('/home/upgrades'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.upgrades')}</button>
                 <div className="h-px bg-blue-100 my-1" />
                 <button onClick={() => { navigate('/join'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-blue-700">{t('header.join')}</button>

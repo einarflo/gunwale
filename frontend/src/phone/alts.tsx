@@ -6,7 +6,6 @@ import { GameWrapper, MobileSpinner } from "./game"
 import OptionButton from "./option"
 import { Text } from "./result"
 import { MobileNav } from "../landing"
-import TopLeftLogo from "../components/TopLeftLogo"
 import TopRightPoints from "../components/TopRightPoints"
 import { selectableColors, textColors, animatedColorIndices, MULTICOLOR_INDEX } from "./waiting"
 import { GameContext } from "../GameContext"
@@ -19,6 +18,7 @@ import five from '../images/upgrades/5.png';
 import six from '../images/upgrades/6.png';
 import seven from '../images/upgrades/7.png';
 import eight from '../images/upgrades/8.png';
+import logo from '../images/tavl-logo.png';
 // All interactions moved to WebSocket
 
 interface AltsProps {
@@ -177,7 +177,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     return (
     <GameWrapper>
         <MobileNav>
-          <TopLeftLogo />
+          <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
           <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
         </MobileNav>
         <Text>Waiting for your score...</Text>
@@ -190,7 +190,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     return (
     <GameWrapper style={{ background: answeredCorrectly ? 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(0,164,67,1) 0%, rgba(34,214,135,1) 100%)' : 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(255,39,39,1) 0%, rgba(247,89,89,1) 100%)' }}>
         <MobileNav>
-          <TopLeftLogo />
+          <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
           <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
         </MobileNav>
         <Text>{answeredCorrectly ? 'Correct' : 'Nope!'}</Text>
@@ -203,7 +203,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
   return(
     <GameWrapper>
       <MobileNav>
-        <TopLeftLogo />
+        <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
         <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
       </MobileNav>
       
