@@ -52,6 +52,7 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   
   const [started, setStarted] = useState(false);
   const [showScoreBoard, setShowScoreBoard] = useState(false);
+  const [powerupBanners, setPowerupBanners] = useState<Array<{ id: string, text: string }>>([]);
   const [showTutorial, setShowTutorial] = useState(false);
   const [preCountdown, setPreCountdown] = useState(false);
     
@@ -167,6 +168,25 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
     setGameStatus("created");
   }, [gameId, gameInstanceId, setGameStatus, socket]);
 
+  // Listen for powerups and show transient overlay
+  useEffect(() => {
+    if (!gameInstanceId) return;
+    socket.emit('join_game', String(gameInstanceId));
+    const onPower = (evt: any) => {
+      try {
+        const actor = evt?.actor?.username || `Player ${evt?.actor?.id || ''}`;
+        const type = String(evt?.type || '').toUpperCase();
+        const target = evt?.targetId ? ` → ${evt.targetId}` : '';
+        const text = `${actor} used ${type}${target}`;
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+        setPowerupBanners(prev => [...prev, { id, text }]);
+        setTimeout(() => setPowerupBanners(prev => prev.filter(b => b.id !== id)), 3500);
+      } catch (_) {}
+    };
+    socket.on('powerup', onPower);
+    return () => { socket.off('powerup', onPower); };
+  }, [socket, gameInstanceId]);
+
   let content: JSX.Element;
   if (!started) {
     content = (<GamePlayers startGame={startGame} stopGame={onStopGame}  gameInstanceId={gameInstanceId} gamePin={gamePin} />);
@@ -199,6 +219,14 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
     <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
       <GlobalStyles />
       <AnimatedGradientBackgroundLight />
+      {/* Powerup overlay banners */}
+      <div style={{ position: 'fixed', top: 12, right: 12, zIndex: 50, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {powerupBanners.map(b => (
+          <div key={b.id} style={{ background: 'rgba(59,130,246,0.9)', color: 'white', borderRadius: 10, padding: '8px 12px', boxShadow: '0 6px 18px rgba(0,0,0,0.2)', fontWeight: 700 }}>
+            {b.text}
+          </div>
+        ))}
+      </div>
       {content}
     </div>
   );

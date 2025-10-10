@@ -31,9 +31,15 @@ interface AltsProps {
   stop: boolean;
   buyStop: () => void;
   color: number;
+  multiplier?: number;
+  hasEye?: boolean;
+  hasShield?: boolean;
+  hasSlow?: boolean;
+  hasEndOpponent?: boolean;
+  hasNuke?: boolean;
 }
 
-const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buyStop, color }: AltsProps) => {
+const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buyStop, color, multiplier = 1, hasEye = false, hasShield = false, hasSlow = false, hasEndOpponent = false, hasNuke = false }: AltsProps) => {
   const { gameInstancePlayerId, gameInstanceId, gameId, nickname } = useContext(GameContext);
   const { socket } = useSocket();
 
@@ -55,6 +61,8 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
 
   const [hide, setHide] = useState<string[]>([]);
   const [stopTime, setStopTime] = useState(false);
+  const [eyeSummary, setEyeSummary] = useState<{ counts: Record<'1'|'2'|'3'|'4', number>, totalPlayers: number, totalResponded: number } | null>(null);
+  const [eyeActive, setEyeActive] = useState(false);
 
 
   // Score update via WebSocket (server persists and broadcasts)
@@ -101,6 +109,24 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
       questionTimeEnd();
     }, (Math.max(1, Number(question.time ?? 20)) * 1000))
   }, [])
+
+  // Eye polling: fetch live distribution while Eye is active and until question ends
+  useEffect(() => {
+    if (!eyeActive) { setEyeSummary(null); return; }
+    if (!gameInstanceId || !question?.uuid) return;
+    let alive = true;
+    const poll = () => {
+      socket.emit('get_answer_counts', { gameInstanceId: String(gameInstanceId), gameQuestionId: String(question.uuid) }, (resp: any) => {
+        if (!alive) return;
+        if (resp?.ok && resp.counts) {
+          setEyeSummary({ counts: resp.counts, totalPlayers: Number(resp.totalPlayers||0), totalResponded: Number(resp.totalResponded||0) });
+        }
+      });
+    };
+    const iv = setInterval(poll, 1000);
+    poll();
+    return () => { alive = false; clearInterval(iv); };
+  }, [eyeActive, gameInstanceId, question?.uuid, socket]);
 
   // Allow host to end question early via WS broadcast
   useEffect(() => {
@@ -165,10 +191,11 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     // If it is correct 
     if (answer === question?.correct) {
       // POST new point score to server
-      setUserPoints(points + score);
+      const earned = Math.round(score * (multiplier || 1));
+      setUserPoints(points + earned);
       // server broadcasts player_update on score_update
       // Set the state
-      setRoundPoints(score)
+      setRoundPoints(earned)
     }
   }
 
@@ -206,11 +233,52 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
         <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
         <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
       </MobileNav>
+      {hasShield && (
+        <ShieldBadge>Shield</ShieldBadge>
+      )}
+      {eyeSummary && (
+        <EyeOverlay>
+          <div className="title">Live answers</div>
+          <Bars>
+            {(['1','2','3','4'] as const).map((k, idx) => {
+              const c = eyeSummary.counts[k] || 0;
+              const total = Math.max(eyeSummary.totalPlayers, 1);
+              const pct = Math.round((c / total) * 100);
+              const label = idx === 0 ? 'A' : idx === 1 ? 'B' : idx === 2 ? 'C' : 'D';
+              const color = selectableColors[idx];
+              return (
+                <BarRow key={k}>
+                  <span className="lbl">{label}</span>
+                  <div className="bar"><div className="fill" style={{ width: `${pct}%`, background: color }} /></div>
+                  <span className="val">{c}</span>
+                </BarRow>
+              );
+            })}
+          </Bars>
+          <div className="foot">{eyeSummary.totalResponded}/{eyeSummary.totalPlayers} responded</div>
+        </EyeOverlay>
+      )}
       
       <PowerUpContainer>
         <PowerUpIcon src={one} has={fif} onClick={() => usfif()}/>
         <PowerUpIcon src={two} has={stop} onClick={() => usStop()}/>
-        <PowerUpIcon src={four} has={false} onClick={() => {}}/>
+        <PowerUpIcon src={three} has={multiplier > 1} onClick={() => {}}/>
+        <PowerUpIcon
+          src={four}
+          has={hasEye}
+          onClick={() => {
+            if (!hasEye) return;
+            const next = !eyeActive;
+            setEyeActive(next);
+            if (next) {
+              socket.emit('powerup', { gameInstanceId: String(gameInstanceId), type: 'eye' });
+            }
+          }}
+        />
+        <PowerUpIcon src={five} has={hasShield} onClick={() => {}}/>
+        <PowerUpIcon src={six} has={hasSlow} onClick={() => {}}/>
+        <PowerUpIcon src={seven} has={hasEndOpponent} onClick={() => {}}/>
+        <PowerUpIcon src={eight} has={hasNuke} onClick={() => {}}/>
       </PowerUpContainer>
       <TimeBar time={String(Math.max(1, Number(question.time ?? 20)))} stop={stopTime}/>
       <AltsContainer>
@@ -229,20 +297,26 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
 }
 
 export const PowerUpIcon = styled.img.attrs((props: {has: boolean}) => props)`
-  width: 20%;
-  margin: 20px;
-  padding: 10px;
-  right: 0;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  margin: 8px;
+  padding: 8px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   cursor: pointer;
-  opacity: ${props => props.has ? '100%' : '30%'};
+  opacity: ${props => props.has ? '100%' : '35%'};
+  touch-action: manipulation;
 `;
 
 export const PowerUp = styled.div.attrs((props: {has: boolean}) => props)`
   background: white;
   width: 20%;
   margin: 20px;
-  border-radius: 5px;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 12px;
   font-weight: bold;
   right: 0;
   color: black;
@@ -252,15 +326,22 @@ export const PowerUp = styled.div.attrs((props: {has: boolean}) => props)`
   align-items: center;
   justify-content: center;
   opacity: ${props => props.has ? '100%' : '30%'};
+  touch-action: manipulation;
 `;
 
 export const PowerUpContainer = styled.div`
  display: flex;
+ align-items: center;
+ gap: 4px;
  background: white;
  margin: 10px;
+ padding: 4px;
  border-radius: 15px;
- 
- justify-content: center;
+ overflow-x: auto;
+ -webkit-overflow-scrolling: touch;
+ scrollbar-width: none;
+ &::-webkit-scrollbar { display: none; }
+ justify-content: flex-start;
 `;
 
 const AltsContainer = styled.div`
@@ -296,3 +377,50 @@ const TimeBar = styled.div.attrs((props: {time: string, stop: boolean}) => props
 `;
 
 export default Alts;
+
+// Shield aura badge
+const ShieldBadge = styled.div`
+  position: fixed;
+  top: 58px;
+  right: 12px;
+  z-index: 30;
+  background: #ecfccb;
+  color: #166534;
+  border: 2px solid #bbf7d0;
+  border-radius: 9999px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  font-weight: 800;
+  padding: 6px 10px;
+  font-size: 12px;
+`;
+
+// Eye overlay styles
+const EyeOverlay = styled.div`
+  position: fixed;
+  top: 56px;
+  left: 8px;
+  z-index: 30;
+  width: min(88vw, 280px);
+  background: #ffffff;
+  border: 2px solid #bfdbfe;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+  padding: 10px;
+  .title { font-weight: 800; font-size: 13px; color: #1f2937; margin-bottom: 6px; }
+  .foot { font-size: 11px; color: #475569; margin-top: 4px; }
+`;
+const Bars = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-direction: column;
+`;
+const BarRow = styled.div`
+  display: grid;
+  grid-template-columns: 20px 1fr 28px;
+  gap: 6px;
+  align-items: center;
+  .lbl { font-weight: 800; color: #334155; }
+  .bar { height: 10px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; border: 1px solid #e5e7eb; }
+  .fill { height: 100%; border-radius: 9999px; }
+  .val { font-size: 12px; color: #334155; text-align: right; }
+`;

@@ -124,7 +124,7 @@ const Home = () => {
             <span className="text-sm sm:text-base font-semibold text-gray-900 text-center">{t('home.premium.text') || 'Upgrade to Premium – no ads, exclusive upgrades and more features'}</span>
             <button
               onClick={() => navigate('/purchase')}
-              className="ml-2 sm:ml-4 shrink-0 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-3 py-1.5 sm:px-4 sm:py-2 text-white font-bold text-sm sm:text-base shadow hover:scale-105 transition"
+              className="ml-2 sm:ml-4 shrink-0 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-3 py-1.5 text-white font-bold text-sm md:px-3 md:py-1.5 md:text-sm shadow hover:scale-105 transition"
             >
               {t('profile.subscription.startPremium') || 'Start Premium'}
             </button>
@@ -206,8 +206,8 @@ const Home = () => {
                       </div>
                       <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
                       <div className="flex gap-2">
-                        <button className="rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                        <button className="rounded-lg bg-white border-2 border-purple-300 px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base text-purple-700 font-semibold shadow hover:bg-purple-50 transition" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
+                        <button className="rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1.5 text-sm text-white font-semibold shadow hover:scale-105 transition md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
+                        <button className="rounded-lg bg-white border-2 border-purple-300 px-3 py-1.5 text-sm text-purple-700 font-semibold shadow hover:bg-purple-50 transition md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
                       </div>
                     </div>
                   </div>
@@ -242,8 +242,8 @@ const Home = () => {
                       </div>
                       <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
                       <div className="flex gap-2">
-                        <button className="rounded-lg bg-gradient-to-r from-yellow-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                        <button className="rounded-lg bg-white border-2 border-yellow-300 px-4 py-2 text-yellow-700 font-semibold shadow hover:bg-yellow-50 transition" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
+                        <button className="rounded-lg bg-gradient-to-r from-yellow-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
+                        <button className="rounded-lg bg-white border-2 border-yellow-300 px-4 py-2 text-yellow-700 font-semibold shadow hover:bg-yellow-50 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
                       </div>
                     </div>
                   </div>
@@ -265,8 +265,8 @@ const Home = () => {
                   <div className="text-xl sm:text-2xl font-bold text-blue-800 mb-2">{t('home.noGames.title') || 'No games yet'}</div>
                   <div className="text-gray-600 mb-4 sm:mb-6">{t('home.noGames.subtitle') || 'Create your first quiz or discover examples to get started.'}</div>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <button onClick={() => navigate('/home/create')} className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base text-white font-bold shadow hover:scale-105 transition">{t('home.create') || 'New quiz'}</button>
-                    <button onClick={() => navigate('/home/discover')} className="rounded-xl bg-white px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">{t('home.discover') || 'Discover'}</button>
+                    <button onClick={() => navigate('/home/create')} className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-4 py-2 text-sm text-white font-bold shadow hover:scale-105 transition md:px-3 md:py-1.5 md:text-sm">{t('home.create') || 'New quiz'}</button>
+                    <button onClick={() => navigate('/home/discover')} className="rounded-xl bg-white px-4 py-2 text-sm text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition md:px-3 md:py-1.5 md:text-sm">{t('home.discover') || 'Discover'}</button>
                   </div>
                 </div>
               </div>
@@ -297,8 +297,8 @@ const Home = () => {
                     </div>
                     <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
                     <div className="flex gap-2">
-                      <button className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                      <button className="rounded-lg bg-white border-2 border-blue-300 px-4 py-2 text-blue-700 font-semibold shadow hover:bg-blue-50 transition" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
+                        <button className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
+                        <button className="rounded-lg bg-white border-2 border-blue-300 px-4 py-2 text-blue-700 font-semibold shadow hover:bg-blue-50 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
                     </div>
                   </div>
                 </div>
@@ -420,11 +420,11 @@ const Home = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <button className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 text-lg font-bold text-white shadow-xl hover:scale-105 transition disabled:opacity-60" onClick={() => createNewGameInstance(selectedGameId || '0', newGamePin)} disabled={watingForCreateGame}>
+                <button className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 text-lg font-bold text-white shadow-xl hover:scale-105 transition disabled:opacity-60 md:px-5 md:py-2.5 md:text-base" onClick={() => createNewGameInstance(selectedGameId || '0', newGamePin)} disabled={watingForCreateGame}>
                   {watingForCreateGame ? (t('home.starting') || 'Starting…') : (t('home.startGame') || 'Start game')}
                 </button>
-                <button className="rounded-xl bg-white px-4 py-3 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition" onClick={() => navigate('edit/' + selectedGameId)}>{t('home.edit') || 'Edit'}</button>
-                <button className="rounded-xl bg-white px-4 py-3 text-gray-700 font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition" onClick={() => setModalIsOpen(false)}>{t('common.close') || 'Close'}</button>
+                <button className="rounded-xl bg-white px-4 py-3 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition md:px-3 md:py-2 md:text-sm" onClick={() => navigate('edit/' + selectedGameId)}>{t('home.edit') || 'Edit'}</button>
+                <button className="rounded-xl bg-white px-4 py-3 text-gray-700 font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition md:px-3 md:py-2 md:text-sm" onClick={() => setModalIsOpen(false)}>{t('common.close') || 'Close'}</button>
               </div>
 
               {/* Hint */}

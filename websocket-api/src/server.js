@@ -47,7 +47,16 @@ const socketIndex = new Map(); // socketId -> { room, playerId }
 function getRoomState(roomId) {
   let state = rooms.get(roomId);
   if (!state) {
-    state = { players: new Map(), sockets: new Map(), answers: new Map(), status: 'created' };
+    state = {
+      players: new Map(),
+      sockets: new Map(),
+      answers: new Map(),
+      status: 'created',
+      powerups: {
+        shields: new Set(), // playerIds with active shield
+        slows: new Map(),   // targetId -> expiresAt ms
+      }
+    };
     rooms.set(roomId, state);
   }
   return state;
@@ -297,6 +306,99 @@ io.on('connection', (socket) => {
       cb && cb({ ok: true, colour: String(colour) });
     } catch (err) {
       console.error(`[${now()}] ! color_update error:`, err?.message || err);
+      cb && cb({ ok: false, error: 'exception' });
+    }
+  });
+
+  // Player-triggered powerups broadcast to room
+  // payload: { gameInstanceId, type: 'eye'|'shield'|'slow'|'end_one'|'nuke'|'custom', targetId?, meta? }
+  socket.on('powerup', (payload = {}, cb) => {
+    try {
+      const idx = socketIndex.get(socket.id);
+      if (!idx) return cb && cb({ ok: false, error: 'not_joined' });
+      const { room, playerId } = idx;
+      const payloadRoom = String(payload?.gameInstanceId || '');
+      if (payloadRoom !== room) return cb && cb({ ok: false, error: 'wrong_room' });
+      const type = String(payload?.type || '').trim();
+      if (!type) return cb && cb({ ok: false, error: 'invalid_type' });
+      const state = getRoomState(room);
+      const actor = state.players.get(playerId) || { username: undefined, score: '0' };
+
+      // Helper to choose a default target (highest scoring opponent)
+      const chooseTarget = () => {
+        const arr = Array.from(state.players.entries()).filter(([id]) => id !== playerId);
+        if (arr.length === 0) return undefined;
+        arr.sort((a,b) => Number(b[1].score||0) - Number(a[1].score||0));
+        return arr[0][0];
+      };
+
+      let targetId = payload?.targetId ? String(payload.targetId) : undefined;
+      if (!targetId && (type === 'end_one' || type === 'slow')) targetId = chooseTarget();
+
+      const evt = {
+        gameId: room,
+        type,
+        actor: { id: playerId, username: actor.username },
+        targetId,
+        meta: payload?.meta || {}
+      };
+
+      const shields = state.powerups.shields;
+      const slows = state.powerups.slows;
+
+      const API_URL = process.env.API_URL;
+
+      const persistScore = async (pid, next) => {
+        const p = state.players.get(pid);
+        if (!p) return;
+        p.score = String(next);
+        if (API_URL) {
+          const endpoint = `${API_URL}/game_instance_players/${pid}/`;
+          const resp = await fetch(endpoint, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ score: String(next) }) });
+          console.log(`[${now()}] <- PUT score status=${resp.status}`);
+        }
+        io.to(room).emit('player_update', { gameId: room, event: 'score', player: { id: pid, score: String(next) } });
+      };
+
+      if (type === 'shield') {
+        shields.add(playerId);
+      } else if (type === 'slow') {
+        if (targetId) {
+          const ttl = Date.now() + 15000; // 15s slow window
+          slows.set(targetId, ttl);
+          evt.meta.expiresAt = ttl;
+        }
+      } else if (type === 'end_one') {
+        if (targetId) {
+          if (shields.has(targetId)) {
+            // consume shield and block effect
+            shields.delete(targetId);
+            evt.meta.blocked = true;
+          } else {
+            const target = state.players.get(targetId);
+            if (target) {
+              persistScore(targetId, 0);
+            }
+          }
+        }
+      } else if (type === 'nuke') {
+        // Zero everyone except shielded
+        const promises = [];
+        for (const [pid, p] of state.players.entries()) {
+          if (shields.has(pid)) {
+            evt.meta.skipped = (evt.meta.skipped || []).concat(pid);
+            continue;
+          }
+          promises.push(persistScore(pid, 0));
+        }
+        Promise.allSettled(promises).then(() => {}).catch(()=>{});
+      }
+
+      console.log(`[${now()}] -> powerup room=${room} type=${type} actor=${actor.username || playerId} target=${evt.targetId || ''}`);
+      io.to(room).emit('powerup', evt);
+      cb && cb({ ok: true });
+    } catch (err) {
+      console.error(`[${now()}] ! powerup error:`, err?.message || err);
       cb && cb({ ok: false, error: 'exception' });
     }
   });

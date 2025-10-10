@@ -36,6 +36,12 @@ const PhoneGameView = () => {
 
   const [fiftyfifty, setFiftyfifty] = useState(false);
   const [stop, setStoptime] = useState(false);
+  const [multiplier, setMultiplier] = useState<number>(1);
+  const [eye, setEye] = useState(false);
+  const [shield, setShield] = useState(false);
+  const [slow, setSlow] = useState(false);
+  const [endOpponent, setEndOpponent] = useState(false);
+  const [nuke, setNuke] = useState(false);
 
   const [colorForUser, setColorForUser] = useState(0);
 
@@ -162,12 +168,52 @@ const PhoneGameView = () => {
 
   // Show the questions alternatives and if the answer is correct
   if (!answered && !gameEnded) {
-    return <Alts question={questions[currentQ]} points={points} setPoints={(p) => setPoints(p)} answered={setAnswer} fif={fiftyfifty} buyfif={() => setFiftyfifty(false)} stop={stop} buyStop={() => setStoptime(false)} color={colorForUser}/>
+    return <Alts
+      question={questions[currentQ]}
+      points={points}
+      setPoints={(p) => setPoints(p)}
+      answered={setAnswer}
+      fif={fiftyfifty}
+      buyfif={() => setFiftyfifty(false)}
+      stop={stop}
+      buyStop={() => setStoptime(false)}
+      color={colorForUser}
+      multiplier={multiplier}
+      hasEye={eye}
+      hasShield={shield}
+      hasSlow={slow}
+      hasEndOpponent={endOpponent}
+      hasNuke={nuke}
+    />
   }
 
   if (answered && !gameEnded) {
     const hasNext = currentQ < questions.length;
-    return <Result nextQuestionStarted={() => setAnswered(false)} currentQ={currentQ} points={points} setPoints={(p) => setPoints(p)} gameFinished={() => {setGameEnded(true); release()}} fif={fiftyfifty} buyfif={() => setFiftyfifty(true)} stop={stop} buyStop={() => setStoptime(true)} color={colorForUser} hasNext={hasNext}/>
+    return <Result
+      nextQuestionStarted={() => setAnswered(false)}
+      currentQ={currentQ}
+      points={points}
+      setPoints={(p) => setPoints(p)}
+      gameFinished={() => {setGameEnded(true); release()}}
+      fif={fiftyfifty}
+      buyfif={() => setFiftyfifty(true)}
+      stop={stop}
+      buyStop={() => setStoptime(true)}
+      color={colorForUser}
+      hasNext={hasNext}
+      hasMultiplier={multiplier > 1}
+      hasEye={eye}
+      hasShield={shield}
+      hasSlow={slow}
+      hasEndOpponent={endOpponent}
+      hasNuke={nuke}
+      buyMultiplier={() => setMultiplier(1.5)}
+      buyEye={() => setEye(true)}
+      buyShield={() => setShield(true)}
+      buySlow={() => setSlow(true)}
+      buyEndOpponent={() => setEndOpponent(true)}
+      buyNuke={() => setNuke(true)}
+    />
   }
 
   return(
