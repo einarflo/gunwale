@@ -74,6 +74,19 @@ services:
     networks:
       - app-network
 
+  betaworks:
+    restart: unless-stopped
+    build:
+      context: ./betaworks
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.betaworks.rule=Host(`betaworks.no`)"
+      - "traefik.http.routers.betaworks.entrypoints=websecure"
+      - "traefik.http.routers.betaworks.tls.certresolver=myresolver"
+      - "traefik.http.services.betaworks.loadbalancer.server.port=80"
+    networks:
+      - app-network
+
   keycloak-db:
     restart: unless-stopped
     image: postgres:15

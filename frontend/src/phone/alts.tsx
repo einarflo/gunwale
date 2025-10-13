@@ -202,7 +202,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
   // Waiting for result to be revealed 
   if (answerSelected && !showCorrect) {
     return (
-    <GameWrapper>
+    <GameWrapper hasShield={hasShield}>
         <MobileNav>
           <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
           <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
@@ -215,7 +215,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
   // Showing the result for 3 seconds
   if (answerSelected && showCorrect) {
     return (
-    <GameWrapper style={{ background: answeredCorrectly ? 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(0,164,67,1) 0%, rgba(34,214,135,1) 100%)' : 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(255,39,39,1) 0%, rgba(247,89,89,1) 100%)' }}>
+    <GameWrapper hasShield={hasShield} style={{ background: answeredCorrectly ? 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(0,164,67,1) 0%, rgba(34,214,135,1) 100%)' : 'linear-gradient(90deg, rgba(28,0,65,1) 0%, rgba(255,39,39,1) 0%, rgba(247,89,89,1) 100%)' }}>
         <MobileNav>
           <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
           <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
@@ -228,11 +228,18 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
 
   // Showing alternatives
   return(
-    <GameWrapper>
+    <GameWrapper hasShield={hasShield}>
       <MobileNav>
         <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
         <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
       </MobileNav>
+      {hasShield && <ShieldAura />}
+      {(hasShield || multiplier > 1) && (
+        <StatusBar>
+          {hasShield && <StatusChip style={{ background: '#dcfce7', borderColor: '#86efac', color: '#166534' }}>Shield</StatusChip>}
+          {multiplier > 1 && <StatusChip style={{ background: '#f3e8ff', borderColor: '#e9d5ff', color: '#6b21a8' }}>Gear x{multiplier}</StatusChip>}
+        </StatusBar>
+      )}
       {hasShield && (
         <ShieldBadge>Shield</ShieldBadge>
       )}
@@ -392,6 +399,45 @@ const ShieldBadge = styled.div`
   font-weight: 800;
   padding: 6px 10px;
   font-size: 12px;
+`;
+
+// Pulsing spherical green gradient overlay when shield active
+const ShieldAura = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 40%, rgba(34,197,94,0.18), transparent 55%),
+              radial-gradient(circle at 20% 70%, rgba(34,197,94,0.12), transparent 60%),
+              radial-gradient(circle at 80% 30%, rgba(34,197,94,0.10), transparent 65%);
+  animation: shieldPulse 4.5s ease-in-out infinite;
+  @keyframes shieldPulse {
+    0%, 100% { opacity: 0.25; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(1.03); }
+  }
+`;
+
+// Status bar chips for active effects
+const StatusBar = styled.div`
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  gap: 6px;
+  padding: 4px 6px;
+  background: rgba(255,255,255,0.85);
+  border: 2px solid #e5e7eb;
+  border-radius: 9999px;
+  backdrop-filter: blur(6px);
+`;
+const StatusChip = styled.div`
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  padding: 4px 8px;
+  font-weight: 800;
+  font-size: 11px;
 `;
 
 // Eye overlay styles

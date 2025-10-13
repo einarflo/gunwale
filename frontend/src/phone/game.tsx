@@ -261,12 +261,21 @@ const PhoneGameView = () => {
   )
 }
 
-export const GameWrapper = styled.div`
+export const GameWrapper = styled.div.attrs((props: { hasShield?: boolean }) => props)`
   height: 100vh;
   height: 100dvh;
   width: 100vw;
-  background: rgb(28,0,65);
-  background-image: linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%);
+  ${(props) => props.hasShield ? `
+    /* Stronger green background with high-contrast base */
+    background:
+      radial-gradient(circle at 50% 35%, rgba(16,185,129,0.35), transparent 52%),
+      radial-gradient(circle at 20% 75%, rgba(16,185,129,0.22), transparent 58%),
+      radial-gradient(circle at 82% 30%, rgba(16,185,129,0.20), transparent 62%),
+      linear-gradient(180deg, #065f46 0%, #064e3b 100%);
+  ` : `
+    background: rgb(28,0,65);
+    background-image: linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%);
+  `}
 `;
 
 export const Header = styled.div`

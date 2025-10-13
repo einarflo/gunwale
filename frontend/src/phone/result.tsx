@@ -238,7 +238,7 @@ const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyf
 
   if(getReady) {
     return (
-      <GameWrapper>
+      <GameWrapper hasShield={hasShield}>
           <MobileNav>
           <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
           <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
@@ -250,7 +250,7 @@ const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyf
 
   
   return(
-    <GameWrapper>
+    <GameWrapper hasShield={hasShield}>
       <MobileNav>
         <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
         <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>

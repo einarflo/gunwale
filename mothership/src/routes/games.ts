@@ -22,6 +22,9 @@ gamesRouter.get('/', requireAuth(), async (req: Request, res: Response) => {
       games.map(async (g) => {
         let qcount = 0;
         let plays = 0;
+        let participants = 0;
+        let avgScore = 0;
+        let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
         try {
           qcount = await prisma.game_question.count({
             where: { game_id: g.uuid, OR: [{ deleted: null }, { NOT: { deleted: '1' } }] },
@@ -34,10 +37,27 @@ gamesRouter.get('/', requireAuth(), async (req: Request, res: Response) => {
         } catch (e) {
           // ignore
         }
+        try {
+          const players = await prisma.game_instance_players.findMany({ where: { game_id: g.uuid }, select: { score: true } });
+          participants = players.length;
+          const total = players.reduce((acc, p) => acc + Number(p.score || 0), 0);
+          avgScore = participants ? Math.round(total / participants) : 0;
+        } catch (e) {
+          // ignore
+        }
+        if (qcount > 0) {
+          const avgPerQ = avgScore / qcount; // 0..1000 scale per question
+          if (avgPerQ >= 750) difficulty = 'easy';
+          else if (avgPerQ >= 450) difficulty = 'medium';
+          else difficulty = 'hard';
+        }
         return {
           ...g,
           qcount,
           plays,
+          participants,
+          avgScore,
+          difficulty,
           username: g.created_by || null,
           favorite: undefined,
           popular: undefined,
@@ -137,6 +157,9 @@ gamesRouter.get('/public', async (req: Request, res: Response) => {
         let qcount = 0;
         let favCount = 0;
         let plays = 0;
+        let participants = 0;
+        let avgScore = 0;
+        let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
         try {
           qcount = await prisma.game_question.count({
             where: { game_id: g.uuid, OR: [{ deleted: null }, { NOT: { deleted: '1' } }] },
@@ -148,8 +171,20 @@ gamesRouter.get('/public', async (req: Request, res: Response) => {
         try {
           plays = await prisma.game_instance.count({ where: { game_id: g.uuid, OR: [{ is_deleted: null }, { NOT: { is_deleted: '1' } }] } });
         } catch (_) {}
+        try {
+          const players = await prisma.game_instance_players.findMany({ where: { game_id: g.uuid }, select: { score: true } });
+          participants = players.length;
+          const total = players.reduce((acc, p) => acc + Number(p.score || 0), 0);
+          avgScore = participants ? Math.round(total / participants) : 0;
+        } catch (_) {}
+        if (qcount > 0) {
+          const avgPerQ = avgScore / qcount;
+          if (avgPerQ >= 750) difficulty = 'easy';
+          else if (avgPerQ >= 450) difficulty = 'medium';
+          else difficulty = 'hard';
+        }
         const tags = tagMap.get(g.uuid) || [];
-        return { ...g, qcount, favCount, plays, tags } as any;
+        return { ...g, qcount, favCount, plays, tags, participants, avgScore, difficulty } as any;
       })
     );
     res.json(enriched);
