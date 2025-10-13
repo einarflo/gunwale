@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: traefik:v2.11
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.le.acme.email=din.epost@domene.no
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --api.dashboard=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - web
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_KEEP_ALIVE=12h
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - web
+
+  challenger-db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=changeme
+      - MYSQL_DATABASE=challenger
+      - MYSQL_USER=challenger
+      - MYSQL_PASSWORD=challenger
+    command: ["--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    ports:
+      - "3307:3306"
+    volumes:
+      - challenger_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uchallenger -pchallenger --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - web
+
+  challenger:
+    build:
+      context: ./challenger
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      challenger-db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=challenger
+      - MYSQL_USER=challenger
+      - MYSQL_PASSWORD=challenger
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.challenger.rule=Host(`ai.tavl.no`)"
+      - "traefik.http.routers.challenger.entrypoints=websecure"
+      - "traefik.http.routers.challenger.tls=true"
+      - "traefik.http.routers.challenger.tls.certresolver=le"
+      - "traefik.http.services.challenger.loadbalancer.server.port=3000"
+    networks:
+      - web
+
+volumes:
+  ollama_models:
+  challenger_db:
+  traefik_letsencrypt:
+
+networks:
+  web:
+    driver: bridge
