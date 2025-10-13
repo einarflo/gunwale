@@ -1,7 +1,7 @@
 import { createApp } from './app.js';
-import { ensureDb } from './db.js';
+import { ensureDb } from './prisma.js';
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 const app = createApp();
 
@@ -11,3 +11,4 @@ ensureDb()
     console.error('Failed to init DB', e);
     process.exit(1);
   });
+

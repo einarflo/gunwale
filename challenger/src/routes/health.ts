@@ -1,15 +1,15 @@
 import express from 'express';
-import { getPool } from '../db.js';
 import { ollamaHealth } from '../services/ollama.js';
+import { prisma } from '../prisma.js';
 
 export const router = express.Router();
 
-router.get('/health', async (req, res) => {
+router.get('/health', async (_req, res) => {
   try {
     await ollamaHealth();
-    await getPool().query('SELECT 1');
+    await prisma.$queryRawUnsafe('SELECT 1');
     res.send({ status: 'ok' });
-  } catch (e) {
+  } catch (e: any) {
     res.status(500).send({ status: 'error', message: String(e?.message || e) });
   }
 });

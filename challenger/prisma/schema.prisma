@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model ai_cache {
+  id             BigInt     @id @default(autoincrement())
+  kind           String     @db.VarChar(32)
+  cache_key      String     @unique @db.VarChar(512)
+  model          String?    @db.VarChar(64)
+  prompt_version String?    @db.VarChar(16)
+  prompt         Json?
+  result         Json
+  hit_count      Int        @default(0)
+  upvotes        Int        @default(0)
+  downvotes      Int        @default(0)
+  created_at     DateTime   @default(now())
+  last_hit_at    DateTime?
+
+  feedbacks ai_cache_feedback[]
+
+  @@index([kind])
+  @@index([model])
+  @@index([prompt_version])
+  @@index([created_at])
+  @@index([last_hit_at])
+}
+
+enum Vote {
+  up
+  down
+}
+
+model ai_cache_feedback {
+  id         BigInt   @id @default(autoincrement())
+  cache_id   BigInt
+  vote       Vote
+  user_ref   String?  @db.VarChar(128)
+  source     String?  @db.VarChar(64)
+  created_at DateTime @default(now())
+
+  cache ai_cache @relation(fields: [cache_id], references: [id], onDelete: Cascade)
+
+  @@index([cache_id])
+  @@index([created_at])
+}
+

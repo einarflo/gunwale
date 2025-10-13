@@ -71,6 +71,7 @@ services:
       - PORT=3000
       - NODE_ENV=production
       - OLLAMA_BASE_URL=http://ollama:11434
+      - DATABASE_URL=mysql://challenger:challenger@db:3306/challenger
       - MYSQL_HOST=db
       - MYSQL_PORT=3306
       - MYSQL_DATABASE=challenger

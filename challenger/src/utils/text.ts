@@ -1,4 +1,4 @@
-export function normalizeText(s = '') {
+export function normalizeText(s: string = ''): string {
   try {
     return s
       .toLowerCase()
@@ -13,13 +13,13 @@ export function normalizeText(s = '') {
   }
 }
 
-function bigrams(s) {
-  const arr = [];
+function bigrams(s: string): string[] {
+  const arr: string[] = [];
   for (let i = 0; i < s.length - 1; i++) arr.push(s.slice(i, i + 2));
   return arr;
 }
 
-export function jaccardSimilarity(a, b) {
+export function jaccardSimilarity(a: string, b: string): number {
   if (!a || !b) return 0;
   const A = new Set(bigrams(a));
   const B = new Set(bigrams(b));

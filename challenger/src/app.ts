@@ -12,7 +12,7 @@ export function createApp() {
   app.use(express.json());
   app.use(morgan('tiny'));
 
-  app.get('/', (req, res) => res.send({ service: 'challenger', endpoints: ['/health', '/v1/generate', '/v1/options', '/v1/questions', '/v1/cache/:id/feedback'] }));
+  app.get('/', (_req, res) => res.send({ service: 'challenger', endpoints: ['/health', '/v1/generate', '/v1/options', '/v1/questions', '/v1/cache/:id/feedback'] }));
 
   app.use(healthRouter);
   app.use(generateRouter);
