@@ -19,7 +19,9 @@
     "jwks-rsa": "^3.0.1",
     "mysql2": "^3.14.4",
     "stripe": "^19.1.0",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "@aws-sdk/client-s3": "^3.676.0",
+    "@aws-sdk/s3-request-presigner": "^3.676.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

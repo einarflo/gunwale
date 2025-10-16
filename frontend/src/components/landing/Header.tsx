@@ -40,17 +40,18 @@ export default function Header({ signIn, playMode }: HeaderProps) {
         {/* Desktop nav */}
         {username ? (
           <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
-          <div onClick={() => navigate("/home")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.library')}</div>
-          <div onClick={() => navigate("/home/discover")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('home.discover')}</div>
-          <div onClick={() => navigate("/home/upgrades")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.upgrades')}</div>
-        </nav>
+            <div onClick={() => navigate("/home")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.library')}</div>
+            <div onClick={() => navigate("/discover")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('home.discover')}</div>
+            <div onClick={() => navigate("/home/upgrades")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.upgrades')}</div>
+          </nav>
         ) : (
-        <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
-          <a href="#features" className="hover:text-blue-600 transition-colors font-medium">{t('header.featured')}</a>
-          <a href="#game" className="hover:text-blue-600 transition-colors font-medium">{t('header.about')}</a>
-          <a href="#upgrades" className="hover:text-blue-600 transition-colors font-medium">{t('header.upgrades')}</a>
-          <a href="#about" className="hover:text-blue-600 transition-colors font-medium">{t('header.pricing')}</a>
-        </nav>
+          <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
+            <a href="#features" className="hover:text-blue-600 transition-colors font-medium">{t('header.featured')}</a>
+            <a href="#game" className="hover:text-blue-600 transition-colors font-medium">{t('header.about')}</a>
+            <div onClick={() => navigate('/discover')} className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('home.discover')}</div>
+            <a href="#upgrades" className="hover:text-blue-600 transition-colors font-medium">{t('header.upgrades')}</a>
+            <a href="#about" className="hover:text-blue-600 transition-colors font-medium">{t('header.pricing')}</a>
+          </nav>
         )}
         {/* Desktop actions */}
         <div className="hidden md:flex items-center gap-3">
@@ -130,7 +131,7 @@ export default function Header({ signIn, playMode }: HeaderProps) {
               <>
                 <button onClick={() => { navigate('/home/profile'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700 font-semibold">{username}</button>
                 <button onClick={() => { navigate('/home'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.library')}</button>
-                <button onClick={() => { navigate('/home/discover'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('home.discover')}</button>
+                <button onClick={() => { navigate('/discover'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('home.discover')}</button>
                 <button onClick={() => { navigate('/home/upgrades'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.upgrades')}</button>
                 <div className="h-px bg-blue-100 my-1" />
                 <button onClick={() => { navigate('/join'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-blue-700">{t('header.join')}</button>
@@ -140,6 +141,7 @@ export default function Header({ signIn, playMode }: HeaderProps) {
               <>
                 <button onClick={() => { document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.featured')}</button>
                 <button onClick={() => { document.getElementById('game')?.scrollIntoView({ behavior: 'smooth' }); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.about')}</button>
+                <button onClick={() => { navigate('/discover'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('home.discover')}</button>
                 <button onClick={() => { document.getElementById('upgrades')?.scrollIntoView({ behavior: 'smooth' }); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.upgrades')}</button>
                 <button onClick={() => { document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.pricing')}</button>
                 <div className="h-px bg-blue-100 my-1" />

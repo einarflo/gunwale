@@ -156,6 +156,13 @@ services:
       # Keycloak Admin (role assignment)
       KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID}
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+      # Media (MinIO / S3)
+      S3_ENDPOINT: https://media.tavl.no
+      S3_REGION: us-east-1
+      S3_BUCKET: ${S3_BUCKET:-tavl-media}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_FORCE_PATH_STYLE: "true"
     depends_on:
       mothership-db:
         condition: service_healthy

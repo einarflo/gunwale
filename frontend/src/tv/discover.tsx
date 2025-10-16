@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { get, post, del } from '../api';
 import GlobalStyles from '../components/landing/GlobalStyles';
 import AnimatedGradientBackground from '../components/landing/AnimatedGradientBackground';
+import Header from '../components/landing/Header';
 import { useI18n } from '../i18n/I18nProvider';
 import Modal from 'react-modal';
 import randomstring from 'randomstring';
@@ -27,7 +28,7 @@ interface GameLite {
 const Discover = () => {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { userId } = useKeycloak();
+  const { userId, isAuthenticated, login } = useKeycloak();
   const [term, setTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +37,8 @@ const Discover = () => {
   const [allTags, setAllTags] = useState<Array<{ id: number; name: string; slug: string }>>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [tagModeAll, setTagModeAll] = useState(false);
+  const [showAllTags, setShowAllTags] = useState(false);
+  const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'favourites' | 'questions'>('popular');
 
   // Modal state for details + start
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -48,8 +51,12 @@ const Discover = () => {
     // Load initial lists
     refresh();
     get('/tags').then(res => setAllTags(Array.isArray(res.data) ? res.data : [])).catch(() => setAllTags([]));
-    get('/favorites/').then(res => { const ids: string[] = res.data?.gameIds || []; setFavorites(new Set(ids.map(String))); }).catch(() => {});
-  }, []);
+    if (isAuthenticated) {
+      get('/favorites/').then(res => { const ids: string[] = res.data?.gameIds || []; setFavorites(new Set(ids.map(String))); }).catch(() => {});
+    } else {
+      setFavorites(new Set());
+    }
+  }, [isAuthenticated]);
 
   const refresh = (opts?: { slugs?: string[]; q?: string; all?: boolean }) => {
     setLoading(true);
@@ -68,9 +75,31 @@ const Discover = () => {
       .finally(() => setLoading(false));
   };
 
-  const filtered = results; // server-side filtered by q/tags
+  // client-side sort for better UX (server already filters)
+  const filtered = useMemo(() => {
+    const arr = [...results];
+    switch (sortBy) {
+      case 'recent':
+        arr.sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime());
+        break;
+      case 'popular':
+        arr.sort((a, b) => (b.plays || 0) - (a.plays || 0));
+        break;
+      case 'favourites':
+        arr.sort((a, b) => (b.favCount || 0) - (a.favCount || 0));
+        break;
+      case 'questions':
+        arr.sort((a, b) => (b.qcount || 0) - (a.qcount || 0));
+        break;
+    }
+    return arr;
+  }, [results, sortBy]);
 
   const toggleFavorite = async (gameId: string) => {
+    if (!isAuthenticated) {
+      try { login(); } catch (_) {}
+      return;
+    }
     const isFav = favorites.has(gameId);
     try {
       if (isFav) {
@@ -96,8 +125,7 @@ const Discover = () => {
   };
 
   const openDetails = (gameId: string) => {
-    setSelectedGameId(gameId);
-    setModalIsOpen(true);
+    navigate(`/game/${encodeURIComponent(gameId)}`);
   };
 
   // Load question list when opening modal
@@ -130,24 +158,76 @@ const Discover = () => {
     <>
       <GlobalStyles />
       <AnimatedGradientBackground />
-      <div className="mx-auto max-w-6xl px-6 py-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-2xl font-bold text-gray-800">Discover</div>
-          <button onClick={() => navigate('/home')} className="rounded-xl bg-white px-4 py-2 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">{t('common.back') || 'Back'}</button>
+      <Header />
+      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <div>
+            <div className="text-2xl md:text-3xl font-extrabold text-gray-800">Discover</div>
+            <div className="text-gray-600">Search public quizzes and explore suggestions.</div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => navigate('/home')} className="rounded-lg bg-white px-3 py-2 text-blue-700 text-sm font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">{t('common.back') || 'Back'}</button>
+          </div>
         </div>
-        <div className="text-gray-600 mb-4">Search for public quizzes and explore suggestions.</div>
 
-        <input
-          value={term}
-          onChange={e => { setTerm(e.target.value); }}
-          placeholder={t('home.searchPlaceholder') || 'Search for quizzes...'}
-          className="w-full mb-4 px-3 py-2 rounded-xl border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
-        />
+        {/* Search + sort */}
+        <div className="rounded-2xl bg-white/80 border-2 border-blue-200 p-3 md:p-4 shadow-sm mb-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <div className="relative flex-1">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 20l-5.6-5.6a7 7 0 10-1.4 1.4L20 21l1-1zM10 16a6 6 0 110-12 6 6 0 010 12z"/></svg>
+              </span>
+              <input
+                value={term}
+                onChange={e => setTerm(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') refresh(); }}
+                placeholder={t('home.searchPlaceholder') || 'Search for quizzes...'}
+                className="w-full pl-9 pr-9 py-2 rounded-lg border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base"
+              />
+              {!!term && (
+                <button onClick={() => { setTerm(''); refresh({ q: '' }); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              )}
+            </div>
+            <div className="shrink-0 flex items-center gap-2">
+              <label className="text-sm text-gray-600">Sort</label>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="rounded-md border border-blue-200 px-2 py-2 text-sm bg-white">
+                <option value="popular">Most plays</option>
+                <option value="recent">Recently updated</option>
+                <option value="favourites">Most favourites</option>
+                <option value="questions">Most questions</option>
+              </select>
+              <button onClick={() => refresh()} className="rounded-md bg-blue-600 text-white text-sm font-semibold px-3 py-2 shadow hover:bg-blue-700">Search</button>
+            </div>
+          </div>
+          {/* Selected tags chips */}
+          {selected.size > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {Array.from(selected).map(slug => {
+                const name = allTags.find(tg => tg.slug === slug)?.name || slug;
+                return (
+                  <span key={slug} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                    {t('tags.' + slug) || name}
+                    <button onClick={() => toggleTag(slug)} className="text-blue-800/80 hover:text-blue-900">×</button>
+                  </span>
+                );
+              })}
+              <button onClick={() => { setSelected(new Set()); refresh({ slugs: [] }); }} className="text-xs text-gray-600 underline">Clear</button>
+            </div>
+          )}
+        </div>
 
         {/* Tag filters */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="rounded-2xl bg-white/70 border-2 border-blue-200 p-3 md:p-4 shadow-sm mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-semibold text-gray-700">Browse tags</div>
+            <button onClick={() => { const v = !tagModeAll; setTagModeAll(v); refresh({ slugs: Array.from(selected), all: v }); }} className={`text-xs rounded-full px-2 py-1 border ${tagModeAll ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-blue-300'}`}>
+              Match all
+            </button>
+          </div>
           <div className="flex flex-wrap gap-2">
-            {allTags.map(tag => {
+            {(showAllTags ? allTags : allTags.slice(0, 12)).map(tag => {
               const active = selected.has(tag.slug);
               return (
                 <button key={tag.slug} onClick={() => toggleTag(tag.slug)} className={`px-3 py-1 rounded-full text-sm font-semibold border-2 transition ${active ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'}`}>
@@ -155,22 +235,23 @@ const Discover = () => {
                 </button>
               );
             })}
+            {allTags.length > 12 && (
+              <button onClick={() => setShowAllTags(s => !s)} className="px-3 py-1 rounded-full text-sm font-semibold border-2 border-gray-300 text-gray-700 bg-white hover:bg-gray-50">
+                {showAllTags ? 'Show fewer' : `Show more (+${allTags.length - 12})`}
+              </button>
+            )}
           </div>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" checked={tagModeAll} onChange={e => { const v = e.target.checked; setTagModeAll(v); refresh({ slugs: Array.from(selected), all: v }); }} />
-            Match all
-          </label>
-        </div>
-
-        <div className="mb-4">
-          <button onClick={() => refresh()} className="rounded-lg bg-white border-2 border-blue-300 px-3 py-1 text-blue-700 text-sm font-semibold shadow hover:bg-blue-50 transition">Search</button>
         </div>
 
         {loading && <div className="text-gray-600">Loading…</div>}
         {error && <div className="text-red-600">{error}</div>}
 
         {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mb-2 text-sm text-gray-600">{filtered.length} results</div>
+        )}
+
+        {!loading && !error && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((g) => {
               const gid = String(g.uuid || g.id);
               const fav = favorites.has(gid);

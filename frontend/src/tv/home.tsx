@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import randomstring from 'randomstring';
 import { get, post, put } from "../api";
+import placeholderImg from "../images/tavl-placeholder.jpg";
 import GlobalStyles from '../components/landing/GlobalStyles';
 import AnimatedGradientBackground from '../components/landing/AnimatedGradientBackground';
 import { useNavigate } from "react-router-dom";
@@ -32,21 +33,9 @@ const Home = () => {
   const [error, setError] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const placeholderUrls = useMemo(
-    () => [
-      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1520975916090-3105956dac38?auto=format&fit=crop&w=800&q=80',
-    ],
-    []
-  );
-  const getPlaceholder = (g: any) => {
-    const key = String(g?.uuid || g?.id || g?.name || '0');
-    let sum = 0;
-    for (let i = 0; i < key.length; i++) sum = (sum + key.charCodeAt(i)) % 997;
-    return placeholderUrls[sum % placeholderUrls.length];
+  const getCover = (g: any) => {
+    const url = (g as any)?.cover_image_url;
+    return url && typeof url === 'string' && url.length > 0 ? url : placeholderImg;
   };
 
   useEffect(() => {
@@ -145,7 +134,7 @@ const Home = () => {
                 {t('home.create') || 'New quiz'}
               </button>
               <button
-                onClick={() => navigate("/home/discover")}
+                onClick={() => navigate("/discover")}
                 className="rounded-xl bg-gradient-to-r from-blue-400 via-pink-400 to-purple-500 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-lg text-white font-bold shadow-lg hover:scale-105 transition-all border-2 border-blue-400 focus:ring-4 focus:ring-purple-200 flex items-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -186,7 +175,7 @@ const Home = () => {
                 {favoriteGames.map(game => (
                   <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-purple-50 hover:shadow-lg transition cursor-pointer border-2 border-purple-300 overflow-hidden" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                     <div className="relative h-32">
-                      <img src={getPlaceholder(game)} alt="" className="h-full w-full object-cover" />
+                      <img src={getCover(game)} alt="" className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 to-transparent" />
                       <div className="absolute top-2 left-2 flex gap-2">
                         <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
@@ -230,7 +219,7 @@ const Home = () => {
                 {popularGames.map(game => (
                   <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-yellow-50 hover:shadow-lg transition cursor-pointer border-2 border-yellow-300 overflow-hidden" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                     <div className="relative h-32">
-                      <img src={getPlaceholder(game)} alt="" className="h-full w-full object-cover" />
+                      <img src={getCover(game)} alt="" className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/30 to-transparent" />
                       <div className="absolute top-2 left-2 flex gap-2">
                         <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
@@ -275,7 +264,7 @@ const Home = () => {
                   <div className="text-gray-600 mb-4 sm:mb-6">{t('home.noGames.subtitle') || 'Create your first quiz or discover examples to get started.'}</div>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <button onClick={() => navigate('/home/create')} className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-4 py-2 text-sm text-white font-bold shadow hover:scale-105 transition md:px-3 md:py-1.5 md:text-sm">{t('home.create') || 'New quiz'}</button>
-                    <button onClick={() => navigate('/home/discover')} className="rounded-xl bg-white px-4 py-2 text-sm text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition md:px-3 md:py-1.5 md:text-sm">{t('home.discover') || 'Discover'}</button>
+                    <button onClick={() => navigate('/discover')} className="rounded-xl bg-white px-4 py-2 text-sm text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition md:px-3 md:py-1.5 md:text-sm">{t('home.discover') || 'Discover'}</button>
                   </div>
                 </div>
               </div>
@@ -286,7 +275,7 @@ const Home = () => {
               filteredGames?.map(game => (
                 <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-white hover:shadow-lg transition cursor-pointer overflow-hidden" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                   <div className="relative h-32">
-                    <img src={getPlaceholder(game)} alt="" className="h-full w-full object-cover" />
+                    <img src={getCover(game)} alt="" className="h-full w-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent" />
                     <div className="absolute top-2 left-2 flex gap-2">
                       <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
@@ -395,7 +384,7 @@ const Home = () => {
             <div className="flex flex-col gap-5">
               {/* Header / Cover */}
               <div className="relative h-40 rounded-xl overflow-hidden">
-                <img src={getPlaceholder(g)} alt="" className="h-full w-full object-cover" />
+                <img src={getCover(g)} alt="" className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent" />
                 <div className="absolute top-2 left-2 flex gap-2">
                   <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{g.qcount || 0} {t('home.questions') || 'questions'}</span>

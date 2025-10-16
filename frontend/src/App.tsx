@@ -19,6 +19,7 @@ import Discover from './tv/discover';
 import ProfilePage from './tv/profilePage';
 import TVGamePlayView from './tv/game';
 import UpgradesPage from './tv/upgradesPage';
+import GamePublic from './tv/gamePublic';
 import { loadPhoneSession, clearPhoneSession } from './storage/session';
 import { get } from './api';
 import { connectSocket } from './api/socket';
@@ -195,6 +196,10 @@ const App = () => {
           />
         }
       />
+      {/* Public routes */}
+      <Route path="/discover" element={<Discover />} />
+      <Route path="/game/:gameId" element={<GamePublic />} />
+
       <Route path="/home" element={
         <RequireAuth>
           <TVView
@@ -209,7 +214,6 @@ const App = () => {
         <Route index element={<Home />} />
         <Route path="upgrades" element={<UpgradesPage />} />
         <Route path="create" element={<CreateGame />} />
-        <Route path="discover" element={<Discover />} />
         <Route path="edit/:gameId" element={<EditGame />} />
         <Route path="edit/:gameId/question/:questionId" element={<EditQuestion />} />
         <Route path="update/:gameId" element={<UpdateGame />} />

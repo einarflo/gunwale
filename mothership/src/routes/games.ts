@@ -284,6 +284,7 @@ gamesRouter.put('/:id', requireAuth(), async (req: Request, res: Response) => {
     'deleted',
     'isPublic',
     'uuid',
+    'cover_image_url',
   ] as const;
 
   const data: any = {};

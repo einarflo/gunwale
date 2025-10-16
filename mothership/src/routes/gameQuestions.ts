@@ -152,6 +152,7 @@ gameQuestionsRouter.put('/:selector', requireAuth(), async (req: Request, res: R
       'correct',
       'time',
       'deleted',
+      'image_url',
     ] as const;
     const data: any = {};
     for (const key of allowedKeys) {

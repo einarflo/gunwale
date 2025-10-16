@@ -4,6 +4,7 @@ import { favoritesRouter } from './routes/favorites';
 import { tagsRouter } from './routes/tags';
 import { gameQuestionsRouter, gameQuestionByIdRouter } from './routes/gameQuestions';
 import { gameInstancesRouter } from './routes/gameInstances';
+import { mediaRouter } from './routes/media';
 import { billingRouter, stripeWebhookHandler } from './routes/billing';
 import { gameInstancePlayersRouter } from './routes/gameInstancePlayers';
 import { gameInstanceAnswersRouter } from './routes/gameInstanceAnswers';
@@ -76,6 +77,7 @@ export function createApp() {
   app.use('/billing', billingRouter);
   app.use('/favorites', favoritesRouter);
   app.use('/tags', tagsRouter);
+  app.use('/media', mediaRouter);
   // game_question routes are wired below
 
   return app;

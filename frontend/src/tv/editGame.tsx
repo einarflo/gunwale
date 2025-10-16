@@ -198,35 +198,35 @@ const EditGame = () => {
     <>
       <GlobalStyles />
       <AnimatedGradientBackground />
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <div className="glass rounded-3xl p-8 shadow-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10">
+        <div className="glass rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
             <div>
-              <div className="text-3xl font-extrabold text-blue-800">{game?.name || 'Quiz'}</div>
+              <div className="text-2xl md:text-3xl font-extrabold text-blue-800 break-words">{game?.name || 'Quiz'}</div>
               {game?.description && (
-                <div className="text-gray-600 mt-1">{game.description}</div>
+                <div className="text-gray-600 mt-1 break-words">{game.description}</div>
               )}
             </div>
-            <div className="flex gap-3 mt-4 md:mt-0">
-              <button onClick={() => navigate('/home')} className="rounded-xl bg-white px-5 py-2 text-gray-700 font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition">
+            <div className="flex flex-wrap gap-2 md:gap-3 mt-4 md:mt-0">
+              <button onClick={() => navigate('/home')} className="rounded-lg md:rounded-xl bg-white px-3 py-2 md:px-5 md:py-2 text-gray-700 text-sm md:text-base font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition">
                 Hjem
               </button>
-              <button onClick={newQuestion} className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-5 py-2 text-white font-bold shadow hover:scale-105 transition">
+              <button onClick={newQuestion} className="rounded-lg md:rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-3 py-2 md:px-5 md:py-2 text-white text-sm md:text-base font-bold shadow hover:scale-105 transition">
                 Nytt spørsmål
               </button>
-              <button onClick={() => navigate('/home/update/' + gameId)} className="rounded-xl bg-white px-5 py-2 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">
+              <button onClick={() => navigate('/home/update/' + gameId)} className="rounded-lg md:rounded-xl bg-white px-3 py-2 md:px-5 md:py-2 text-blue-700 text-sm md:text-base font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">
                 Rediger quiz
               </button>
-              <button onClick={deleteGame} className="rounded-xl bg-white px-5 py-2 text-red-600 font-semibold shadow border-2 border-red-200 hover:bg-red-50 transition">
+              <button onClick={deleteGame} className="rounded-lg md:rounded-xl bg-white px-3 py-2 md:px-5 md:py-2 text-red-600 text-sm md:text-base font-semibold shadow border-2 border-red-200 hover:bg-red-50 transition">
                 Slett quiz
               </button>
             </div>
           </div>
 
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-xl font-semibold text-gray-700">Spørsmål</div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+            <div className="text-lg md:text-xl font-semibold text-gray-700">Spørsmål</div>
             <input
-              className="px-4 py-2 rounded-xl border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 text-base bg-white/80 shadow"
+              className="w-full sm:w-auto px-3 py-2 md:px-4 md:py-2 rounded-lg md:rounded-xl border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base bg-white/80 shadow"
               placeholder="Søk i spørsmål..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -238,7 +238,7 @@ const EditGame = () => {
           ) : filteredQuestions.length === 0 ? (
             <div className="text-gray-600">Ingen spørsmål enda. Klikk «Nytt spørsmål» for å starte.</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
               {displayQuestions.map((q: any, idx: number) => (
                 <div
                   key={String(q.uuid || idx)}
@@ -247,7 +247,7 @@ const EditGame = () => {
                   onDragOver={(e) => onDragOver(e as any, idx)}
                   onDragEnd={onDragEnd}
                   onDrop={() => onDrop(idx)}
-                  className={`relative rounded-2xl bg-white p-5 border-2 ${hoverIndex === idx && dragIndex !== null ? 'border-blue-400' : 'border-blue-200'} hover:border-blue-300 shadow-sm hover:shadow transition`}
+                  className={`relative rounded-xl md:rounded-2xl bg-white p-4 md:p-5 border-2 ${hoverIndex === idx && dragIndex !== null ? 'border-blue-400' : 'border-blue-200'} hover:border-blue-300 shadow-sm hover:shadow transition`}
                 >
                   {/* Drag handle and position badge */}
                   <div className="absolute top-3 left-3 flex items-center gap-2 text-gray-500">
@@ -264,7 +264,7 @@ const EditGame = () => {
                     <div className={`rounded-xl px-3 py-2 text-sm ${q.correct === '3' ? 'bg-green-100 text-green-800 font-semibold' : 'bg-gray-100 text-gray-700'}`}>C: {q.alt3 || '—'}</div>
                     <div className={`rounded-xl px-3 py-2 text-sm ${q.correct === '4' ? 'bg-green-100 text-green-800 font-semibold' : 'bg-gray-100 text-gray-700'}`}>D: {q.alt4 || '—'}</div>
                   </div>
-                  <div className="mt-3 flex items-center gap-2">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button
                       className={`rounded bg-white border text-gray-700 text-sm font-semibold px-3 py-1 hover:bg-gray-50 ${idx === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
                       onClick={() => moveQuestion(idx, idx - 1)}
