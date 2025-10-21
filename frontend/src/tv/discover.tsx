@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { get, post, del } from '../api';
 import GlobalStyles from '../components/landing/GlobalStyles';
-import AnimatedGradientBackground from '../components/landing/AnimatedGradientBackground';
+import ParallaxOrbs from '../components/ParallaxOrbs';
+import ParallaxScroll from '../components/ParallaxScroll';
 import Header from '../components/landing/Header';
+import Footer from '../components/Footer';
 import { useI18n } from '../i18n/I18nProvider';
+import mockup from '../images/tavl-placeholder.jpg';
 import Modal from 'react-modal';
 import randomstring from 'randomstring';
 import { useKeycloak } from '../auth/KeycloakProvider';
@@ -23,6 +26,8 @@ interface GameLite {
   created_at?: string | Date | null;
   updated_at?: string | Date | null;
   tags?: Array<{ slug: string; name: string }>;
+  cover_image_url?: string | null;
+  coverImageUrl?: string | null;
 }
 
 const Discover = () => {
@@ -154,51 +159,74 @@ const Discover = () => {
       });
   };
 
+  // Color utility for subtle per-card accents
+  const hslFromString = (str: string) => {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return `hsl(${h % 360} 70% 55% / 0.35)`;
+  };
+
+  const gradientForTag = (slug: string) => {
+    let h = 0;
+    const key = slug || '';
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    const h1 = h % 360;
+    const h2 = (h1 + 35) % 360;
+    // Softer, glassy gradient with lower alpha
+    return `linear-gradient(135deg, hsl(${h1} 80% 60% / 0.45) 0%, hsl(${h2} 78% 58% / 0.45) 100%)`;
+  };
+
   return (
     <>
-      <GlobalStyles />
-      <AnimatedGradientBackground />
-      <Header />
-      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-          <div>
-            <div className="text-2xl md:text-3xl font-extrabold text-gray-800">Discover</div>
-            <div className="text-gray-600">Search public quizzes and explore suggestions.</div>
+      <div className="relative min-h-screen bg-[#1e1b4b] text-white overflow-hidden" style={{ fontFamily: 'Inter, \"Plus Jakarta Sans\", Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' }}>
+        <GlobalStyles />
+        {/* Background layers to match GamePublic/Landing */}
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+        <ParallaxOrbs />
+        <ParallaxScroll />
+        <Header />
+        <div className="mx-auto mt-20 max-w-6xl px-4 py-6 md:px-6 md:py-8 text-white">
+        <div className="relative before:absolute before:inset-0 before:content-[''] before:bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.15),transparent_70%)] before:-z-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+            <div>
+              <div className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-pink-100 drop-shadow" style={{ textShadow: '0 0 12px rgba(236,72,153,0.4)' }}>Discover</div>
+              <div className="text-white/80">Search public quizzes and explore suggestions.</div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => navigate('/home')} className="rounded-full bg-white/10 border border-white/10 px-3 py-2 text-white text-sm font-semibold hover:bg-white/20 transition">{t('common.back') || 'Back'}</button>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => navigate('/home')} className="rounded-lg bg-white px-3 py-2 text-blue-700 text-sm font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">{t('common.back') || 'Back'}</button>
-          </div>
-        </div>
 
         {/* Search + sort */}
-        <div className="rounded-2xl bg-white/80 border-2 border-blue-200 p-3 md:p-4 shadow-sm mb-3">
+        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-3 md:p-4 shadow-sm mb-3">
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
             <div className="relative flex-1">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 20l-5.6-5.6a7 7 0 10-1.4 1.4L20 21l1-1zM10 16a6 6 0 110-12 6 6 0 010 12z"/></svg>
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/60">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 20l-5.6-5.6a7 7 0 10-1.4 1.4L20 21l1-1zM10 16a6 6 0 110-12 6 6 0 010 12z"/></svg>
               </span>
               <input
                 value={term}
                 onChange={e => setTerm(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') refresh(); }}
                 placeholder={t('home.searchPlaceholder') || 'Search for quizzes...'}
-                className="w-full pl-9 pr-9 py-2 rounded-lg border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base"
+                className="w-full pl-10 pr-10 py-2 rounded-lg border border-white/10 bg-white/10 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/30 text-sm md:text-base"
               />
               {!!term && (
-                <button onClick={() => { setTerm(''); refresh({ q: '' }); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <button onClick={() => { setTerm(''); refresh({ q: '' }); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               )}
             </div>
             <div className="shrink-0 flex items-center gap-2">
-              <label className="text-sm text-gray-600">Sort</label>
-              <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="rounded-md border border-blue-200 px-2 py-2 text-sm bg-white">
+              <label className="text-sm text-white/80">Sort</label>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="rounded-md border border-white/10 px-2 py-2 text-sm bg-white/10 text-white">
                 <option value="popular">Most plays</option>
                 <option value="recent">Recently updated</option>
                 <option value="favourites">Most favourites</option>
                 <option value="questions">Most questions</option>
               </select>
-              <button onClick={() => refresh()} className="rounded-md bg-blue-600 text-white text-sm font-semibold px-3 py-2 shadow hover:bg-blue-700">Search</button>
+              <button onClick={() => refresh()} className="rounded-md bg-gradient-to-r from-indigo-500 to-pink-500 text-white text-sm font-semibold px-3 py-2 shadow hover:shadow-lg transition">Search</button>
             </div>
           </div>
           {/* Selected tags chips */}
@@ -207,120 +235,166 @@ const Discover = () => {
               {Array.from(selected).map(slug => {
                 const name = allTags.find(tg => tg.slug === slug)?.name || slug;
                 return (
-                  <span key={slug} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                  <span key={slug} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-white/10 text-white border border-white/10">
                     {t('tags.' + slug) || name}
-                    <button onClick={() => toggleTag(slug)} className="text-blue-800/80 hover:text-blue-900">×</button>
+                    <button onClick={() => toggleTag(slug)} className="text-white/80 hover:text-white">×</button>
                   </span>
                 );
               })}
-              <button onClick={() => { setSelected(new Set()); refresh({ slugs: [] }); }} className="text-xs text-gray-600 underline">Clear</button>
+              <button onClick={() => { setSelected(new Set()); refresh({ slugs: [] }); }} className="text-xs text-white/70 underline">Clear</button>
             </div>
           )}
         </div>
 
-        {/* Tag filters */}
-        <div className="rounded-2xl bg-white/70 border-2 border-blue-200 p-3 md:p-4 shadow-sm mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-sm font-semibold text-gray-700">Browse tags</div>
-            <button onClick={() => { const v = !tagModeAll; setTagModeAll(v); refresh({ slugs: Array.from(selected), all: v }); }} className={`text-xs rounded-full px-2 py-1 border ${tagModeAll ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-blue-300'}`}>
-              Match all
-            </button>
+        {/* Tag filters as gradient cards row */}
+        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-3 md:p-4 shadow-sm mb-4">
+          <div className="flex items-center justify-start mb-3">
+            <div className="text-sm font-semibold text-white/80">Browse tags</div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {(showAllTags ? allTags : allTags.slice(0, 12)).map(tag => {
-              const active = selected.has(tag.slug);
-              return (
-                <button key={tag.slug} onClick={() => toggleTag(tag.slug)} className={`px-3 py-1 rounded-full text-sm font-semibold border-2 transition ${active ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'}`}>
-                  {t('tags.' + tag.slug) || tag.name}
-                </button>
-              );
-            })}
-            {allTags.length > 12 && (
-              <button onClick={() => setShowAllTags(s => !s)} className="px-3 py-1 rounded-full text-sm font-semibold border-2 border-gray-300 text-gray-700 bg-white hover:bg-gray-50">
-                {showAllTags ? 'Show fewer' : `Show more (+${allTags.length - 12})`}
-              </button>
-            )}
+          <div className="overflow-x-auto no-scrollbar -mx-2 px-2">
+            <div className="flex items-stretch gap-3 py-1">
+              {allTags.map(tag => {
+                const active = selected.has(tag.slug);
+                return (
+                  <button
+                    key={tag.slug}
+                    onClick={() => toggleTag(tag.slug)}
+                    className={`relative min-w-[150px] h-[96px] rounded-2xl px-4 py-3 text-left text-white/95 backdrop-blur-xl border transition active:scale-95 shadow-[0_10px_40px_rgba(0,0,0,0.16)] hover:shadow-[0_16px_60px_rgba(0,0,0,0.22)] hover:brightness-[1.03] ${active ? 'ring-2 ring-white/60 border-white/30' : 'ring-0 border-white/20'}`}
+                    style={{ backgroundImage: gradientForTag(tag.slug), backgroundColor: 'rgba(255,255,255,0.08)' }}
+                    title={t('tags.' + tag.slug) || tag.name}
+                  >
+                    <div className="font-semibold drop-shadow-sm truncate">{t('tags.' + tag.slug) || tag.name}</div>
+                    <div className="pointer-events-none absolute inset-0 rounded-2xl" style={{ background: 'radial-gradient(120% 100% at 0% 0%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 60%)' }} />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {loading && <div className="text-gray-600">Loading…</div>}
-        {error && <div className="text-red-600">{error}</div>}
+        {loading && <div className="text-white/70">Loading…</div>}
+        {error && <div className="text-red-300">{error}</div>}
 
         {!loading && !error && (
-          <div className="mb-2 text-sm text-gray-600">{filtered.length} results</div>
+          <div className="mb-2 text-sm text-white/70">{filtered.length} results</div>
+        )}
+
+        {/* Empty state */}
+        {!loading && !error && filtered.length === 0 && (
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+            <div className="text-3xl mb-2">😕</div>
+            <div className="text-white font-medium mb-1">Fant ingen quizer som matcher søket ditt</div>
+            <div className="text-white/70 mb-4">Prøv å fjerne noen filtre eller opprett en ny quiz!</div>
+            <button onClick={() => navigate('/home')} className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition">Lag ny quiz</button>
+          </div>
         )}
 
         {!loading && !error && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((g) => {
+            {filtered.map((g, idx) => {
               const gid = String(g.uuid || g.id);
               const fav = favorites.has(gid);
+              const cover = (g as any).cover_image_url || (g as any).coverImageUrl || null;
+              const tagKey = (g.tags && g.tags.length ? (g.tags[0].slug || g.tags[0].name) : '') || gid;
               return (
-              <div key={gid} className="rounded-xl border-2 border-blue-100 bg-white/90 hover:shadow transition cursor-pointer" onClick={() => openDetails(gid)}>
+              <div key={gid} className="group relative rounded-xl border border-white/10 bg-white/10 backdrop-blur-md hover:bg-white/15 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(236,72,153,0.15)] transition-all duration-200 cursor-pointer overflow-hidden" onClick={() => openDetails(gid)}>
+                <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${hslFromString(tagKey)}, transparent)` }} />
+                <div className={`relative ${idx % 6 === 0 ? 'aspect-[16/8]' : 'aspect-[16/9]'} overflow-hidden`}>
+                  {cover ? (
+                    <img src={cover} alt={g.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                  ) : (
+                    <div className="h-full w-full relative">
+                      <img src={mockup} alt={`${g.name} cover placeholder`} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                      <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${hslFromString(gid + (g.name || ''))}, transparent)` }} />
+                    </div>
+                  )}
+                  {(idx % 6 === 0) && (
+                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-purple-600/30 to-transparent" />
+                  )}
+                </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="text-lg font-bold text-blue-700 truncate">{g.name}</div>
+                    <div className="text-lg font-bold text-white truncate drop-shadow">{g.name}</div>
                     <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(gid); }} className={`rounded-full border px-2 py-1 text-xs ${fav ? 'bg-yellow-300/60 border-yellow-400 text-yellow-900' : 'bg-white border-blue-200 text-blue-700'}`}>{fav ? '★' : '☆'}</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(gid); }}
+                        title={fav ? 'Fjern fra favoritter' : 'Legg til favoritt'}
+                        aria-label={fav ? 'Remove favorite' : 'Add favorite'}
+                        className={`rounded-full border px-2 py-1 text-xs ${fav ? 'bg-rose-500/30 border-rose-300 text-rose-100' : 'bg-white/10 border-white/10 text-white hover:bg-white/20'}`}
+                      >
+                        {fav ? '♥' : '♡'}
+                      </button>
                     </div>
                   </div>
-                  <div className="text-sm text-gray-600 line-clamp-2 mb-2">{g.description || (t('home.noDescription') || 'No description')}</div>
-                  <div className="flex items-center gap-3 text-xs text-gray-600">
-                    <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{g.qcount || 0} {t('home.questions') || 'questions'}</span>
+                  <div className="text-sm text-white/80 line-clamp-2 mb-2">{g.description || (t('home.noDescription') || 'No description')}</div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-white/80">
+                    <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{g.qcount || 0} {t('home.questions') || 'questions'}</span>
                     {g.created_at && (
-                      <span className="inline-flex items-center gap-1" title="Created">
+                      <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Created">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm.5 5h-1v6l5 3 .5-.866-4.5-2.634V7z"/></svg>
                         {new Date(g.created_at).toLocaleDateString()}
                       </span>
                     )}
                     {g.updated_at && (
-                      <span className="inline-flex items-center gap-1" title="Updated">
+                      <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Updated">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 6v4l3 3 1-1-3-3V6z"/></svg>
                         {new Date(g.updated_at).toLocaleDateString()}
                       </span>
                     )}
-                    <span className="inline-flex items-center gap-1" title="Plays">
+                    <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Plays">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                       {g.plays ?? 0} {t('home.plays') || 'plays'}
                     </span>
-                    <span className="inline-flex items-center gap-1" title="Participants">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 3-1.34 3-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V20h14v-3.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V20h6v-3.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Participants">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 3-1.34 3-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V20h14v-3.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
                       {(g as any).participants ?? 0}
                     </span>
                     {(g as any).difficulty && (
-                      <span className="inline-flex items-center gap-1" title="Difficulty">
+                      <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Difficulty">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12h18v2H3z"/></svg>
                         {String((g as any).difficulty)}
                       </span>
                     )}
-                    <span className="inline-flex items-center gap-1" title="Favorites">
+                    <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Favorites">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1.01 4.22 2.5C11.09 5.01 12.76 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                       {g.favCount ?? 0}
                     </span>
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); openDetails(gid); }} className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-3 py-1.5 text-white text-sm font-semibold shadow hover:scale-105 transition">{t('home.startGame') || 'Start game'}</button>
-                </div>
-                {Array.isArray(g.tags) && g.tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {g.tags.slice(0, 6).map(tag => (
-                      <span key={tag.slug} className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                        {t('tags.' + tag.slug) || tag.name}
-                      </span>
-                    ))}
-                    {g.tags.length > 6 && (
-                      <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold bg-gray-50 text-gray-700 border border-gray-200">+{g.tags.length - 6}</span>
-                    )}
+                    <button onClick={(e) => { e.stopPropagation(); openDetails(gid); }} className="rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-3 py-1.5 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition">{t('home.startGame') || 'Start game'}</button>
                   </div>
-                )}
+                  {Array.isArray(g.tags) && g.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {g.tags.slice(0, 6).map(tag => (
+                        <span key={tag.slug} className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold bg-white/10 text-white border border-white/10">
+                          {t('tags.' + tag.slug) || tag.name}
+                        </span>
+                      ))}
+                      {g.tags.length > 6 && (
+                        <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold bg-white/10 text-white border border-white/10">+{g.tags.length - 6}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );})}
+            );})}
           </div>
         )}
+
+        {/* Create new quiz CTA after grid */}
+        {!loading && !error && filtered.length > 0 && (
+          <div className="rounded-2xl p-6 text-center bg-white/5 mt-10 border border-white/10">
+            <h3 className="text-lg text-white font-medium mb-2">Ikke funnet noe du liker?</h3>
+            <p className="text-white/60 mb-4">Lag din egen quiz og del den med venner!</p>
+            <button onClick={() => navigate('/home')} className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition">Lag ny quiz</button>
+          </div>
+        )}
+        </div>
       </div>
 
       {/* Modal with quiz details + question list */}
+      <Footer />
+
       <Modal
         isOpen={modalIsOpen}
         onAfterOpen={() => {
@@ -364,31 +438,29 @@ const Discover = () => {
               {/* Header */}
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="text-2xl font-extrabold text-blue-900">{g.name}</div>
-                  <div className="text-gray-700">{t('home.by', { name: g.created_by_name || '—' }) || `By ${g.created_by_name || '—'}`}</div>
+                  <div className="text-2xl font-extrabold text-white drop-shadow" style={{ textShadow: '0 0 12px rgba(236,72,153,0.4)' }}>{g.name}</div>
+                  <div className="text-white/90">{t('home.by', { name: g.created_by_name || '—' }) || `By ${g.created_by_name || '—'}`}</div>
                 </div>
                 <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${isPublic ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{isPublic ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
               </div>
-              {g.description && <div className="text-gray-800">{g.description}</div>}
+              {g.description && <div className="text-white">{g.description}</div>}
 
               {/* Meta */}
-              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700">
-                <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{g.qcount || questions.length} {t('home.questions') || 'questions'}</span>
-                {g.created_at && (
-                  <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm.5 5h-1v6l5 3 .5-.866-4.5-2.634V7z"/></svg>{new Date(g.created_at).toLocaleDateString()}</span>
-                )}
+              <div className="flex flex-wrap items-center gap-2 text-xs text-white/80">
+                <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{g.qcount || questions.length} {t('home.questions') || 'questions'}</span>
+                {g.created_at && (<span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm.5 5h-1v6l5 3 .5-.866-4.5-2.634V7z"/></svg>{new Date(g.created_at).toLocaleDateString()}</span>)}
               </div>
 
               {/* Questions list */}
-              <div className="rounded-2xl bg-white/85 p-4 border-2 border-blue-200 max-h-64 overflow-auto">
-                <div className="text-base font-semibold text-blue-800 mb-2">{t('home.questions') || 'Questions'}</div>
+              <div className="rounded-2xl bg-white/10 backdrop-blur-md p-4 border border-white/10 max-h-64 overflow-auto">
+                <div className="text-base font-semibold text-white mb-2">{t('home.questions') || 'Questions'}</div>
                 {questions.length === 0 ? (
-                  <div className="text-sm text-gray-600">{t('common.loading') || 'Loading…'}</div>
+                  <div className="text-sm text-white/70">{t('common.loading') || 'Loading…'}</div>
                 ) : (
                   <ul className="space-y-2">
                     {questions.map((q, idx) => (
-                      <li key={String(q.uuid || idx)} className="text-sm text-gray-800 flex gap-2">
-                        <span className="text-blue-600 font-semibold">{idx + 1}.</span>
+                      <li key={String(q.uuid || idx)} className="text-sm text-white/90 flex gap-2">
+                        <span className="text-pink-300 font-semibold">{idx + 1}.</span>
                         <span className="truncate">{q.text || '—'}</span>
                       </li>
                     ))}
@@ -397,27 +469,28 @@ const Discover = () => {
               </div>
 
               {/* PIN + Actions */}
-              <div className="rounded-2xl bg-white/80 p-4 border-2 border-blue-200 flex items-center justify-between gap-4">
+              <div className="rounded-2xl bg-white/10 backdrop-blur-md p-4 border border-white/10 flex items-center justify-between gap-4">
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-700">{t('home.pin') || 'PIN'}</div>
-                  <div className="text-3xl font-extrabold text-blue-700">{newGamePin}</div>
+                  <div className="text-xs uppercase tracking-wide text-white/80">{t('home.pin') || 'PIN'}</div>
+                  <div className="text-3xl font-extrabold text-white">{newGamePin}</div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="rounded-lg bg-white border-2 border-blue-300 px-3 py-1 text-blue-700 text-sm font-semibold shadow hover:bg-blue-50 transition" onClick={() => navigator.clipboard?.writeText(newGamePin)}>{t('home.copyPin') || 'Copy PIN'}</button>
-                  <button className="rounded-lg bg-white border-2 border-blue-300 px-3 py-1 text-blue-700 text-sm font-semibold shadow hover:bg-blue-50 transition" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/join/${newGamePin}`)}>{t('home.copyLink') || 'Copy link'}</button>
+                  <button className="rounded-lg bg-white/10 border border-white/10 px-3 py-1 text-white text-sm font-semibold shadow hover:bg-white/20 transition" onClick={() => navigator.clipboard?.writeText(newGamePin)}>{t('home.copyPin') || 'Copy PIN'}</button>
+                  <button className="rounded-lg bg-white/10 border border-white/10 px-3 py-1 text-white text-sm font-semibold shadow hover:bg-white/20 transition" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/join/${newGamePin}`)}>{t('home.copyLink') || 'Copy link'}</button>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <button className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 text-lg font-bold text-white shadow-xl hover:scale-105 transition disabled:opacity-60" onClick={() => createNewGameInstance(String(selectedGameId), newGamePin)} disabled={creating}>
+                <button className="flex-1 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 px-6 py-3 text-lg font-bold text-white shadow-xl hover:shadow-2xl active:scale-95 transition disabled:opacity-60" onClick={() => createNewGameInstance(String(selectedGameId), newGamePin)} disabled={creating}>
                   {creating ? (t('home.starting') || 'Starting…') : (t('home.startGame') || 'Start game')}
                 </button>
-                <button className="rounded-xl bg-white px-4 py-3 text-gray-700 font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition" onClick={() => setModalIsOpen(false)}>{t('common.close') || 'Close'}</button>
+                <button className="rounded-xl bg-white/10 px-4 py-3 text-white font-semibold shadow border border-white/10 hover:bg-white/20 transition" onClick={() => setModalIsOpen(false)}>{t('common.close') || 'Close'}</button>
               </div>
             </div>
           );
         })()}
       </Modal>
+      </div>
     </>
   );
 };

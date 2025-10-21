@@ -6,7 +6,10 @@ import randomstring from 'randomstring';
 import { get, post, put } from "../api";
 import placeholderImg from "../images/tavl-placeholder.jpg";
 import GlobalStyles from '../components/landing/GlobalStyles';
-import AnimatedGradientBackground from '../components/landing/AnimatedGradientBackground';
+import ParallaxOrbs from '../components/ParallaxOrbs';
+import ParallaxScroll from '../components/ParallaxScroll';
+import Header from '../components/landing/Header';
+import Footer from '../components/Footer';
 import { useNavigate } from "react-router-dom";
 import { useKeycloak } from "../auth/KeycloakProvider";
 import { upgrades } from "../data/upgrades";
@@ -102,78 +105,123 @@ const Home = () => {
     game.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Tabs state and derived datasets
+  const [activeTab, setActiveTab] = useState<'mine' | 'favorites' | 'played' | 'trash'>('mine');
+  const totalPlays = (games || []).reduce((acc: number, g: any) => acc + (g.plays ?? g.playthroughs ?? 0), 0);
+  const playedGames = useMemo(() => {
+    const arr = (games || []).filter((g: any) => (g.plays ?? g.playthroughs ?? 0) > 0);
+    return arr.sort((a: any, b: any) => (b.plays ?? b.playthroughs ?? 0) - (a.plays ?? a.playthroughs ?? 0));
+  }, [games]);
+
+  useEffect(() => {
+    if (activeTab === 'trash') {
+      loadDeletedGames();
+    }
+  }, [activeTab]);
+
   return (
     <>
-      <GlobalStyles />
-      <AnimatedGradientBackground />
+      <div className="relative pt-20 min-h-screen bg-[#1e1b4b] text-white overflow-hidden" style={{ fontFamily: 'Inter, "Plus Jakarta Sans", Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' }}>
+        <GlobalStyles />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+        <ParallaxOrbs />
+        <ParallaxScroll />
+      
+      {/* Profile + Quick Nav */}
+      <div className="mx-auto max-w-6xl px-6 mt-10">
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-6">
+            <div className="text-xl font-bold mb-1">{t('home.welcome', { username: username || '' }) || `Velkommen, ${username}!`}</div>
+            <div className="text-white/80 mb-4">{isPremium ? 'Premium' : 'Standard'}</div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                <div className="text-2xl font-extrabold">{games?.length ?? 0}</div>
+                <div className="text-xs text-white/70">Quizer</div>
+              </div>
+              <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                <div className="text-2xl font-extrabold">{favoriteGames?.length ?? 0}</div>
+                <div className="text-xs text-white/70">Favoritter</div>
+              </div>
+              <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                <div className="text-2xl font-extrabold">{totalPlays}</div>
+                <div className="text-xs text-white/70">Spillinger</div>
+              </div>
+            </div>
+            {!isPremium && (
+              <button onClick={() => navigate('/purchase')} className="mt-4 w-full rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition">Oppgrader til Premium</button>
+            )}
+          </div>
+          <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-6 md:col-span-2">
+            <div className="text-sm font-semibold mb-3">Navigasjon</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button onClick={() => navigate('/home/create')} className="rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm text-white hover:bg-white/20 transition">Lag ny</button>
+              <button onClick={() => navigate('/discover')} className="rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm text-white hover:bg-white/20 transition">Oppdag</button>
+              <button onClick={() => navigate('/billing')} className="rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm text-white hover:bg-white/20 transition">Abonnement</button>
+              <button onClick={() => setActiveTab('trash')} className="rounded-xl bg-white/10 border border-white/10 px-3 py-3 text-sm text-white hover:bg-white/20 transition">Papirkurv</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Premium Upsell Banner - only show if not premium */}
-      {!isPremium && (
-        <div className="w-full sticky top-0 z-20">
-          <div className="w-full flex items-center justify-center gap-2 sm:gap-4 py-2 sm:py-3 px-3 sm:px-4 bg-gradient-to-r from-blue-300 via-purple-300 to-blue-300 border-b-2 border-blue-400 shadow-lg relative">
-            <span className="text-sm sm:text-base font-semibold text-gray-900 text-center">{t('home.premium.text') || 'Upgrade to Premium – no ads, exclusive upgrades and more features'}</span>
+      {isPremium && (
+        <div className="mx-auto max-w-6xl px-6 mt-8">
+          <div className="relative w-full rounded-3xl flex items-center justify-between gap-3 py-3 px-4 bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+            <div className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(60%_60%_at_50%_100%,rgba(236,72,153,0.2),transparent_70%)]" />
+            <span className="relative text-sm sm:text-base font-semibold text-white/90">{t('home.premium.text') || 'Upgrade to Premium – no ads, exclusive upgrades and more features'}</span>
             <button
               onClick={() => navigate('/purchase')}
-              className="ml-2 sm:ml-4 shrink-0 rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-3 py-1.5 text-white font-bold text-sm md:px-3 md:py-1.5 md:text-sm shadow hover:scale-105 transition"
+              className="relative ml-2 sm:ml-4 shrink-0 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white font-bold text-sm shadow hover:shadow-lg active:scale-95 transition"
             >
               {t('profile.subscription.startPremium') || 'Start Premium'}
             </button>
           </div>
         </div>
       )}
+
       {/* Main Content */}
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="glass rounded-3xl p-8 shadow-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <div className="text-2xl sm:text-3xl font-bold text-gray-800">{t('home.welcome', { username: username || '' }) || `Velkommen, ${username}!`}</div>
-            <div className="flex gap-2 sm:gap-4 mt-3 md:mt-0">
-              <button
-                onClick={() => navigate("/home/create")}
-                className="rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-4 py-2 sm:px-8 sm:py-3 text-sm sm:text-lg text-white font-extrabold shadow-xl hover:scale-105 transition-all border-2 border-blue-400 focus:ring-4 focus:ring-blue-200 flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                {t('home.create') || 'New quiz'}
-              </button>
-              <button
-                onClick={() => navigate("/discover")}
-                className="rounded-xl bg-gradient-to-r from-blue-400 via-pink-400 to-purple-500 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-lg text-white font-bold shadow-lg hover:scale-105 transition-all border-2 border-blue-400 focus:ring-4 focus:ring-purple-200 flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                {t('home.discover') || 'Discover'}
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <div className="text-lg sm:text-xl font-semibold text-gray-700">{t('home.search') || 'Search'}</div>
-            <div className="inline-flex rounded-xl border-2 border-blue-200 overflow-hidden">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-3 py-1.5 text-sm font-semibold ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-blue-700'}`}
-                aria-pressed={viewMode === 'grid'}
-              >
-                Cards
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 text-sm font-semibold ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-blue-700'}`}
-                aria-pressed={viewMode === 'list'}
-              >
-                List
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        <div className="rounded-3xl p-8 shadow-xl bg-white/10 backdrop-blur-md border border-white/10">
+         
+          {/* Search capsule + view toggle + tabs */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3 sm:mb-4">
+            <div className="relative flex items-center w-full max-w-3xl">
+              <span className="pointer-events-none absolute left-5 text-white/60">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 20l-5.6-5.6a7 7 0 10-1.4 1.4L20 21l1-1zM10 16a6 6 0 110-12 6 6 0 010 12z"/></svg>
+              </span>
+              <div className="w-full rounded-full bg-white/5 border border-white/10 pl-12 pr-32 py-3 focus-within:ring-4 focus-within:ring-pink-500/30 transition-all">
+                <input
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  placeholder={t('home.searchPlaceholder') || 'Finn quizer…'}
+                  className="w-full bg-transparent text-white placeholder:text-white/50 outline-none"
+                />
+              </div>
+              <button onClick={() => { /* client-side filter already applied */ }} className="absolute right-3 px-5 py-2 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-medium hover:brightness-110 transition">
+                {t('common.search') || 'Søk'}
               </button>
             </div>
+            <div className="inline-flex self-end md:self-auto rounded-xl border border-white/10 overflow-hidden bg-white/10">
+              <button onClick={() => setViewMode('grid')} className={`px-3 py-1.5 text-sm font-semibold ${viewMode === 'grid' ? 'bg-white/20 text-white' : 'text-white/80'}`} aria-pressed={viewMode === 'grid'}>Cards</button>
+              <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 text-sm font-semibold ${viewMode === 'list' ? 'bg-white/20 text-white' : 'text-white/80'}`} aria-pressed={viewMode === 'list'}>List</button>
+            </div>
           </div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            placeholder={t('home.searchPlaceholder') || 'Search for quizzes...'}
-            className="w-full mb-4 sm:mb-6 px-3 py-2 sm:px-4 rounded-xl border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 text-base sm:text-lg"
-          />
-          {favoriteGames && favoriteGames.length > 0 && (
+          {/* Tabs */}
+          <div className="mb-4 flex items-center gap-2">
+            {(['mine','favorites','played','trash'] as const).map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)} className={`rounded-full px-3 py-1.5 text-sm border ${activeTab === tab ? 'bg-white/20 text-white border-white/10' : 'bg-white/10 text-white/80 border-white/10 hover:bg-white/15'}`}>
+                {tab === 'mine' ? 'Mine' : tab === 'favorites' ? 'Favoritter' : tab === 'played' ? 'Spilte' : 'Papirkurv'}
+              </button>
+            ))}
+          </div>
+
+      {activeTab === 'favorites' && favoriteGames && favoriteGames.length > 0 && (
             <>
-              <div className="text-xl font-semibold text-purple-700 mb-2 mt-4">{t('home.favorites') || 'Favorites'}</div>
+              <div className="text-xl font-semibold text-white mb-2 mt-4">{t('home.favorites') || 'Favorites'}</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-                {favoriteGames.map(game => (
-                  <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-purple-50 hover:shadow-lg transition cursor-pointer border-2 border-purple-300 overflow-hidden" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
+                {favoriteGames.map((game, idx) => (
+                  <div key={String(game.uuid)} className="rounded-xl p-0 shadow bg-white/10 backdrop-blur-md hover:bg-white/15 transition cursor-pointer border border-white/10 overflow-hidden anim-fadeUp" style={{ animationDelay: `${idx * 0.05}s` }} onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                     <div className="relative h-32">
                       <img src={getCover(game)} alt="" className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 to-transparent" />
@@ -185,11 +233,11 @@ const Home = () => {
                     </div>
                     <div className="p-6">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="text-lg font-bold text-purple-700">{game.name}</div>
-                        <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
+                        <div className="text-lg font-bold text-white">{game.name}</div>
+                        <span className="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-white/10 text-white border border-white/10">{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
                       </div>
-                      <div className="text-sm text-gray-600 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
-                      <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                      <div className="text-sm text-white/80 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
+                      <div className="flex items-center gap-3 text-xs text-white/80 mb-3">
                         <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
                         <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 5 0 100 10 5 5 0 000-10z" /></svg>{(game as any).plays ?? (game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
                         <span className="inline-flex items-center gap-1" title="Participants"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 3-1.34 3-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V20h14v-3.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V20h6v-3.5c0-2.33-4.67-3.5-7-3.5z"/></svg>{(game as any).participants ?? 0}</span>
@@ -201,10 +249,13 @@ const Home = () => {
                         )}
                         {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z" /></svg>{(game as any).status}</span>}
                       </div>
-                      <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
+                      <div className="text-xs text-white/70 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
                       <div className="flex gap-2">
-                        <button className="rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1.5 text-sm text-white font-semibold shadow hover:scale-105 transition md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                        <button className="rounded-lg bg-white border-2 border-purple-300 px-3 py-1.5 text-sm text-purple-700 font-semibold shadow hover:bg-purple-50 transition md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
+                        <button className="relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-3 py-1.5 text-sm text-white font-semibold shadow hover:shadow-lg active:scale-95 transition md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>
+                          {t('home.startGame') || 'Start game'}
+                          <span className="pointer-events-none absolute inset-0 animate-shine" style={{ background: 'linear-gradient(110deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 100%)', backgroundSize: '200% 100%' }} />
+                        </button>
+                        <button className="rounded-lg bg-white/10 border border-white/10 px-3 py-1.5 text-sm text-white font-semibold shadow hover:bg-white/20 transition md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
                       </div>
                     </div>
                   </div>
@@ -212,15 +263,15 @@ const Home = () => {
               </div>
             </>
           )}
-          {popularGames && popularGames.length > 0 && (
+      {activeTab === 'played' && playedGames && playedGames.length > 0 && (
             <>
-              <div className="text-xl font-semibold text-yellow-700 mb-2 mt-4">{t('home.popular') || 'Popular'}</div>
+              <div className="text-xl font-semibold text-white mb-2 mt-4">Spilte</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {popularGames.map(game => (
-                  <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-yellow-50 hover:shadow-lg transition cursor-pointer border-2 border-yellow-300 overflow-hidden" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
+                {playedGames.map((game, idx) => (
+                  <div key={String(game.uuid)} className="rounded-xl p-0 shadow bg-white/10 backdrop-blur-md hover:bg-white/15 transition cursor-pointer border border-white/10 overflow-hidden anim-fadeUp" style={{ animationDelay: `${idx * 0.05}s` }} onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                     <div className="relative h-32">
                       <img src={getCover(game)} alt="" className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-yellow-900/30 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                       <div className="absolute top-2 left-2 flex gap-2">
                         <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
                         <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(game as any).plays ?? (game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
@@ -229,27 +280,51 @@ const Home = () => {
                     </div>
                     <div className="p-6">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="text-lg font-bold text-yellow-700">{game.name}</div>
-                        <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
+                        <div className="text-lg font-bold text-white">{game.name}</div>
+                        <span className="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-white/10 text-white border border-white/10">{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
                       </div>
-                      <div className="text-sm text-gray-700 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
-                      <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                      <div className="text-sm text-white/80 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
+                      <div className="flex items-center gap-3 text-xs text-white/80 mb-3">
                         <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
                         <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z" /></svg>{(game as any).plays ?? (game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
                         {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z" /></svg>{(game as any).status}</span>}
                       </div>
-                      <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
+                      <div className="text-xs text-white/70 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
                       <div className="flex gap-2">
-                        <button className="rounded-lg bg-gradient-to-r from-yellow-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                        <button className="rounded-lg bg-white border-2 border-yellow-300 px-4 py-2 text-yellow-700 font-semibold shadow hover:bg-yellow-50 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
+                        <button className="relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>
+                          {t('home.startGame') || 'Start game'}
+                          <span className="pointer-events-none absolute inset-0 animate-shine" style={{ background: 'linear-gradient(110deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 100%)', backgroundSize: '200% 100%' }} />
+                        </button>
+                        <button className="rounded-lg bg-white/10 border border-white/10 px-4 py-2 text-white font-semibold shadow hover:bg-white/20 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             </>
+      )}
+
+      {activeTab === 'trash' && (
+        <div className="rounded-2xl p-6 shadow-xl bg-white/10 backdrop-blur-md border border-white/10">
+          <div className="text-xl font-semibold text-white mb-2">Papirkurv</div>
+          {deletedGames.length === 0 ? (
+            <div className="text-white/70">{t('home.trash.empty') || 'No deleted quizzes'}</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {deletedGames.map(g => (
+                <div key={String((g as any).uuid || (g as any).id)} className="rounded-xl p-6 shadow bg-white/10 backdrop-blur-md border border-white/10">
+                  <div className="text-lg font-bold text-white mb-2">{g.name}</div>
+                  <div className="text-sm text-white/70 mb-3">{(g as any).qcount || 0} {t('home.questions') || 'questions'}</div>
+                  <button className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition" onClick={() => restoreGame(((g as any).uuid as any) || (g as any).id)}>{t('home.trash.restore') || 'Restore'}</button>
+                </div>
+              ))}
+            </div>
           )}
-          <div className="text-xl font-semibold text-gray-700 mb-4">{t('home.yourGames') || 'Your games'}</div>
+        </div>
+      )}
+          {activeTab === 'mine' && (
+          <>
+          <div className="text-xl font-semibold text-white mb-4">{t('home.yourGames') || 'Your games'}</div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
               <div className="col-span-1 md:col-span-2 lg:col-span-3 flex justify-center items-center h-32">
@@ -257,23 +332,23 @@ const Home = () => {
               </div>
             ) : error ? (
               <div className="text-red-500">{t('common.error') || 'An error occurred'}</div>
-            ) : (!games || games.length === 0) ? (
+              ) : (!games || games.length === 0) ? (
               <div className="md:col-span-3">
-                <div className="rounded-2xl bg-white/90 p-6 sm:p-8 border-2 border-blue-200 text-center shadow">
-                  <div className="text-xl sm:text-2xl font-bold text-blue-800 mb-2">{t('home.noGames.title') || 'No games yet'}</div>
-                  <div className="text-gray-600 mb-4 sm:mb-6">{t('home.noGames.subtitle') || 'Create your first quiz or discover examples to get started.'}</div>
+                <div className="rounded-2xl bg-white/10 backdrop-blur-md p-6 sm:p-8 border border-white/10 text-center shadow">
+                  <div className="text-xl sm:text-2xl font-bold text-white mb-2">{t('home.noGames.title') || 'No games yet'}</div>
+                  <div className="text-white/70 mb-4 sm:mb-6">{t('home.noGames.subtitle') || 'Create your first quiz or discover examples to get started.'}</div>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <button onClick={() => navigate('/home/create')} className="rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-4 py-2 text-sm text-white font-bold shadow hover:scale-105 transition md:px-3 md:py-1.5 md:text-sm">{t('home.create') || 'New quiz'}</button>
-                    <button onClick={() => navigate('/discover')} className="rounded-xl bg-white px-4 py-2 text-sm text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition md:px-3 md:py-1.5 md:text-sm">{t('home.discover') || 'Discover'}</button>
+                    <button onClick={() => navigate('/home/create')} className="rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 text-sm text-white font-bold shadow hover:shadow-lg active:scale-95 transition md:px-3 md:py-1.5 md:text-sm">{t('home.create') || 'New quiz'}</button>
+                    <button onClick={() => navigate('/discover')} className="rounded-xl bg-white/10 px-4 py-2 text-sm text-white font-semibold shadow border border-white/10 hover:bg-white/20 transition md:px-3 md:py-1.5 md:text-sm">{t('home.discover') || 'Discover'}</button>
                   </div>
                 </div>
               </div>
-            ) : (filteredGames && filteredGames.length === 0) ? (
+              ) : (filteredGames && filteredGames.length === 0) ? (
               <div className="md:col-span-3 text-center text-gray-600">{t('home.search.noMatches', { term: `«${searchTerm}»` }) || `No results for ${searchTerm}`}</div>
             ) : (
               viewMode === 'grid' ? (
-              filteredGames?.map(game => (
-                <div key={String(game.uuid)} className="glass rounded-xl p-0 shadow bg-white hover:shadow-lg transition cursor-pointer overflow-hidden" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
+              filteredGames?.map((game, idx) => (
+                <div key={String(game.uuid)} className="rounded-xl p-0 shadow bg-white/10 backdrop-blur-md border border-white/10 hover:bg-white/15 transition cursor-pointer overflow-hidden anim-fadeUp" style={{ animationDelay: `${idx * 0.05}s` }} onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                   <div className="relative h-32">
                     <img src={getCover(game)} alt="" className="h-full w-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent" />
@@ -285,46 +360,49 @@ const Home = () => {
                   </div>
                   <div className="p-6">
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="text-lg font-bold text-blue-700">{game.name}</div>
-                      <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
+                      <div className="text-lg font-bold text-white">{game.name}</div>
+                      <span className="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-white/10 text-white border border-white/10">{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
                     </div>
-                    <div className="text-sm text-gray-600 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
+                    <div className="text-sm text-white/80 line-clamp-2 mb-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
+                    <div className="flex items-center gap-3 text-xs text-white/80 mb-3">
                       <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
                       <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z" /></svg>{(game as any).plays ?? (game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
                       {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z" /></svg>{(game as any).status}</span>}
                     </div>
-                    <div className="text-xs text-gray-500 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
+                    <div className="text-xs text-white/70 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
                     <div className="flex gap-2">
-                        <button className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                        <button className="rounded-lg bg-white border-2 border-blue-300 px-4 py-2 text-blue-700 font-semibold shadow hover:bg-blue-50 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
+                        <button className="relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>
+                          {t('home.startGame') || 'Start game'}
+                          <span className="pointer-events-none absolute inset-0 animate-shine" style={{ background: 'linear-gradient(110deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 100%)', backgroundSize: '200% 100%' }} />
+                        </button>
+                        <button className="rounded-lg bg-white/10 border border-white/10 px-4 py-2 text-white font-semibold shadow hover:bg-white/20 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); navigate('edit/' + (game.uuid as any)); }}>{t('home.edit') || 'Edit'}</button>
                     </div>
                   </div>
                 </div>
               ))
               ) : (
                 <div className="md:col-span-3">
-                  <div className="overflow-hidden rounded-xl border-2 border-blue-100 bg-white/90">
-                    <div className="divide-y">
+                  <div className="overflow-hidden rounded-xl border border-white/10 bg-white/10 backdrop-blur-md">
+                    <div className="divide-y divide-white/10">
                       {filteredGames?.map(game => (
-                        <div key={String(game.uuid)} className="p-3 sm:p-4 hover:bg-blue-50/40 transition">
+                        <div key={String(game.uuid)} className="p-3 sm:p-4 hover:bg-white/10 transition">
                           <div className="flex items-start justify-between gap-2 sm:gap-3">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <div className="text-sm sm:text-lg font-semibold text-blue-800 truncate">{game.name}</div>
-                                <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-semibold ${((game as any).isPublic ?? 0) === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
+                                <div className="text-sm sm:text-lg font-semibold text-white truncate">{game.name}</div>
+                                <span className="shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-semibold bg-white/10 text-white border border-white/10">{((game as any).isPublic ?? 0) === 1 ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
                               </div>
-                              <div className="hidden sm:block text-xs sm:text-sm text-gray-600 line-clamp-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
-                              <div className="hidden sm:flex mt-1 items-center gap-4 text-xs text-gray-600">
+                              <div className="hidden sm:block text-xs sm:text-sm text-white/80 line-clamp-2">{(game as any).description || (t('home.noDescription') || 'No description')}</div>
+                              <div className="hidden sm:flex mt-1 items-center gap-4 text-xs text-white/80">
                                 <span className="inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
-                                <span className="inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z"/></svg>{(game as any).plays ?? (game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
+                                <span className="inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 5 0 100 10 5 5 0 000-10z"/></svg>{(game as any).plays ?? (game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
                                 {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z"/></svg>{(game as any).status}</span>}
                               </div>
-                              <div className="hidden sm:block mt-1 text-xs text-gray-500">{t('home.by', { name: (game as any).created_by_name }) || `By ${(game as any).created_by_name}`}</div>
+                              <div className="hidden sm:block mt-1 text-xs text-white/70">{t('home.by', { name: (game as any).created_by_name }) || `By ${(game as any).created_by_name}`}</div>
                             </div>
                             <div className="shrink-0 flex items-center gap-2">
-                              <button className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm text-white font-semibold shadow hover:scale-105 transition" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
-                              <button className="hidden sm:inline-flex rounded-lg bg-white border-2 border-blue-300 px-3 py-1.5 text-blue-700 text-sm font-semibold shadow hover:bg-blue-50 transition" onClick={() => navigate('edit/' + (game.uuid as any))}>{t('home.edit') || 'Edit'}</button>
+                              <button className="rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm text-white font-semibold shadow hover:shadow-lg active:scale-95 transition" onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>{t('home.startGame') || 'Start game'}</button>
+                              <button className="hidden sm:inline-flex rounded-lg bg-white/10 border border-white/10 px-3 py-1.5 text-white text-sm font-semibold shadow hover:bg-white/20 transition" onClick={() => navigate('edit/' + (game.uuid as any))}>{t('home.edit') || 'Edit'}</button>
                             </div>
                           </div>
                         </div>
@@ -335,6 +413,8 @@ const Home = () => {
               )
             )}
           </div>
+          </>
+          )}
         </div>
       </div>
       {/* Modal for game options */}
@@ -355,7 +435,7 @@ const Home = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(255, 255, 255, 0.75)'
+            backgroundColor: 'rgba(0, 0, 0, 0.4)'
           },
           content: {
             top: '45%',
@@ -365,13 +445,14 @@ const Home = () => {
             marginRight: '-50%',
             transform: 'translate(-50%, -50%)',
             borderRadius: '20px',
-            border: 'none',
+            border: '1px solid rgba(255,255,255,0.15)',
             color: 'white',
             fontFamily: "Coll",
-            background: 'linear-gradient(135deg, #a5b4fc 0%, #c4b5fd 100%)',
+            background: 'rgba(255,255,255,0.08)',
+            backdropFilter: 'blur(16px)',
             width: '90%',
             maxWidth: '720px',
-            boxShadow: '0 8px 32px rgba(59,130,246,0.15)'
+            boxShadow: '0 8px 32px rgba(0,0,0,0.35)'
           },
         }}
         contentLabel="Game options"
@@ -385,7 +466,7 @@ const Home = () => {
               {/* Header / Cover */}
               <div className="relative h-40 rounded-xl overflow-hidden">
                 <img src={getCover(g)} alt="" className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                 <div className="absolute top-2 left-2 flex gap-2">
                   <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{g.qcount || 0} {t('home.questions') || 'questions'}</span>
                   <span className="bg-black/40 text-white text-xs font-semibold rounded-full px-2 py-0.5">{(g as any).plays ?? g.playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
@@ -395,35 +476,36 @@ const Home = () => {
               {/* Essentials */}
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="text-2xl font-bold text-blue-900">{g.name}</div>
-                  <div className="text-gray-700">{t('home.by', { name: g.created_by_name || '—' }) || `By ${g.created_by_name || '—'}`}</div>
+                  <div className="text-2xl font-bold text-white">{g.name}</div>
+                  <div className="text-white/80">{t('home.by', { name: g.created_by_name || '—' }) || `By ${g.created_by_name || '—'}`}</div>
                 </div>
-                <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${isPublic ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{isPublic ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
+                <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-white/10 text-white border border-white/10`}>{isPublic ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
               </div>
-              {g.description && <div className="text-gray-800">{g.description}</div>}
-              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700">
+{g.description && <div className="text-white/90">{g.description}</div>}
+              <div className="flex flex-wrap items-center gap-3 text-xs text-white/80">
                 <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>{g.qcount || 0} {t('home.questions') || 'questions'}</span>
                 <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z" /></svg>{(g as any).plays ?? g.playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
               </div>
 
               {/* PIN + Actions */}
-              <div className="rounded-2xl bg-white/80 p-4 border-2 border-purple-200 flex items-center justify-between gap-4">
+              <div className="rounded-2xl bg-white/10 backdrop-blur-md p-4 border border-white/10 flex items-center justify-between gap-4">
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-gray-700">{t('home.pin') || 'PIN'}</div>
-                  <div className="text-3xl font-extrabold text-purple-700">{newGamePin}</div>
+                  <div className="text-xs uppercase tracking-wide text-white/80">{t('home.pin') || 'PIN'}</div>
+                  <div className="text-3xl font-extrabold text-white">{newGamePin}</div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="rounded-lg bg-white border-2 border-purple-300 px-3 py-1 text-purple-700 text-sm font-semibold shadow hover:bg-purple-50 transition" onClick={() => navigator.clipboard?.writeText(newGamePin)}>{t('home.copyPin') || 'Copy PIN'}</button>
-                  <button className="rounded-lg bg-white border-2 border-blue-300 px-3 py-1 text-blue-700 text-sm font-semibold shadow hover:bg-blue-50 transition" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/join/${newGamePin}`)}>{t('home.copyLink') || 'Copy link'}</button>
+                  <button className="rounded-lg bg-white/10 border border-white/10 px-3 py-1 text-white text-sm font-semibold shadow hover:bg-white/20 transition" onClick={() => navigator.clipboard?.writeText(newGamePin)}>{t('home.copyPin') || 'Copy PIN'}</button>
+                  <button className="rounded-lg bg-white/10 border border-white/10 px-3 py-1 text-white text-sm font-semibold shadow hover:bg-white/20 transition" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/join/${newGamePin}`)}>{t('home.copyLink') || 'Copy link'}</button>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <button className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-3 text-lg font-bold text-white shadow-xl hover:scale-105 transition disabled:opacity-60 md:px-5 md:py-2.5 md:text-base" onClick={() => createNewGameInstance(selectedGameId || '0', newGamePin)} disabled={watingForCreateGame}>
+                <button className="relative overflow-hidden flex-1 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 px-6 py-3 text-lg font-bold text-white shadow-xl hover:shadow-2xl active:scale-95 transition disabled:opacity-60 md:px-5 md:py-2.5 md:text-base" onClick={() => createNewGameInstance(selectedGameId || '0', newGamePin)} disabled={watingForCreateGame}>
                   {watingForCreateGame ? (t('home.starting') || 'Starting…') : (t('home.startGame') || 'Start game')}
+                  <span className="pointer-events-none absolute inset-0 animate-shine" style={{ background: 'linear-gradient(110deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 100%)', backgroundSize: '200% 100%' }} />
                 </button>
-                <button className="rounded-xl bg-white px-4 py-3 text-blue-700 font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition md:px-3 md:py-2 md:text-sm" onClick={() => navigate('edit/' + selectedGameId)}>{t('home.edit') || 'Edit'}</button>
-                <button className="rounded-xl bg-white px-4 py-3 text-gray-700 font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition md:px-3 md:py-2 md:text-sm" onClick={() => setModalIsOpen(false)}>{t('common.close') || 'Close'}</button>
+                <button className="rounded-xl bg-white/10 px-4 py-3 text-white font-semibold shadow border border-white/10 hover:bg-white/20 transition md:px-3 md:py-2 md:text-sm" onClick={() => navigate('edit/' + selectedGameId)}>{t('home.edit') || 'Edit'}</button>
+                <button className="rounded-xl bg-white/10 px-4 py-3 text-white font-semibold shadow border border-white/10 hover:bg-white/20 transition md:px-3 md:py-2 md:text-sm" onClick={() => setModalIsOpen(false)}>{t('common.close') || 'Close'}</button>
               </div>
 
               {/* Hint */}
@@ -432,31 +514,8 @@ const Home = () => {
           );
         })()}
       </Modal>
-      <div className="mx-auto max-w-6xl px-6 py-6">
-        <button
-          onClick={() => { const ns = !showTrash; setShowTrash(ns); if (ns) loadDeletedGames(); }}
-          className="rounded-xl bg-white px-5 py-2 text-gray-700 font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition"
-        >
-          {showTrash ? (t('home.trash.hide') || 'Hide trash') : (t('home.trash.show') || 'Show trash')}
-        </button>
-        {showTrash && (
-          <div className="mt-4">
-            <div className="text-lg font-semibold text-gray-700 mb-2">{t('home.trash.title') || 'Deleted quizzes'}</div>
-            {deletedGames.length === 0 ? (
-              <div className="text-gray-500">{t('home.trash.empty') || 'No deleted quizzes'}</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {deletedGames.map(g => (
-                  <div key={String(g.uuid || g.id)} className="glass rounded-xl p-6 shadow bg-white border-2 border-gray-200">
-                    <div className="text-lg font-bold text-blue-700 mb-2">{g.name}</div>
-                    <div className="text-sm text-gray-500 mb-1">{(g as any).qcount || 0} {t('home.questions') || 'questions'}</div>
-                    <button className="rounded-lg bg-green-600 px-4 py-2 text-white font-semibold shadow hover:scale-105 transition" onClick={() => restoreGame((g.uuid as any) || g.id)}>{t('home.trash.restore') || 'Restore'}</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+      
+      <Footer />
       </div>
     </>
   );

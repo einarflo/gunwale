@@ -28,6 +28,14 @@ export default function GlobalStyles() {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-10px); }
       }
+      @keyframes fadeUp { 0% { opacity: 0; transform: translateY(14px); } 100% { opacity: 1; transform: translateY(0); } }
+      .anim-fadeUp { animation: fadeUp .6s ease both; }
+      @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+      @keyframes shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+      .animate-marquee { display: inline-block; white-space: nowrap; animation: marquee 18s linear infinite; padding-left: 100%; }
+      .animate-shine { animation: shine 1.6s linear infinite; }
+      .no-scrollbar::-webkit-scrollbar{ display: none }
+      .no-scrollbar{ -ms-overflow-style: none; scrollbar-width: none }
       .glass {
         backdrop-filter: blur(16px);
         background: linear-gradient(

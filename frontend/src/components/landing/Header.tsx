@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import logo from '../../images/tavl-logo.png';
-import { ArrowRight, LogOut } from "lucide-react";
+import { ArrowRight, LogOut, User } from "lucide-react";
+import tavlWhite from "../../images/tavl-white.png";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useKeycloak } from "../../auth/KeycloakProvider";
@@ -17,141 +17,227 @@ export default function Header({ signIn, playMode }: HeaderProps) {
   const { logout, username, isAuthenticated, login } = useKeycloak();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { t } = useI18n();
 
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const userMenuRefDesktop = useRef<HTMLDivElement>(null);
+  const userMenuRefMobile = useRef<HTMLDivElement>(null);
+  const guestMenuRefMobile = useRef<HTMLDivElement>(null);
+  const headerBoxRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (!userMenuRef.current) return;
-      if (!userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
+      const t = e.target as Node;
+      const insideDesktop = userMenuRefDesktop.current?.contains(t);
+      const insideMobile = userMenuRefMobile.current?.contains(t);
+      const insideGuest = guestMenuRefMobile.current?.contains(t);
+      if (!insideDesktop && !insideMobile && !insideGuest) setUserMenuOpen(false);
     };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setUserMenuOpen(false); };
     document.addEventListener('click', onDocClick);
     document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('click', onDocClick); document.removeEventListener('keydown', onKey); };
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    const measure = () => {
+      const el = headerBoxRef.current;
+      if (!el) { setHeaderHeight(0); return; }
+      const mt = parseFloat(window.getComputedStyle(el).marginTop || '0');
+      setHeaderHeight(el.offsetHeight + mt);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', measure);
+    };
   }, []);
+  useEffect(() => {
+    const el = headerBoxRef.current;
+    if (!el) return;
+    const mt = parseFloat(window.getComputedStyle(el).marginTop || '0');
+    setHeaderHeight(el.offsetHeight + mt);
+  }, [menuOpen]);
 
   return (
-    <header className="sticky top-0 z-30 border-b-2 border-blue-200 bg-white/90 backdrop-blur-xl shadow-lg shadow-blue-100/50">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-        <div className="flex items-center gap-3">
-          <img src={logo} alt="Tavl" className="h-8 cursor-pointer" onClick={() => navigate(isAuthenticated ? '/home' : '')} />
+    <>
+    <header className="fixed top-0 left-0 right-0 z-50">
+      <div
+        className={[
+          "transition-all duration-200 mx-3 sm:mx-6 mt-3 rounded-2xl",
+          scrolled
+            ? "bg-[#0d0b24]/80 backdrop-blur-md border border-white/10 shadow-lg shadow-black/20"
+            : "bg-[#0d0b24]/40 backdrop-blur-md border border-white/10"
+        ].join(' ')}
+        ref={headerBoxRef}
+      >
+      <div className="container mx-auto px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between">
+        <div
+          className="flex items-center gap-3 cursor-pointer select-none"
+          onClick={() => navigate(isAuthenticated ? '/home' : '/')}
+        >
+          <img
+            src={tavlWhite}
+            alt="tavl"
+            className="h-7 sm:h-8 opacity-95 transition-opacity duration-200 hover:opacity-100"
+          />
         </div>
         {/* Desktop nav */}
-        {username ? (
-          <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
-            <div onClick={() => navigate("/home")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.library')}</div>
-            <div onClick={() => navigate("/discover")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('home.discover')}</div>
-            <div onClick={() => navigate("/home/upgrades")}  className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('header.upgrades')}</div>
-          </nav>
-        ) : (
-          <nav className="hidden items-center gap-8 text-sm text-gray-600 md:flex">
-            <a href="#features" className="hover:text-blue-600 transition-colors font-medium">{t('header.featured')}</a>
-            <a href="#game" className="hover:text-blue-600 transition-colors font-medium">{t('header.about')}</a>
-            <div onClick={() => navigate('/discover')} className="hover:text-blue-600 transition-colors font-medium cursor-pointer">{t('home.discover')}</div>
-            <a href="#upgrades" className="hover:text-blue-600 transition-colors font-medium">{t('header.upgrades')}</a>
-            <a href="#about" className="hover:text-blue-600 transition-colors font-medium">{t('header.pricing')}</a>
-          </nav>
-        )}
+        <nav className="hidden md:flex items-center gap-2 text-sm rounded-full border border-white/10 bg-white/5 px-2 py-1">
+          <button
+            onClick={() => navigate('/home')}
+            className="relative group text-white/90 hover:text-white transition-colors duration-200 font-semibold rounded-full px-4 py-2 hover:bg-white/10"
+          >
+            {t('header.library')}
+            <span className="absolute left-0 -bottom-1 h-0.5 w-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 transition-all duration-200 group-hover:w-full" />
+          </button>
+          <button
+            onClick={() => navigate('/discover')}
+            className="relative group text-white/90 hover:text-white transition-colors duration-200 font-semibold rounded-full px-4 py-2 hover:bg-white/10"
+          >
+            {t('home.discover')}
+            <span className="absolute left-0 -bottom-1 h-0.5 w-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 transition-all duration-200 group-hover:w-full" />
+          </button>
+          <button
+            onClick={() => navigate('/home/upgrades')}
+            className="relative group text-white/90 hover:text-white transition-colors duration-200 font-semibold rounded-full px-4 py-2 hover:bg-white/10"
+          >
+            {t('header.upgrades')}
+            <span className="absolute left-0 -bottom-1 h-0.5 w-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 transition-all duration-200 group-hover:w-full" />
+          </button>
+        </nav>
         {/* Desktop actions */}
         <div className="hidden md:flex items-center gap-3">
-          {/* Show LanguageSwitcher only when logged out (when logged in it's inside the user dropdown) */}
-          {!isAuthenticated && <LanguageSwitcher />}
-          <button 
+          <button
             onClick={() => navigate('/join')}
-            className="rounded-xl border-2 border-blue-300 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-all font-medium"
+            className="hidden lg:inline-flex rounded-full bg-white text-indigo-600 px-5 py-2 text-sm hover:bg-indigo-50 transition-colors duration-200 font-semibold shadow-sm"
           >
-            {t('header.join')}
+            Join a game
           </button>
           {!isAuthenticated && (
-            <button 
+            <button
               onClick={login}
-              className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2 text-sm font-medium text-white hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40"
+              className="inline-flex items-center gap-3 rounded-full bg-white/10 border border-white/10 px-2.5 py-1.5 text-sm text-white hover:bg-white/20 transition-colors duration-200"
+              aria-label="Sign in"
             >
-              {t('header.signin')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
+                <User className="h-4 w-4" />
+              </span>
+              <span className="font-medium">Sign in</span>
+              <ArrowRight className="h-4 w-4 opacity-80" />
             </button>
           )}
-          {isAuthenticated && username && (
-            <div className="relative" ref={userMenuRef}>
+          {isAuthenticated && (
+            <div className="relative" ref={userMenuRefDesktop}>
               <button
                 onClick={() => setUserMenuOpen(v => !v)}
                 aria-haspopup="menu"
                 aria-expanded={userMenuOpen}
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-blue-300 px-3 py-2 text-sm text-gray-800 hover:bg-blue-50 font-semibold max-w-[160px] truncate"
-                title={username}
+                className="inline-flex items-center gap-3 rounded-full bg-white/10 border border-white/10 px-2.5 py-1.5 text-sm text-white hover:bg-white/20 transition-colors duration-200"
+                title={username || ''}
               >
-                <span className="truncate">{username}</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
+                  <User className="h-4 w-4" />
+                </span>
+                <span className="hidden lg:block max-w-[160px] truncate font-medium">{username}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M7 10l5 5 5-5z"/></svg>
               </button>
               {userMenuOpen && (
-                <div role="menu" className="absolute right-0 mt-2 w-60 rounded-xl border-2 border-blue-200 bg-white shadow-xl p-2 z-40">
-                  <button onClick={() => { navigate('/home/profile'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700 font-medium">
-                    {t('header.profile')}
+                <div role="menu" className="absolute right-0 mt-2 w-60 rounded-2xl border border-white/10 bg-[#0d0b24]/90 backdrop-blur-md shadow-xl shadow-black/30 p-2 z-40 text-white/90">
+                  <button onClick={() => { navigate('/home/profile'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">
+                    Profile
+                  </button>
+                  <button onClick={() => { navigate('/home/achievements'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">
+                    Achievements
+                  </button>
+                  <button onClick={() => { navigate('/home/settings'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">
+                    Settings
                   </button>
                   <div className="px-3 py-2">
-                    <div className="text-xs text-gray-500 mb-1">{t('header.language')}</div>
+                    <div className="text-xs text-white/60 mb-1">{t('header.language')}</div>
                     <LanguageSwitcher />
                   </div>
-                  <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full inline-flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-red-50 text-red-600 font-medium">
-                    {t('header.signout')} <LogOut className="h-4 w-4" />
+                  <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full inline-flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-white/10 text-red-300">
+                    Logout <LogOut className="h-4 w-4" />
                   </button>
                 </div>
               )}
             </div>
           )}
         </div>
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden inline-flex items-center justify-center rounded-lg border border-blue-200 p-2 text-blue-600 hover:bg-blue-50"
-          aria-label="Toggle menu"
-          onClick={() => setMenuOpen(v => !v)}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            {menuOpen ? (
-              <path d="M18 6L6 18M6 6l12 12" />
-            ) : (
-              <>
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </>
-            )}
-          </svg>
-        </button>
-      </div>
-      {/* Mobile menu panel */}
-      {menuOpen && (
-        <div className="md:hidden border-t border-blue-200 bg-white/95 backdrop-blur-xl">
-          <div className="mx-auto max-w-7xl px-4 py-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700 font-semibold">{t('header.language')}</div>
-              <LanguageSwitcher />
-            </div>
-            {isAuthenticated ? (
-              <>
-                <button onClick={() => { navigate('/home/profile'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700 font-semibold">{username}</button>
-                <button onClick={() => { navigate('/home'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.library')}</button>
-                <button onClick={() => { navigate('/discover'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('home.discover')}</button>
-                <button onClick={() => { navigate('/home/upgrades'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.upgrades')}</button>
-                <div className="h-px bg-blue-100 my-1" />
-                <button onClick={() => { navigate('/join'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-blue-700">{t('header.join')}</button>
-                <button onClick={() => { logout(); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-red-50 text-red-600">{t('header.signout')}</button>
-              </>
-            ) : (
-              <>
-                <button onClick={() => { document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.featured')}</button>
-                <button onClick={() => { document.getElementById('game')?.scrollIntoView({ behavior: 'smooth' }); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.about')}</button>
-                <button onClick={() => { navigate('/discover'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('home.discover')}</button>
-                <button onClick={() => { document.getElementById('upgrades')?.scrollIntoView({ behavior: 'smooth' }); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.upgrades')}</button>
-                <button onClick={() => { document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-gray-700">{t('header.pricing')}</button>
-                <div className="h-px bg-blue-100 my-1" />
-                <button onClick={() => { navigate('/join'); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 hover:bg-blue-50 text-blue-700">{t('header.join')}</button>
-                <button onClick={() => { login(); setMenuOpen(false); }} className="text-left rounded-lg px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white">{t('header.signin')}</button>
-              </>
+        {/* Mobile actions */}
+        {!isAuthenticated ? (
+          <div className="md:hidden" ref={guestMenuRefMobile}>
+            <button
+              onClick={() => setUserMenuOpen(v => !v)}
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 transition-colors duration-200"
+              title="Menu"
+            >
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
+                <User className="h-4 w-4" />
+              </span>
+              <span className="max-w-[140px] truncate font-medium">Menu</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            {userMenuOpen && (
+              <div role="menu" className="absolute right-4 mt-2 w-60 rounded-2xl border border-white/10 bg-[#0d0b24]/90 backdrop-blur-md shadow-xl shadow-black/30 p-2 z-40 text-white/90">
+                <button onClick={() => { navigate('/join'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Play</button>
+                <button onClick={() => { navigate('/discover'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('home.discover')}</button>
+                <button onClick={() => { navigate('/home/upgrades'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('header.upgrades')}</button>
+                <div className="px-3 py-2">
+                  <div className="text-xs text-white/60 mb-1">{t('header.language')}</div>
+                  <LanguageSwitcher />
+                </div>
+                <button onClick={() => { setUserMenuOpen(false); login(); }} className="w-full inline-flex items-center justify-between rounded-lg px-3 py-2 bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-medium">
+                  {t('header.signin')} <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
             )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="md:hidden" ref={userMenuRefMobile}>
+            <button
+              onClick={() => setUserMenuOpen(v => !v)}
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 transition-colors duration-200"
+              title={username || ''}
+            >
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
+                <User className="h-4 w-4" />
+              </span>
+              <span className="max-w-[140px] truncate font-medium">{username}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            {userMenuOpen && (
+              <div role="menu" className="absolute right-4 mt-2 w-60 rounded-2xl border border-white/10 bg-[#0d0b24]/90 backdrop-blur-md shadow-xl shadow-black/30 p-2 z-40 text-white/90">
+                {/* Primary navigation (visible here on mobile since header links are hidden) */}
+                <button onClick={() => { navigate('/home'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('header.library')}</button>
+                <button onClick={() => { navigate('/discover'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('home.discover')}</button>
+                <button onClick={() => { navigate('/home/upgrades'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('header.upgrades')}</button>
+                <div className="h-px bg-white/10 my-1" />
+                <button onClick={() => { navigate('/home/profile'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Profile</button>
+                <button onClick={() => { navigate('/home/achievements'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Achievements</button>
+                <button onClick={() => { navigate('/home/settings'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Settings</button>
+                <div className="px-3 py-2">
+                  <div className="text-xs text-white/60 mb-1">{t('header.language')}</div>
+                  <LanguageSwitcher />
+                </div>
+                <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full inline-flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-white/10 text-red-300">Logout <LogOut className="h-4 w-4" /></button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      </div>
+      {/* Mobile menu panel */}
+      {/* previous hamburger panel removed; we use the dropdown above */}
     </header>
+    {/* Spacer to prevent content from being covered by fixed header */}
+
+    </>
   );
 }
