@@ -115,6 +115,26 @@ services:
     networks:
       - web
 
+  postlady:
+    build:
+      context: ./postlady
+    restart: unless-stopped
+    depends_on:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.postlady.rule=Host(`postlady.tech`)"
+      - "traefik.http.routers.postlady.entrypoints=websecure"
+      - "traefik.http.routers.postlady.tls=true"
+      - "traefik.http.routers.postlady.tls.certresolver=le"
+      - "traefik.http.services.postlady.loadbalancer.server.port=80"
+      - "traefik.docker.network=web"
+    volumes:
+      - ./postlady/public/downloads:/usr/share/nginx/html/downloads:ro
+    networks:
+      - web
+
+
 volumes:
   ollama_models:
   challenger_db:
