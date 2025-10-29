@@ -69,11 +69,19 @@ const Signin = ({ toGameMode, setLoggedInUser }: SiginProps) => {
 }
 
 const LoginWrapper = styled.div`
-    height: 100vh;
-    height: 100dvh;
-    width: 100vw;
-    background: #ffffff;
-    display: flex;
+  height: 100dvh;
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  background: #1e1b4b;
+  &::before{ content:''; position:absolute; inset:0; z-index:0; background:
+    radial-gradient(circle at 20% 30%, rgba(99,102,241,0.35) 0%, transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(236,72,153,0.35) 0%, transparent 60%),
+    linear-gradient(to bottom right,#4f46e5,#9333ea,#ec4899); opacity:.9; }
+  &::after{ content:''; position:absolute; inset:0; z-index:0; background:
+    radial-gradient(ellipse at center, rgba(255,255,255,0.05) 0%, transparent 70%);
+    animation: glowPulse 6s ease-in-out infinite; opacity:.9; }
 `;
 
 const Logo = styled.img`
@@ -115,7 +123,6 @@ const LeftSide = styled.div`
 
 const RightSide = styled.div`
   width: 50%;
-  background-image: linear-gradient(180deg, #6A71FA 0%, #9C8AFA 100%);
   @media (max-width: 1160px) {
     display: none;
     width: 0;

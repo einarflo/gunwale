@@ -80,7 +80,7 @@ export default function Header({ signIn, playMode }: HeaderProps) {
           <img
             src={tavlWhite}
             alt="tavl"
-            className="h-7 sm:h-8 opacity-95 transition-opacity duration-200 hover:opacity-100"
+            className="h-7 sm:h-8 opacity-100 transition-opacity duration-200"
           />
         </div>
         {/* Desktop nav */}
@@ -90,21 +90,18 @@ export default function Header({ signIn, playMode }: HeaderProps) {
             className="relative group text-white/90 hover:text-white transition-colors duration-200 font-semibold rounded-full px-4 py-2 hover:bg-white/10"
           >
             {t('header.library')}
-            <span className="absolute left-0 -bottom-1 h-0.5 w-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 transition-all duration-200 group-hover:w-full" />
           </button>
           <button
             onClick={() => navigate('/discover')}
             className="relative group text-white/90 hover:text-white transition-colors duration-200 font-semibold rounded-full px-4 py-2 hover:bg-white/10"
           >
             {t('home.discover')}
-            <span className="absolute left-0 -bottom-1 h-0.5 w-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 transition-all duration-200 group-hover:w-full" />
           </button>
           <button
             onClick={() => navigate('/home/upgrades')}
             className="relative group text-white/90 hover:text-white transition-colors duration-200 font-semibold rounded-full px-4 py-2 hover:bg-white/10"
           >
             {t('header.upgrades')}
-            <span className="absolute left-0 -bottom-1 h-0.5 w-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 transition-all duration-200 group-hover:w-full" />
           </button>
         </nav>
         {/* Desktop actions */}

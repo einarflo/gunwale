@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import logo from '../images/tavl-logo.png';
-import { ErrorText, TextInputField, PrimaryButtonLocal as PrimaryButton, Logo } from "./gamepin";
+import { BackgroundLayers, Card, ErrorText, TextInputField, PrimaryButtonLocal as PrimaryButton, Logo, Viewport } from "./gamepin";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { useNavigate } from "react-router-dom";
 import { connectSocket } from "../api/socket";
@@ -105,28 +105,15 @@ const Username = ({ setNickname, setGameInstancePlayerId }: UsernameProps) => {
 
     return (
         <GamePinWrapper>
-            <BackgroundLayer />
-            <GlowLeft />
-            <GlowRight />
-            <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+            <BackgroundLayers />
+            <Viewport>
                 <TopLeftLogo />
                 <button
-                    style={{
-                        position: "absolute",
-                        left: 32,
-                        top: 32,
-                        background: "none",
-                        border: "none",
-                        color: "#3b82f6",
-                        fontSize: "1.1rem",
-                        cursor: "pointer",
-                        zIndex: 20
-                    }}
-                    onClick={() => navigate('/join/' + gamePin)}
-                >
-                    ← {t('common.back')}
-                </button>
+                  style={{ position:'absolute', left:24, top:24, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'#fff', borderRadius:9999, padding:'8px 12px', cursor:'pointer', zIndex:20 }}
+                  onClick={() => navigate('/join/' + gamePin)}
+                >← {t('common.back')}</button>
                 <Content>
+                        <Card>
                         <Logo src={logo} />
                         {loading ? <Spinner/> : (
                             <>
@@ -148,17 +135,15 @@ const Username = ({ setNickname, setGameInstancePlayerId }: UsernameProps) => {
                                 }}>{t('join.play') || 'PLAY'}</PrimaryButton>
                             </>
                         )}
+                        </Card>
                 </Content>
-            </div>
+            </Viewport>
         </GamePinWrapper>
     );
 }
 
 const GamePinWrapper = styled.div`
-    height: 100vh;
-    height: 100dvh;
-    width: 100vw;
-    background: linear-gradient(135deg, #ffffff, #f5f7ff);
+  position: relative; height: 100dvh; width: 100vw; overflow: hidden; background: #1e1b4b;
 `;
 
 const Content = styled.div`
@@ -169,7 +154,6 @@ const Content = styled.div`
     min-width: 300px;
     max-width: 80vw;
 `;
-
 
 const rotate = keyframes`
   from {
@@ -192,38 +176,6 @@ border-radius: 50%;
 border-top-color: #3b82f6;
 animation: spin 1s ease-in-out infinite;
 -webkit-animation: ${rotate} 1s ease-in-out infinite;
-`;
-
-const BackgroundLayer = styled.div`
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, #ffffff, #f5f7ff);
-`;
-
-const GlowLeft = styled.div`
-    position: absolute;
-    top: -20%;
-    left: -10%;
-    width: 60vw;
-    height: 60vw;
-    border-radius: 50%;
-    filter: blur(70px);
-    opacity: 0.7;
-    background: radial-gradient(circle, rgba(59,130,246,0.25), transparent 60%);
-    pointer-events: none;
-`;
-
-const GlowRight = styled.div`
-    position: absolute;
-    bottom: 5%;
-    right: 0%;
-    width: 55vw;
-    height: 55vw;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.6;
-    background: radial-gradient(circle, rgba(236,72,153,0.22), transparent 60%);
-    pointer-events: none;
 `;
 
 export default Username;
