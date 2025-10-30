@@ -16,7 +16,7 @@ const CreateGame = () => {
 
     const [error, seterror] = useState(false);
 
-    const insertGame = async ({ name, description, isPublic, tags }: { name: string; description: string; isPublic: boolean; tags: string[]; headerImage?: string | null }) => {
+    const insertGame = async ({ name, description, isPublic, tags, headerImage }: { name: string; description: string; isPublic: boolean; tags: string[]; headerImage?: string | null }) => {
       try {
         const res = await post(`/games`, {
           name,
@@ -31,6 +31,7 @@ const CreateGame = () => {
         if (Array.isArray(tags)) {
           try { await put(`/tags/game/${selector}`, { slugs: tags }); } catch(_) {}
         }
+        // Placeholder: headerImage can be handled after basic game creation if needed
         navigate(`/home/edit/${selector}`);
       } catch (e) {
         seterror(true);
@@ -55,6 +56,7 @@ const CreateGame = () => {
               <GameForm
                 title="Quiznavn og beskrivelse"
                 showImageUpload
+                initialImageUrl={null}
                 submitText="Opprett quiz"
                 cancelText="Avbryt"
                 onSubmit={insertGame as any}

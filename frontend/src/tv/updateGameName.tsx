@@ -138,18 +138,19 @@ const UpdateGame = () => {
             {loading ? (
               <div className="flex h-48 items-center justify-center text-white/70">Laster...</div>
             ) : (
-              <GameForm
-                title="Rediger quiz"
-                initialName={initialName}
-                initialDescription={initialDescription}
-                initialIsPublic={initialIsPublic}
-                initialTags={initialTags}
-                showImageUpload={true}
-                submitText="Lagre"
-                cancelText="Avbryt"
-                onSubmit={saveGame as any}
-                onCancel={() => navigate('/home/edit/' + gameId)}
-              />
+            <GameForm
+              title="Rediger quiz"
+              initialName={initialName}
+              initialDescription={initialDescription}
+              initialIsPublic={initialIsPublic}
+              initialTags={initialTags}
+              showImageUpload={true}
+              initialImageUrl={coverImageUrl}
+              submitText="Lagre"
+              cancelText="Avbryt"
+              onSubmit={saveGame as any}
+              onCancel={() => navigate('/home/edit/' + gameId)}
+            />
             )}
           </section>
         </div>
