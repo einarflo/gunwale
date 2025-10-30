@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import GlobalStyles from '../components/landing/GlobalStyles';
 import ParallaxOrbs from "../components/ParallaxOrbs";
 import ParallaxScroll from "../components/ParallaxScroll";
+import placeholderImg from "../images/tavl-placeholder.jpg";
 
 const clamp = (value: number, min: number, max: number) => {
   if (!Number.isFinite(value)) return min;
@@ -118,6 +119,14 @@ const EditQuestion = () => {
 
   const timeValue = clamp(Number(time), TIME_MIN, TIME_MAX);
   const scoreValue = clamp(Number(score), SCORE_MIN, SCORE_MAX);
+  const previewImage = imageUrl || placeholderImg;
+  const previewAlternatives = useMemo(() => {
+    return alternatives.map((alt, idx) => ({
+      label: String.fromCharCode(65 + idx),
+      text: alt,
+      isCorrect: String(idx + 1) === correctAlternative,
+    }));
+  }, [alternatives, correctAlternative]);
 
   function stripThinkBlocks(s: string) {
     try { return s.replace(/<think>[\s\S]*?<\/think>/g, ""); } catch { return s; }
@@ -648,6 +657,84 @@ const EditQuestion = () => {
                 <p className="mt-4 text-xs text-white/60">
                   Tips: AI-forslag kan redigeres etterpå. Dra og slipp direkte til alternativene, eller bruk knappene.
                 </p>
+              </section>
+
+              <section className="rounded-3xl border border-white/10 bg-white/6 p-6 sm:p-8 shadow-[0_25px_80px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+                <div className="flex flex-col gap-6 lg:flex-row">
+                  <div className="relative w-full overflow-hidden rounded-3xl border border-white/15 bg-black/30 lg:w-1/2">
+                    <img src={previewImage} alt="Forhåndsvisning" className="h-full w-full object-cover" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center rounded-full border border-white/20 bg-black/40 px-3 py-1 text-xs font-semibold text-white/80">
+                        {timeValue} sek
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-white/20 bg-black/40 px-3 py-1 text-xs font-semibold text-white/80">
+                        {scoreValue.toLocaleString('no-NB')} poeng
+                      </span>
+                      {correctLabel && (
+                        <span className="inline-flex items-center rounded-full border border-emerald-300/60 bg-emerald-500/40 px-3 py-1 text-xs font-semibold text-emerald-50">
+                          Fasit: {correctLabel}
+                        </span>
+                      )}
+                    </div>
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h2 className="text-2xl font-bold text-white drop-shadow-lg">{questionPreview}</h2>
+                      {description && (
+                        <p className="mt-2 text-sm text-white/85 drop-shadow">{description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Forhåndsvisning</h3>
+                        <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                          Slik vises spørsmålet på arbeidsstasjonen
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => navigate(`/home/edit/${gameId}`)}
+                        className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white/85 transition hover:bg-white/16"
+                      >
+                        Gå til quizoversikten
+                      </button>
+                    </div>
+                    <div className="grid gap-3">
+                      {previewAlternatives.map(({ label, text, isCorrect }) => (
+                        <div
+                          key={label}
+                          className={`relative overflow-hidden rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                            isCorrect
+                              ? 'border-emerald-300/60 bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/30 text-emerald-50 shadow-[0_18px_45px_rgba(16,185,129,0.35)]'
+                              : 'border-white/15 bg-white/8 text-white/90 hover:border-white/25 hover:bg-white/12'
+                          }`}
+                        >
+                          <span className="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-xs font-semibold">
+                            {label}
+                          </span>
+                          <span>{text?.trim() ? text : '—'}</span>
+                          {isCorrect && (
+                            <span className="absolute inset-y-0 right-4 inline-flex items-center">
+                              <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-emerald-100"
+                              >
+                                <path d="M20 6L9 17l-5-5" />
+                              </svg>
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </section>
 
               {error && (

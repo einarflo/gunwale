@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import GlobalStyles from '../components/landing/GlobalStyles';
 import ParallaxOrbs from "../components/ParallaxOrbs";
 import ParallaxScroll from "../components/ParallaxScroll";
+import placeholderImg from "../images/tavl-placeholder.jpg";
 
 export interface GameItem {
   name: String;
@@ -309,100 +310,133 @@ const EditGame = () => {
                   Ingen spørsmål enda. Klikk «Nytt spørsmål» for å starte.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  {displayQuestions.map((q: any, idx: number) => (
-                    <div
-                      key={String(q.uuid || idx)}
-                      draggable={!searchTerm.trim()}
-                      onDragStart={() => onDragStart(idx)}
-                      onDragOver={(e) => onDragOver(e as any, idx)}
-                      onDragEnd={onDragEnd}
-                      onDrop={() => onDrop(idx)}
-                      className={`group relative rounded-2xl border border-white/12 bg-white/10 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.45)] transition hover:border-white/20 hover:bg-white/14 ${
-                        hoverIndex === idx && dragIndex !== null ? 'border-pink-400/60 bg-white/16' : ''
-                      }`}
-                    >
-                      <div className="absolute inset-x-0 -top-1 mx-5 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 transition group-hover:opacity-100" />
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-2">
-                          <div className="inline-flex items-center gap-2">
-                            <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-white/70">
-                              #{idx + 1}
-                            </span>
-                            <span className="inline-flex items-center rounded-full border border-indigo-300/40 bg-indigo-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-100">
-                              {q.time || '—'} sek
-                            </span>
-                            <span className="inline-flex items-center rounded-full border border-amber-300/40 bg-amber-400/20 px-2.5 py-0.5 text-[11px] font-semibold text-amber-100">
-                              {q.score || '—'} poeng
-                            </span>
-                          </div>
-                          <h3 className="text-lg font-semibold leading-snug text-white line-clamp-3">
-                            {q.text || 'Uten tittel'}
-                          </h3>
-                          {q.description && (
-                            <p className="text-sm text-white/65 line-clamp-2">{q.description}</p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => navigate('/home/edit/' + gameId + '/question/' + String(q.uuid))}
-                          className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:bg-white/20"
-                        >
-                          Rediger
-                        </button>
-                      </div>
+                <div className="space-y-4">
+                  {displayQuestions.map((q: any, idx: number) => {
+                    const image = q.image_url || q.imageUrl || placeholderImg;
+                    const timeLabel = q.time ? `${q.time} sek` : '— sek';
+                    const scoreLabel = q.score ? `${q.score} poeng` : '— poeng';
+                    const correctIndex = Number(q.correct);
+                    const correctLabel = Number.isFinite(correctIndex) && correctIndex >= 1 && correctIndex <= 4
+                      ? String.fromCharCode(64 + correctIndex)
+                      : null;
+                    const altData = (['alt1', 'alt2', 'alt3', 'alt4'] as const).map((field, choiceIdx) => ({
+                      key: field,
+                      label: String.fromCharCode(65 + choiceIdx),
+                      text: q[field] || '',
+                      isCorrect: String(q.correct) === String(choiceIdx + 1),
+                    }));
 
-                      <div className="mt-4 grid grid-cols-2 gap-2 text-sm font-medium">
-                        {(['alt1', 'alt2', 'alt3', 'alt4'] as const).map((field, choiceIdx) => {
-                          const isCorrect = String(q.correct) === String(choiceIdx + 1);
-                          const label = ['A', 'B', 'C', 'D'][choiceIdx];
-                          return (
-                            <div
-                              key={field}
-                              className={`rounded-xl border px-3 py-2 ${
-                                isCorrect
-                                  ? 'border-emerald-300/45 bg-emerald-400/20 text-emerald-100 shadow-inner shadow-emerald-900/25'
-                                  : 'border-white/12 bg-white/6 text-white/80'
-                              }`}
-                            >
-                              {label}: {q[field] || '—'}
+                    return (
+                      <div
+                        key={String(q.uuid || idx)}
+                        draggable={!searchTerm.trim()}
+                        onDragStart={() => onDragStart(idx)}
+                        onDragOver={(e) => onDragOver(e as any, idx)}
+                        onDragEnd={onDragEnd}
+                        onDrop={() => onDrop(idx)}
+                        className={`group relative rounded-2xl border border-white/12 bg-white/10 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.45)] transition hover:border-white/20 hover:bg-white/14 cursor-grab active:cursor-grabbing ${
+                          hoverIndex === idx && dragIndex !== null ? 'border-pink-400/60 bg-white/16' : ''
+                        }`}
+                      >
+                        <div className="absolute inset-x-0 -top-1 mx-5 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 transition group-hover:opacity-100" />
+                        <div className="flex flex-col gap-5">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-white/70">
+                              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 uppercase tracking-[0.2em]">
+                                #{idx + 1}
+                              </span>
+                              <span className="inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-1">
+                                Tid: {timeLabel}
+                              </span>
+                              <span className="inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-1">
+                                Poeng: {scoreLabel}
+                              </span>
+                              {correctLabel && (
+                                <span className="inline-flex items-center rounded-full border border-emerald-300/45 bg-emerald-500/25 px-3 py-1 text-emerald-100">
+                                  Fasit: {correctLabel}
+                                </span>
+                              )}
                             </div>
-                          );
-                        })}
-                      </div>
+                            <button
+                              onClick={() => navigate('/home/edit/' + gameId + '/question/' + String(q.uuid))}
+                              className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white/85 transition hover:bg-white/18"
+                            >
+                              Rediger spørsmålet
+                            </button>
+                          </div>
 
-                      <div className="mt-4 flex items-center gap-2 text-xs text-white/60">
-                        <div className="inline-flex items-center rounded-full border border-white/15 bg-white/8 px-2 py-1">
-                          <span>Dra for å flytte</span>
-                        </div>
-                        <div className="inline-flex items-center gap-1">
-                          <button
-                            className={`rounded-full border border-white/15 bg-white/8 p-1 text-white transition hover:bg-white/14 ${
-                              idx === 0 ? 'opacity-40 cursor-not-allowed' : ''
-                            }`}
-                            onClick={() => moveQuestion(idx, idx - 1)}
-                            disabled={idx === 0}
-                            title="Flytt opp"
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M7 14l5-5 5 5z" />
-                            </svg>
-                          </button>
-                          <button
-                            className={`rounded-full border border-white/15 bg-white/8 p-1 text-white transition hover:bg-white/14 ${
-                              idx === displayQuestions.length - 1 ? 'opacity-40 cursor-not-allowed' : ''
-                            }`}
-                            onClick={() => moveQuestion(idx, idx + 1)}
-                            disabled={idx === displayQuestions.length - 1}
-                            title="Flytt ned"
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M7 10l5 5 5-5z" />
-                            </svg>
-                          </button>
+                          <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+                            <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-black/30 h-48 lg:flex-[0_0_48%] lg:max-w-[420px] lg:h-[260px]">
+                              <img src={image} alt="" className="h-full w-full object-cover object-center" />
+                              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                              <div className="absolute bottom-4 left-4 right-4 space-y-2">
+                                <h3 className="text-lg font-semibold text-white drop-shadow">
+                                  {q.text || 'Uten tittel'}
+                                </h3>
+                                {q.description && (
+                                  <p className="text-sm text-white/85 drop-shadow line-clamp-2">
+                                    {q.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex-1 flex flex-col gap-3 lg:min-h-[260px]">
+                              <div className="grid gap-2 text-sm font-medium">
+                                {altData.map(({ key, label, text, isCorrect }) => (
+                                  <div
+                                    key={key}
+                                    className={`relative overflow-hidden rounded-2xl border px-3 py-2 ${
+                                      isCorrect
+                                        ? 'border-emerald-300/45 bg-emerald-400/20 text-emerald-100 shadow-[0_14px_35px_rgba(16,185,129,0.35)]'
+                                        : 'border-white/12 bg-white/6 text-white/85'
+                                    }`}
+                                  >
+                                    <span className="mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs font-semibold">
+                                      {label}
+                                    </span>
+                                    <span>{text?.trim() ? text : '—'}</span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className="flex items-center justify-between text-xs text-white/60 lg:mt-auto">
+                                <div className="inline-flex items-center rounded-full border border-white/15 bg-white/8 px-2 py-1">
+                                  <span>Dra for å flytte</span>
+                                </div>
+                                <div className="inline-flex items-center gap-1">
+                                  <button
+                                    className={`rounded-full border border-white/15 bg-white/8 p-1 text-white transition hover:bg-white/14 ${
+                                      idx === 0 ? 'opacity-40 cursor-not-allowed' : ''
+                                    }`}
+                                    onClick={() => moveQuestion(idx, idx - 1)}
+                                    disabled={idx === 0}
+                                    title="Flytt opp"
+                                  >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                      <path d="M7 14l5-5 5 5z" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    className={`rounded-full border border-white/15 bg-white/8 p-1 text-white transition hover:bg-white/14 ${
+                                      idx === displayQuestions.length - 1 ? 'opacity-40 cursor-not-allowed' : ''
+                                    }`}
+                                    onClick={() => moveQuestion(idx, idx + 1)}
+                                    disabled={idx === displayQuestions.length - 1}
+                                    title="Flytt ned"
+                                  >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                      <path d="M7 10l5 5 5-5z" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
