@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import styled from "styled-components";
 import { get, put, post } from "../api";
 import { useNavigate, useParams } from "react-router-dom";
 import GlobalStyles from '../components/landing/GlobalStyles';
-import AnimatedGradientBackground from '../components/landing/AnimatedGradientBackground';
+import ParallaxOrbs from "../components/ParallaxOrbs";
+import ParallaxScroll from "../components/ParallaxScroll";
 
-export interface GameItem {
-  name: String;
-  description: String;
-  created_by: String;
-  status: String;
-}
+const clamp = (value: number, min: number, max: number) => {
+  if (!Number.isFinite(value)) return min;
+  return Math.min(max, Math.max(min, value));
+};
+
+const TIME_MIN = 5;
+const TIME_MAX = 120;
+const SCORE_MIN = 100;
+const SCORE_MAX = 5000;
 
 const EditQuestion = () => {
   const [text, setText] = useState("");
@@ -103,6 +106,18 @@ const EditQuestion = () => {
     const idx = Number(correctAlternative) - 1;
     return idx >= 0 && idx < alternatives.length ? (alternatives[idx] || "") : "";
   }, [correctAlternative, alternatives]);
+
+  const filledAlternatives = useMemo(() => alternatives.filter((alt) => alt && alt.trim().length > 0).length, [alternatives]);
+  const correctLabel = useMemo(() => {
+    const idx = Number(correctAlternative);
+    if (idx >= 1 && idx <= alternatives.length) {
+      return String.fromCharCode(64 + idx);
+    }
+    return null;
+  }, [correctAlternative, alternatives.length]);
+
+  const timeValue = clamp(Number(time), TIME_MIN, TIME_MAX);
+  const scoreValue = clamp(Number(score), SCORE_MIN, SCORE_MAX);
 
   function stripThinkBlocks(s: string) {
     try { return s.replace(/<think>[\s\S]*?<\/think>/g, ""); } catch { return s; }
@@ -271,156 +286,376 @@ const EditQuestion = () => {
       const pres = await post(`/media/presign`, { kind: 'questionImage', id: questionId, contentType }).then(r => r.data as any);
       if (pres?.putUrl) {
         await fetch(pres.putUrl, { method: 'PUT', headers: { 'Content-Type': contentType }, body: file });
-        setImageUrl(pres.publicUrl || null);
+        let finalUrl = pres.publicUrl || null;
+        try {
+          if (pres.key) {
+            const optimized = await post(`/media/optimize`, { key: pres.key }).then(r => r.data as any);
+            if (optimized?.publicUrl) {
+              finalUrl = optimized.publicUrl;
+            }
+          }
+        } catch (_) {
+          // ignore optimization errors; fallback to original URL
+        }
+        setImageUrl(finalUrl);
       }
     } catch (_) {
       setAiError('Opplasting feilet');
     }
   };
 
+  const questionPreview = text.trim() || 'Uten tittel';
+  const hasImage = Boolean(imageUrl);
+
   return (
     <>
-      <GlobalStyles />
-      <AnimatedGradientBackground />
-      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10">
-        <div className="glass rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
-            <div className="text-2xl md:text-3xl font-extrabold text-blue-800">Rediger spørsmål</div>
-            <div className="flex flex-wrap gap-2 md:gap-3 mt-4 md:mt-0">
-              <button onClick={updateQuestion} className="rounded-lg md:rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-3 py-2 md:px-5 md:py-2 text-white text-sm md:text-base font-bold shadow hover:scale-105 transition">Lagre</button>
-              <button onClick={() => navigate('/home/edit/' + gameId)} className="rounded-lg md:rounded-xl bg-white px-3 py-2 md:px-5 md:py-2 text-blue-700 text-sm md:text-base font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">Avbryt</button>
-              <button onClick={deleteQuestion} className="rounded-lg md:rounded-xl bg-white px-3 py-2 md:px-5 md:py-2 text-red-600 text-sm md:text-base font-semibold shadow border-2 border-red-200 hover:bg-red-50 transition">Slett</button>
-            </div>
-          </div>
+      <div
+        className="relative min-h-screen bg-[#1e1b4b] text-white overflow-hidden"
+        style={{
+          fontFamily:
+            'Inter, "Plus Jakarta Sans", Poppins, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+        }}
+      >
+        <GlobalStyles />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06)_0%,transparent_70%)] animate-pulse-slow" />
+        <ParallaxOrbs />
+        <ParallaxScroll />
 
-          {loading ? (
-            <div className="flex justify-center items-center h-32 text-gray-500">Laster...</div>
-          ) : (
-            <div className="grid grid-cols-1 gap-5">
-              <div className="rounded-xl md:rounded-2xl bg-white p-4 md:p-5 border-2 border-blue-200 shadow-sm">
-                <label className="block text-sm font-semibold text-blue-700 mb-1">Spørsmålstekst</label>
-                <textarea className="w-full max-w-full rounded-lg md:rounded-xl border-2 border-blue-200 px-3 py-2 md:px-4 md:py-3 bg-white/80 shadow focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base" rows={3} placeholder="Skriv spørsmålet her..." value={text} onChange={e => setText(e.target.value)} />
-                <label className="block text-sm font-semibold text-purple-700 mt-4 mb-1">Hint (valgfritt)</label>
-                <input className="w-full max-w-full rounded-lg md:rounded-xl border-2 border-purple-200 px-3 py-2 md:px-4 md:py-3 bg-white/80 shadow focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm md:text-base" placeholder="Kort hint" value={description} onChange={e => setDescription(e.target.value)} />
-              </div>
-
-              <div className="rounded-xl md:rounded-2xl bg-white p-4 md:p-5 border-2 border-blue-200 shadow-sm">
-                <div className="text-lg font-bold text-gray-700 mb-2">Alternativer</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                  {alternatives.map((alternative, index) => (
-                    <label key={index}
-                           onDrop={(e) => onAlternativeDrop(e, index)}
-                           onDragOver={onAlternativeDragOver}
-                           className={`flex items-center gap-2 rounded-lg md:rounded-xl px-3 py-2 border-2 ${String(index+1) === correctAlternative ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
-                      <input
-                        type="radio"
-                        name="correctAlternative"
-                        checked={String(index+1) === correctAlternative}
-                        onChange={() => handleCorrectAlternativeChange(index + 1)}
-                      />
-                      <span className="text-sm font-semibold text-gray-600 w-5">{String.fromCharCode(65+index)}:</span>
-                      <input
-                        className="flex-1 max-w-full rounded-md border border-gray-300 px-2 py-1 bg-white outline-none text-gray-800 text-sm md:text-base focus:ring-2 focus:ring-blue-400"
-                        type="text"
-                        placeholder={`Alternativ ${index + 1}`}
-                        value={alternative || ''}
-                        onChange={(e) => handleAlternativeChange(index, e.target.value)}
-                      />
-                    </label>
-                  ))}
+        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-20 pb-16 space-y-10 mt-10">
+          <section className="rounded-3xl border border-white/10 bg-white/10 p-6 sm:p-8 shadow-[0_25px_80px_rgba(15,23,42,0.55)] backdrop-blur-xl">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-3 max-w-3xl">
+                <p className="text-xs uppercase tracking-[0.3em] text-white/60">Rediger spørsmål</p>
+                <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight text-white">{questionPreview}</h1>
+                {description && (
+                  <p className="text-sm text-white/70 leading-relaxed">{description}</p>
+                )}
+                <div className="flex flex-wrap items-center gap-2 pt-2">
+                  <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+                    Alternativer: {filledAlternatives}/4
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+                    Tid: {time || '—'} sek
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+                    {score || '—'} poeng
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+                    Fasit: {correctLabel ? `Alternativ ${correctLabel}` : 'Ikke valgt'}
+                  </span>
+                  <span className={`inline-flex items-center rounded-full border ${hasImage ? 'border-emerald-300/50 bg-emerald-500/20 text-emerald-100' : 'border-white/15 bg-white/10 text-white/70'} px-3 py-1 text-xs font-semibold`}>
+                    {hasImage ? 'Bilde lagt til' : 'Ingen bilde'}
+                  </span>
                 </div>
               </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={updateQuestion}
+                  className="inline-flex items-center rounded-full bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-900/30 transition hover:-translate-y-0.5 hover:shadow-purple-900/40"
+                >
+                  Lagre
+                </button>
+                <button
+                  onClick={() => navigate('/home/edit/' + gameId)}
+                  className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/20"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={deleteQuestion}
+                  className="inline-flex items-center rounded-full border border-rose-300/50 bg-rose-500/30 px-4 py-2 text-sm font-semibold text-rose-50 transition hover:bg-rose-500/40"
+                >
+                  Slett
+                </button>
+              </div>
+            </div>
+          </section>
 
-              {/* AI-forslag */}
-              <div className="rounded-xl md:rounded-2xl bg-white p-4 md:p-5 border-2 border-emerald-200 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                  <div className="text-lg font-bold text-gray-700">AI-forslag til alternativer</div>
+          {loading ? (
+            <section className="rounded-3xl border border-white/10 bg-white/8 p-6 sm:p-8 shadow-[0_20px_70px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+              <div className="flex h-48 items-center justify-center text-white/70">Laster…</div>
+            </section>
+          ) : (
+            <>
+              <section className="rounded-3xl border border-white/10 bg-white/8 p-6 sm:p-8 shadow-[0_20px_70px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+                <div className="grid gap-6 lg:grid-cols-[1.75fr,1fr]">
+                  <div className="space-y-6">
+                    <div className="rounded-2xl border border-white/12 bg-white/10 p-6 space-y-4 shadow-inner shadow-indigo-900/25">
+                      <label className="block text-sm font-semibold uppercase tracking-[0.2em] text-white/60">
+                        Spørsmålstekst
+                      </label>
+                      <textarea
+                        className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm sm:text-base text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-pink-400/40"
+                        rows={4}
+                        placeholder="Skriv spørsmålet her..."
+                        value={text}
+                        onChange={e => setText(e.target.value)}
+                      />
+                      <label className="block text-sm font-semibold uppercase tracking-[0.2em] text-white/60">
+                        Hint (valgfritt)
+                      </label>
+                      <input
+                        className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm sm:text-base text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+                        placeholder="Kort hint"
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="rounded-2xl border border-white/12 bg-white/10 p-6 shadow-inner shadow-indigo-900/25">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 className="text-lg font-semibold text-white">Alternativer</h3>
+                        <span className="text-xs uppercase tracking-[0.2em] text-white/50">
+                          Velg fasit med radioknappen
+                        </span>
+                      </div>
+                      <div className="mt-4 space-y-3">
+                        {alternatives.map((alternative, index) => {
+                          const isCorrect = String(index + 1) === correctAlternative;
+                          return (
+                            <div
+                              key={index}
+                              onDrop={(e) => onAlternativeDrop(e, index)}
+                              onDragOver={onAlternativeDragOver}
+                              className={`group rounded-2xl border px-4 py-3 transition ${
+                                isCorrect
+                                  ? 'border-emerald-300/60 bg-emerald-400/20 shadow-[0_12px_35px_rgba(16,185,129,0.35)]'
+                                  : 'border-white/12 bg-white/6 hover:border-white/20 hover:bg-white/10'
+                              }`}
+                            >
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                                <input
+                                  type="radio"
+                                  name="correctAlternative"
+                                  checked={isCorrect}
+                                  onChange={() => handleCorrectAlternativeChange(index + 1)}
+                                  className="h-4 w-4 shrink-0 accent-pink-500"
+                                />
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+                                      {String.fromCharCode(65 + index)}
+                                    </span>
+                                    {isCorrect && (
+                                      <span className="inline-flex items-center rounded-full border border-emerald-300/60 bg-emerald-400/25 px-2 py-0.5 text-[10px] font-semibold text-emerald-50">
+                                        Fasit
+                                      </span>
+                                    )}
+                                  </div>
+                                  <input
+                                    className="w-full rounded-2xl border border-white/20 bg-white/90 px-3 py-2 text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+                                    type="text"
+                                    placeholder={`Alternativ ${index + 1}`}
+                                    value={alternative || ''}
+                                    onChange={(e) => handleAlternativeChange(index, e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p className="mt-3 text-xs text-white/60">
+                        Tips: Du kan dra forslag fra AI-panelet inn i feltene, eller skrive manuelt.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="rounded-2xl border border-white/12 bg-white/10 p-6 shadow-inner shadow-indigo-900/25 space-y-6">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/60">
+                          <span>Tid (sek)</span>
+                          <span className="text-white/85 font-semibold">{timeValue} sek</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={TIME_MIN}
+                          max={TIME_MAX}
+                          step={1}
+                          value={timeValue}
+                          onChange={e => setTime(String(e.target.value))}
+                          className="h-2 w-full appearance-none rounded-full bg-white/10 accent-pink-400 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-pink-400 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-pink-400"
+                        />
+                        <input
+                          type="number"
+                          min={TIME_MIN}
+                          max={TIME_MAX}
+                          step={1}
+                          className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm sm:text-base text-white focus:outline-none focus:ring-2 focus:ring-pink-400/40"
+                          value={time}
+                          onChange={e => setTime(e.target.value)}
+                          onBlur={() => setTime(String(timeValue))}
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-white/60">
+                          <span>Poeng</span>
+                          <span className="text-white/85 font-semibold">{scoreValue.toLocaleString('no-NB')} poeng</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={SCORE_MIN}
+                          max={SCORE_MAX}
+                          step={50}
+                          value={scoreValue}
+                          onChange={e => setScore(String(e.target.value))}
+                          className="h-2 w-full appearance-none rounded-full bg-white/10 accent-indigo-400 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-400 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-indigo-400"
+                        />
+                        <input
+                          type="number"
+                          min={SCORE_MIN}
+                          max={SCORE_MAX}
+                          step={50}
+                          className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm sm:text-base text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+                          value={score}
+                          onChange={e => setScore(e.target.value)}
+                          onBlur={() => setScore(String(scoreValue))}
+                        />
+                      </div>
+                      <p className="text-xs text-white/60">
+                        Hold deg til faste poeng og tidsintervaller for mer balanserte quizer.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/12 bg-white/10 p-6 shadow-inner shadow-indigo-900/25 space-y-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-semibold text-white">Bilde (valgfritt)</h3>
+                        <label className="inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white/85 transition hover:bg-white/18">
+                          Last opp
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => {
+                              const f = e.target.files?.[0];
+                              if (f) onUploadImage(f);
+                            }}
+                          />
+                        </label>
+                      </div>
+                      {imageUrl ? (
+                        <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-black/40">
+                          <img src={imageUrl} alt="Spørsmålsbilde" className="h-48 w-full object-cover" />
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-white/20 bg-white/5 p-6 text-center text-sm text-white/60">
+                          Ingen bilde valgt. Brukes for å gi kontekst til spørsmålet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-500/15 via-teal-500/15 to-indigo-500/15 p-6 sm:p-8 shadow-[0_25px_80px_rgba(15,23,42,0.55)] backdrop-blur-xl">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">AI-forslag til alternativer</h2>
+                    <p className="text-sm text-white/70">
+                      Skriv spørsmålet først, velg modell og hent forslag. Dra forslag over i alternativene.
+                    </p>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <select
                       value={aiModel}
                       onChange={(e) => setAiModel(e.target.value)}
-                      className="inline-flex items-center gap-2 rounded-lg border-2 border-blue-300 px-3 py-2 text-sm text-gray-800 hover:bg-blue-50 font-semibold max-w-[2000px] truncate"
+                      className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white/90 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                     >
                       <option value="llama3.2:3b-instruct-q4_K_M">llama3.2:3b-instruct (rask)</option>
                       <option value="llama3.1:8b-instruct-q4_K_M">llama3.1:8b-instruct</option>
                       <option value="deepseek-r1:14b">deepseek-r1:14b (treg)</option>
                     </select>
-                    <button onClick={fetchAiOptions} disabled={aiLoading || !text.trim()} className="rounded-lg px-3 py-2 md:px-4 md:py-2 bg-emerald-600 text-white text-sm md:text-base font-semibold shadow disabled:opacity-50">
+                    <button
+                      onClick={fetchAiOptions}
+                      disabled={aiLoading || !text.trim()}
+                      className="inline-flex items-center rounded-full bg-emerald-500/80 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
                       {aiLoading ? 'Henter…' : 'Foreslå alternativer'}
                     </button>
                   </div>
                 </div>
+
                 {(aiLoading || (aiProgress > 0 && aiProgress < 100)) && (
-                  <div className="w-full h-2 bg-gray-100 rounded overflow-hidden mb-3">
-                    <div className="h-full bg-emerald-500 transition-all duration-100" style={{ width: `${aiProgress}%` }} />
+                  <div className="mt-4 h-2 w-full overflow-hidden rounded-full border border-white/10 bg-black/30">
+                    <div
+                      className="h-full bg-emerald-400/80 transition-all duration-100"
+                      style={{ width: `${aiProgress}%` }}
+                    />
                   </div>
                 )}
-                {aiError && <div className="text-sm text-red-600 mb-2">{aiError}</div>}
-                {!aiLoading && aiSuggestions.length === 0 && <div className="text-sm text-gray-500">Ingen forslag ennå. Skriv spørsmålet og trykk “Foreslå alternativer”.</div>}
+                {aiError && (
+                  <div className="mt-3 rounded-2xl border border-rose-300/40 bg-rose-500/20 px-4 py-3 text-sm font-semibold text-rose-100">
+                    {aiError}
+                  </div>
+                )}
+
+                {!aiLoading && aiSuggestions.length === 0 && (
+                  <div className="mt-4 rounded-2xl border border-dashed border-white/15 bg-white/8 px-4 py-3 text-sm text-white/70">
+                    Ingen forslag ennå. Fyll inn spørsmålet og trykk «Foreslå alternativer».
+                  </div>
+                )}
 
                 {aiSuggestions.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
                     {aiSuggestions.map((sug, i) => (
-                      <div key={i}
-                           draggable
-                           onDragStart={(e) => onSuggestionDragStart(e, sug.text)}
-                           className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 rounded-lg md:rounded-xl px-3 py-2 border-2 ${sug.isCorrect ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-gray-50'} cursor-grab active:cursor-grabbing`}>
-                        <div className="text-sm text-gray-800 truncate sm:max-w-[70%]" title={sug.text}>{sug.text}</div>
-                        <div className="flex flex-wrap gap-2">
+                      <div
+                        key={i}
+                        draggable
+                        onDragStart={(e) => onSuggestionDragStart(e, sug.text)}
+                        className={`group flex flex-col gap-3 rounded-2xl border px-4 py-3 transition ${
+                          sug.isCorrect
+                            ? 'border-emerald-300/60 bg-emerald-400/15'
+                            : 'border-white/15 bg-white/10'
+                        } cursor-grab active:cursor-grabbing`}
+                      >
+                        <div className="text-sm text-white/90" title={sug.text}>
+                          {sug.text}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
-                            className="text-xs px-2 py-1 rounded bg-blue-600 text-white"
+                            className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 transition hover:bg-white/16"
                             onClick={() => {
-                              // Insert into first empty alternative or replace the shortest
                               const emptyIdx = alternatives.findIndex(a => !a || a.trim() === '');
                               const idx = emptyIdx !== -1 ? emptyIdx : 0;
                               handleAlternativeChange(idx, sug.text);
                               if (sug.isCorrect) setCorrectAlternative(String(idx + 1));
                             }}
-                          >Sett inn</button>
+                          >
+                            Sett inn
+                          </button>
                           {sug.isCorrect && (
                             <button
-                              className="text-xs px-2 py-1 rounded border border-green-500 text-green-700"
+                              className="inline-flex items-center rounded-full border border-emerald-300/60 bg-emerald-400/25 px-3 py-1 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-400/35"
                               onClick={() => {
                                 const emptyIdx = alternatives.findIndex(a => !a || a.trim() === '');
                                 const idx = emptyIdx !== -1 ? emptyIdx : 0;
                                 handleAlternativeChange(idx, sug.text);
                                 setCorrectAlternative(String(idx + 1));
                               }}
-                            >Merk korrekt</button>
+                            >
+                              Merk korrekt
+                            </button>
                           )}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="text-xs text-gray-400 mt-2">Tips: Dra og slipp forslag inn i en av boksene over. Grønn ramme = foreslått fasit.</div>
-              </div>
 
-              {/* Bilde for spørsmålet */}
-              <div className="rounded-xl md:rounded-2xl bg-white p-4 md:p-5 border-2 border-blue-200 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-lg font-bold text-gray-700">Bilde (valgfritt)</div>
-                  <label className="rounded-lg bg-white border-2 border-blue-300 px-3 py-2 text-blue-700 text-sm font-semibold shadow hover:bg-blue-50 transition cursor-pointer">
-                    Last opp
-                    <input type="file" accept="image/*" className="hidden" onChange={e => { const f=e.target.files?.[0]; if (f) onUploadImage(f); }} />
-                  </label>
-                </div>
-                {imageUrl ? (
-                  <img src={imageUrl} alt="Spørsmålsbilde" className="rounded-xl w-full max-h-60 object-cover" />
-                ) : (
-                  <div className="text-sm text-gray-500">Ingen bilde valgt.</div>
-                )}
-              </div>
+                <p className="mt-4 text-xs text-white/60">
+                  Tips: AI-forslag kan redigeres etterpå. Dra og slipp direkte til alternativene, eller bruk knappene.
+                </p>
+              </section>
 
-              <div className="rounded-xl md:rounded-2xl bg-white p-4 md:p-5 border-2 border-blue-200 shadow-sm">
-                <label className="block text-sm font-semibold text-purple-700 mt-4 mb-1">Tid (sek)</label>
-                <input className="w-full max-w-full rounded-lg md:rounded-xl border-2 border-purple-200 px-3 py-2 md:px-4 md:py-3 bg-white/80 shadow focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm md:text-base" value={time} onChange={e => setTime(e.target.value)} />
-                <label className="block text-sm font-semibold text-purple-700 mt-4 mb-1">Poeng</label>
-                <input className="w-full max-w-full rounded-lg md:rounded-xl border-2 border-purple-200 px-3 py-2 md:px-4 md:py-3 bg-white/80 shadow focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm md:text-base" value={score} onChange={e => setScore(e.target.value)} />
-              </div>
-
-              {error && <div className="text-red-600 font-semibold">Noe gikk galt eller mangler. Sjekk feltene over.</div>}
-            </div>
+              {error && (
+                <section className="rounded-3xl border border-rose-400/50 bg-rose-500/20 p-5 text-sm font-semibold text-rose-100 shadow-[0_20px_60px_rgba(190,24,93,0.35)]">
+                  Noe gikk galt eller mangler. Kontroller feltene og prøv igjen.
+                </section>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -429,152 +664,3 @@ const EditQuestion = () => {
 };
 
 export default EditQuestion;
-
-const Recent = styled.div`
-  font-size: 1.5rem;
-  color: #05212f70;
-  font-family: sans-serif;
-  padding-left: 31px;
-  padding-bottom: 0px;
-  font-family: "Coll";
-`;
-
-const NameInput = styled.input`
-background: #ffffff;
-border: 2px solid #2d3870;
-margin: 31px;
-border-radius: 5px;
-padding: 8px;
-width: 600px;
-height: 30px;
-color: #2d3870;
-display: flex;
-align-items: center;
-justify-content: center;
-font-family: "Coll";
-font-size: 1rem;
-`;
-
-const DescriptionInput = styled.input`
-background: #ffffff;
-border: 2px solid #2d3870;
-margin: 31px;
-border-radius: 5px;
-padding: 8px;
-width: 600px;
-height: 30px;
-color: #2d3870;
-display: flex;
-align-items: center;
-justify-content: center;
-font-family: "Coll";
-font-size: 1rem;
-`;
-
-const Heading = styled.div`
-  font-size: 2.5rem;
-  #font-weight: bold;
-  color: #05212f;
-  font-family: sans-serif;
-  padding: 31px;
-  padding-bottom: 0px;
-  font-family: "Coll";
-`;
-
-const TextInput = styled.input`
-  background: #ffffff;
-  border: 2px solid #2d3870;
-  margin: 8px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 600px;
-  height: 30px;
-  color: #2d3870;
-  font-family: "Coll";
-  font-size: 1rem;
-`;
-
-const AlternativeContainer = styled.div`
-  display: flex;
-  align-items: center;
-  padding-left: 23px;
-`;
-
-const RadioButton = styled.input`
-  margin: 0 8px;
-`;
-
-const Actions = styled.div`
-  display: flex;
-  padding: 31px;
-  padding-top: 31px;
-`;
-
-const Create = styled.div`
-  background: #2d3870;
-  margin: 0px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  height: 30px;
-  font-weight: bold;
-cursor: pointer;
-  color: white;
-  border: 2px solid #2d3870;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 20px;
-  &:hover {
-    border: 2px solid #2d387050;
-    background: #2d387050;
-  }
-`;
-
-const Cancel = styled.div`
-  background: #ffffff;
-  border: 2px solid #2d3870;
-  margin: 0px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  height: 30px;
-  font-weight: bold;
-  cursor: pointer;
-  color: #2d3870;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  &:hover {
-    border: 2px solid #2d387050;
-  }
-`;
-
-const ErrorMessage = styled.div`
-  color: red;
-  padding: 16px;
-`;
-
-const Delete = styled.div`
-  background: #fc0349;
-  margin: 0px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  height: 30px;
-  font-weight: bold;
-cursor: pointer;
-  color: white;
-  border: 2px solid #fc034970;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 20px;
-  &:hover {
-    border: 2px solid #fc034950;
-    background: #fc034950;
-  }
-`;

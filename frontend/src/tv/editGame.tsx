@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import styled from "styled-components";
 import { get, post, put } from "../api";
 import { Question } from "./game";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import GlobalStyles from '../components/landing/GlobalStyles';
-import AnimatedGradientBackground from '../components/landing/AnimatedGradientBackground';
+import ParallaxOrbs from "../components/ParallaxOrbs";
+import ParallaxScroll from "../components/ParallaxScroll";
 
 export interface GameItem {
   name: String;
@@ -182,8 +182,6 @@ const EditGame = () => {
     setQuestions(prev => prev.map((q: any) => (q.uuid === uuid ? { ...q, ...patch } : q)) as any);
   };
 
-  // No inline save; full edits happen on question page
-
   const restoreQuestion = async (uuid: string) => {
     try {
       await put(`/game_question/restore/${uuid}`, {});
@@ -194,132 +192,282 @@ const EditGame = () => {
     }
   };
 
+  const stats = useMemo(() => {
+    const totalQuestions = questions.length;
+    const totalScore = questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0);
+    const totalTime = questions.reduce((sum, q) => sum + (Number(q.time) || 0), 0);
+    return { totalQuestions, totalScore, totalTime };
+  }, [questions]);
+
   return (
     <>
       <GlobalStyles />
-      <AnimatedGradientBackground />
-      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10">
-        <div className="glass rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
-            <div>
-              <div className="text-2xl md:text-3xl font-extrabold text-blue-800 break-words">{game?.name || 'Quiz'}</div>
-              {game?.description && (
-                <div className="text-gray-600 mt-1 break-words">{game.description}</div>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2 md:gap-3 mt-4 md:mt-0">
-              <button onClick={() => navigate('/home')} className="rounded-lg md:rounded-xl bg-white px-3 py-2 md:px-5 md:py-2 text-gray-700 text-sm md:text-base font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition">
-                Hjem
-              </button>
-              <button onClick={newQuestion} className="rounded-lg md:rounded-xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-3 py-2 md:px-5 md:py-2 text-white text-sm md:text-base font-bold shadow hover:scale-105 transition">
-                Nytt spørsmål
-              </button>
-              <button onClick={() => navigate('/home/update/' + gameId)} className="rounded-lg md:rounded-xl bg-white px-3 py-2 md:px-5 md:py-2 text-blue-700 text-sm md:text-base font-semibold shadow border-2 border-blue-200 hover:bg-blue-50 transition">
-                Rediger quiz
-              </button>
-              <button onClick={deleteGame} className="rounded-lg md:rounded-xl bg-white px-3 py-2 md:px-5 md:py-2 text-red-600 text-sm md:text-base font-semibold shadow border-2 border-red-200 hover:bg-red-50 transition">
-                Slett quiz
-              </button>
-            </div>
-          </div>
+      <div
+        className="relative min-h-screen bg-[#1e1b4b] text-white overflow-hidden"
+        style={{
+          fontFamily:
+            'Inter, "Plus Jakarta Sans", Poppins, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+        }}
+      >
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+        <ParallaxOrbs />
+        <ParallaxScroll />
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-            <div className="text-lg md:text-xl font-semibold text-gray-700">Spørsmål</div>
-            <input
-              className="w-full sm:w-auto px-3 py-2 md:px-4 md:py-2 rounded-lg md:rounded-xl border-2 border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm md:text-base bg-white/80 shadow"
-              placeholder="Søk i spørsmål..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center items-center h-32 text-gray-500">Laster...</div>
-          ) : filteredQuestions.length === 0 ? (
-            <div className="text-gray-600">Ingen spørsmål enda. Klikk «Nytt spørsmål» for å starte.</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-              {displayQuestions.map((q: any, idx: number) => (
-                <div
-                  key={String(q.uuid || idx)}
-                  draggable={!searchTerm.trim()}
-                  onDragStart={() => onDragStart(idx)}
-                  onDragOver={(e) => onDragOver(e as any, idx)}
-                  onDragEnd={onDragEnd}
-                  onDrop={() => onDrop(idx)}
-                  className={`relative rounded-xl md:rounded-2xl bg-white p-4 md:p-5 border-2 ${hoverIndex === idx && dragIndex !== null ? 'border-blue-400' : 'border-blue-200'} hover:border-blue-300 shadow-sm hover:shadow transition`}
+        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-24 pb-16 space-y-10 mt-10">
+          <section className="rounded-3xl border border-white/10 bg-white/10 p-6 sm:p-8 shadow-[0_25px_80px_rgba(15,23,42,0.55)] backdrop-blur-xl">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-3 max-w-3xl">
+                <p className="text-xs uppercase tracking-[0.3em] text-white/60">Rediger quiz</p>
+                <h1 className="text-3xl sm:text-4xl font-extrabold leading-tight text-white">
+                  {game?.name || 'Quiz uten navn'}
+                </h1>
+                {game?.description && (
+                  <p className="text-sm sm:text-base text-white/70 leading-relaxed">{game.description}</p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => navigate('/home')}
+                  className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/20"
                 >
-                  {/* Drag handle and position badge */}
-                  <div className="absolute top-3 left-3 flex items-center gap-2 text-gray-500">
-                    <span className="inline-block rounded-full bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1">Nummer: {idx + 1}</span>
-                    <span className="inline-block rounded-full bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1">Tid: {q.time || '—'}</span>
-                    <span className="inline-block rounded-full bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1">Poeng: {q.score || '—'}</span>
-                  </div>
-                  <div className="flex items-start justify-between mb-2 mt-6">
-                    <div className="text-lg font-bold text-blue-800 line-clamp-2">{q.text || 'Uten tittel'}</div>
-                  </div>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <div className={`rounded-xl px-3 py-2 text-sm ${q.correct === '1' ? 'bg-green-100 text-green-800 font-semibold' : 'bg-gray-100 text-gray-700'}`}>A: {q.alt1 || '—'}</div>
-                    <div className={`rounded-xl px-3 py-2 text-sm ${q.correct === '2' ? 'bg-green-100 text-green-800 font-semibold' : 'bg-gray-100 text-gray-700'}`}>B: {q.alt2 || '—'}</div>
-                    <div className={`rounded-xl px-3 py-2 text-sm ${q.correct === '3' ? 'bg-green-100 text-green-800 font-semibold' : 'bg-gray-100 text-gray-700'}`}>C: {q.alt3 || '—'}</div>
-                    <div className={`rounded-xl px-3 py-2 text-sm ${q.correct === '4' ? 'bg-green-100 text-green-800 font-semibold' : 'bg-gray-100 text-gray-700'}`}>D: {q.alt4 || '—'}</div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <button
-                      className={`rounded bg-white border text-gray-700 text-sm font-semibold px-3 py-1 hover:bg-gray-50 ${idx === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
-                      onClick={() => moveQuestion(idx, idx - 1)}
-                      disabled={idx === 0}
-                      title="Flytt opp"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>
-                    </button>
-                    <button
-                      className={`rounded bg-white border text-gray-700 text-sm font-semibold px-3 py-1 hover:bg-gray-50 ${idx === (displayQuestions.length - 1) ? 'opacity-40 cursor-not-allowed' : ''}`}
-                      onClick={() => moveQuestion(idx, idx + 1)}
-                      disabled={idx === (displayQuestions.length - 1)}
-                      title="Flytt ned"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
-                    </button>
-                    <button
-                      onClick={() => navigate('/home/edit/' + gameId + '/question/' + String(q.uuid))}
-                      className="ml-auto rounded bg-blue-600 text-white text-sm font-semibold px-3 py-1 hover:bg-blue-700"
-                    >
-                      Rediger
-                    </button>
-                  </div>
-                  <div className="text-xs text-gray-400 mt-2">Dra og hold over kort for å forhåndsvise plassering, eller bruk pilene. Slipp for å lagre rekkefølge.</div>
-                </div>
-              ))}
+                  Til oversikt
+                </button>
+                <button
+                  onClick={newQuestion}
+                  className="inline-flex items-center rounded-full bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-900/30 transition hover:-translate-y-0.5 hover:shadow-purple-900/40"
+                >
+                  Nytt spørsmål
+                </button>
+                <button
+                  onClick={() => navigate('/home/update/' + gameId)}
+                  className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/20"
+                >
+                  Rediger metadata
+                </button>
+                <button
+                  onClick={deleteGame}
+                  className="inline-flex items-center rounded-full border border-rose-300/50 bg-rose-500/25 px-4 py-2 text-sm font-semibold text-rose-50 transition hover:bg-rose-500/35"
+                >
+                  Slett quiz
+                </button>
+              </div>
             </div>
-          )}
 
-          {error && <div className="text-red-600 font-semibold mt-4">Det har oppstått en feil...</div>}
-          <div className="mt-8">
-            <button
-              onClick={() => { const ns = !showTrash; setShowTrash(ns); if (ns) getDeletedQuestions(gameId || ''); }}
-              className="rounded-xl bg-white px-5 py-2 text-gray-700 font-semibold shadow border-2 border-gray-200 hover:bg-gray-50 transition"
-            >
-              {showTrash ? 'Skjul papirkurv' : 'Vis papirkurv'}
-            </button>
-          </div>
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/15 bg-white/8 p-4 text-center shadow-inner shadow-indigo-900/20">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Spørsmål</p>
+                <p className="mt-2 text-2xl font-bold text-white">{stats.totalQuestions}</p>
+              </div>
+              <div className="rounded-2xl border border-white/15 bg-white/8 p-4 text-center shadow-inner shadow-indigo-900/20">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Total tid (sek)</p>
+                <p className="mt-2 text-2xl font-bold text-white">{stats.totalTime}</p>
+              </div>
+              <div className="rounded-2xl border border-white/15 bg-white/8 p-4 text-center shadow-inner shadow-indigo-900/20">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">Poengsum</p>
+                <p className="mt-2 text-2xl font-bold text-white">{stats.totalScore}</p>
+              </div>
+            </div>
 
-          {showTrash && (
-            <div className="mt-4">
-              <div className="text-lg font-semibold text-gray-700 mb-2">Slettede spørsmål</div>
-              {deletedQuestions.length === 0 ? (
-                <div className="text-gray-500">Ingen slettede spørsmål</div>
+            <div className="mt-8 relative">
+              <div className="h-[2px] w-full bg-[linear-gradient(90deg,transparent_0%,rgba(99,102,241,0.85)_12%,rgba(168,85,247,0.85)_28%,rgba(245,158,11,1)_50%,rgba(236,72,153,0.9)_72%,rgba(99,102,241,0.85)_88%,transparent_100%)]" />
+              <div
+                className="pointer-events-none absolute -top-4 left-0 right-0 h-12 bg-[linear-gradient(90deg,transparent,rgba(99,102,241,0.4)_12%,rgba(168,85,247,0.4)_28%,rgba(245,158,11,0.55)_50%,rgba(236,72,153,0.4)_72%,rgba(99,102,241,0.4)_88%,transparent)] blur-2xl"
+                aria-hidden
+              />
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-white/8 p-6 sm:p-8 shadow-[0_20px_70px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Spørsmål</h2>
+                <p className="text-sm text-white/60">
+                  Dra kort for å endre rekkefølge, eller bruk pilene for presist grep.
+                </p>
+              </div>
+              <div className="relative w-full sm:w-auto">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/50">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 20l-5.6-5.6a7 7 0 10-1.4 1.4L20 21l1-1zM10 16a6 6 0 110-12 6 6 0 010 12z" />
+                  </svg>
+                </span>
+                <input
+                  className="w-full rounded-full border border-white/15 bg-white/10 py-2.5 pl-11 pr-5 text-sm font-medium text-white placeholder:text-white/50 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-pink-400/40"
+                  placeholder="Søk i spørsmål…"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="mt-6">
+              {loading ? (
+                <div className="flex h-32 items-center justify-center text-white/60">Laster…</div>
+              ) : filteredQuestions.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-white/70">
+                  Ingen spørsmål enda. Klikk «Nytt spørsmål» for å starte.
+                </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {deletedQuestions.map((dq: any) => (
-                    <div key={String(dq.uuid)} className="rounded-2xl bg-white p-4 border-2 border-gray-200">
-                      <div className="font-semibold text-gray-800">{dq.text || 'Uten tittel'}</div>
-                      <button onClick={() => restoreQuestion(String(dq.uuid))} className="mt-2 rounded bg-green-600 text-white text-sm font-semibold px-3 py-1 hover:bg-green-700">Gjenopprett</button>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  {displayQuestions.map((q: any, idx: number) => (
+                    <div
+                      key={String(q.uuid || idx)}
+                      draggable={!searchTerm.trim()}
+                      onDragStart={() => onDragStart(idx)}
+                      onDragOver={(e) => onDragOver(e as any, idx)}
+                      onDragEnd={onDragEnd}
+                      onDrop={() => onDrop(idx)}
+                      className={`group relative rounded-2xl border border-white/12 bg-white/10 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.45)] transition hover:border-white/20 hover:bg-white/14 ${
+                        hoverIndex === idx && dragIndex !== null ? 'border-pink-400/60 bg-white/16' : ''
+                      }`}
+                    >
+                      <div className="absolute inset-x-0 -top-1 mx-5 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 transition group-hover:opacity-100" />
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-2">
+                          <div className="inline-flex items-center gap-2">
+                            <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-white/70">
+                              #{idx + 1}
+                            </span>
+                            <span className="inline-flex items-center rounded-full border border-indigo-300/40 bg-indigo-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-100">
+                              {q.time || '—'} sek
+                            </span>
+                            <span className="inline-flex items-center rounded-full border border-amber-300/40 bg-amber-400/20 px-2.5 py-0.5 text-[11px] font-semibold text-amber-100">
+                              {q.score || '—'} poeng
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-semibold leading-snug text-white line-clamp-3">
+                            {q.text || 'Uten tittel'}
+                          </h3>
+                          {q.description && (
+                            <p className="text-sm text-white/65 line-clamp-2">{q.description}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => navigate('/home/edit/' + gameId + '/question/' + String(q.uuid))}
+                          className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:bg-white/20"
+                        >
+                          Rediger
+                        </button>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2 text-sm font-medium">
+                        {(['alt1', 'alt2', 'alt3', 'alt4'] as const).map((field, choiceIdx) => {
+                          const isCorrect = String(q.correct) === String(choiceIdx + 1);
+                          const label = ['A', 'B', 'C', 'D'][choiceIdx];
+                          return (
+                            <div
+                              key={field}
+                              className={`rounded-xl border px-3 py-2 ${
+                                isCorrect
+                                  ? 'border-emerald-300/45 bg-emerald-400/20 text-emerald-100 shadow-inner shadow-emerald-900/25'
+                                  : 'border-white/12 bg-white/6 text-white/80'
+                              }`}
+                            >
+                              {label}: {q[field] || '—'}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="mt-4 flex items-center gap-2 text-xs text-white/60">
+                        <div className="inline-flex items-center rounded-full border border-white/15 bg-white/8 px-2 py-1">
+                          <span>Dra for å flytte</span>
+                        </div>
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            className={`rounded-full border border-white/15 bg-white/8 p-1 text-white transition hover:bg-white/14 ${
+                              idx === 0 ? 'opacity-40 cursor-not-allowed' : ''
+                            }`}
+                            onClick={() => moveQuestion(idx, idx - 1)}
+                            disabled={idx === 0}
+                            title="Flytt opp"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M7 14l5-5 5 5z" />
+                            </svg>
+                          </button>
+                          <button
+                            className={`rounded-full border border-white/15 bg-white/8 p-1 text-white transition hover:bg-white/14 ${
+                              idx === displayQuestions.length - 1 ? 'opacity-40 cursor-not-allowed' : ''
+                            }`}
+                            onClick={() => moveQuestion(idx, idx + 1)}
+                            disabled={idx === displayQuestions.length - 1}
+                            title="Flytt ned"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M7 10l5 5 5-5z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
+
+            {error && (
+              <div className="mt-6 rounded-2xl border border-rose-400/40 bg-rose-500/20 p-4 text-sm font-semibold text-rose-100">
+                Det oppstod en feil ved lasting av spørsmål. Prøv igjen senere.
+              </div>
+            )}
+
+            <div className="mt-8">
+              <button
+                onClick={() => {
+                  const ns = !showTrash;
+                  setShowTrash(ns);
+                  if (ns) getDeletedQuestions(gameId || '');
+                }}
+                className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-5 py-2 text-sm font-semibold text-white/85 transition hover:bg-white/20"
+              >
+                {showTrash ? 'Skjul papirkurv' : 'Vis papirkurv'}
+              </button>
+            </div>
+          </section>
+
+          {showTrash && (
+            <section className="rounded-3xl border border-white/10 bg-white/8 p-6 sm:p-8 shadow-[0_20px_70px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Slettede spørsmål</h2>
+                  <p className="text-sm text-white/60">
+                    Gjenopprett spørsmål som er fjernet ved et uhell.
+                  </p>
+                </div>
+                <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
+                  Antall: {deletedQuestions.length}
+                </span>
+              </div>
+
+              <div className="mt-5">
+                {deletedQuestions.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-white/65">
+                    Ingen slettede spørsmål.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {deletedQuestions.map((dq: any) => (
+                      <div
+                        key={String(dq.uuid)}
+                        className="rounded-2xl border border-white/12 bg-white/10 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.35)]"
+                      >
+                        <div className="text-sm font-semibold text-white line-clamp-3">
+                          {dq.text || 'Uten tittel'}
+                        </div>
+                        <button
+                          onClick={() => restoreQuestion(String(dq.uuid))}
+                          className="mt-4 inline-flex items-center rounded-full bg-emerald-500/80 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-emerald-500"
+                        >
+                          Gjenopprett
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
           )}
         </div>
       </div>
@@ -328,146 +476,3 @@ const EditGame = () => {
 };
 
 export default EditGame;
-
-const Container = styled.div`
-  display: flex;
-  margin: 10px;
-  margin-top: 0px;
-
-`;
-
-const Heading = styled.div`
-  font-size: 2.5rem;
-  #font-weight: bold;
-  color: #05212f;
-  font-family: sans-serif;
-  padding: 31px;
-  padding-bottom: 0px;
-  font-family: "Coll";
-`;
-
-const Recent = styled.div`
-  font-size: 1.5rem;
-  color: #05212f70;
-  font-family: sans-serif;
-  padding-left: 31px;
-  padding-bottom: 0px;
-  font-family: "Coll";
-`;
-
-const Desc = styled.div`
-  font-size: 1rem;
-  #font-weight: bold;
-  color: #05212f;
-  font-family: sans-serif;
-  padding: 31px;
-  padding-top: 0px;
-
-  font-family: "Coll";
-`;
-
-const QuizActions = styled.div`
-  display: flex;
-  padding: 31px;
-  padding-top: 5px;
-`;
-
-const QuestionsList = styled.div`
-  margin-top: 0px;
-  width: 80%;
-  max-width: 1000px;
-  padding: 21px;
-`;
-
-const QuestionContainer = styled.div`
-  
-  border-radius: 8px;
-  border: 2px solid #2d3870;
-  padding: 16px;
-  margin-bottom: 16px;
-  cursor: pointer;
-  &:hover {
-    border: 2px solid #2d387050;
-  }
-`;
-
-const QuestionText = styled.div`
-  font-size: 1.2rem;
-  color: #05212f;
-  font-weight: bold;
-  margin-bottom: 8px;
-`;
-
-const QuestionDescription = styled.div`
-  color: #2d3870;
-`;
-
-const QuestionMeta = styled.div`
-  color: #2d3870;
-  text-align: right;
-`;
-
-const Play = styled.div`
-  background: #2d3870;
-  margin: 0px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  height: 30px;
-  font-weight: bold;
-cursor: pointer;
-  color: white;
-  border: 2px solid #2d3870;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 20px;
-  &:hover {
-    border: 2px solid #2d387050;
-    background: #2d387050;
-  }
-`;
-
-const Home = styled.div`
-  background: #ffffff;
-  border: 2px solid #2d3870;
-  margin: 0px;
-  margin-right: 20px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  height: 30px;
-  font-weight: bold;
-  cursor: pointer;
-  color: #2d3870;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  &:hover {
-    border: 2px solid #2d387050;
-  }
-`;
-
-const Delete = styled.div`
-  background: #fc0349;
-  margin: 0px;
-  border-radius: 5px;
-  padding: 8px;
-  width: 120px;
-  height: 30px;
-  font-weight: bold;
-cursor: pointer;
-  color: white;
-  border: 2px solid #fc034970;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 20px;
-  &:hover {
-    border: 2px solid #fc034950;
-    background: #fc034950;
-  }
-`;

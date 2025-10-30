@@ -65,15 +65,15 @@ Tips for ytelse og «varm» modell
 - `DATABASE_URL` (MySQL, settes i compose)
 - MySQL (brukes av Prisma‐clienten via `DATABASE_URL`): `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`
 
-## Media (MinIO / S3)
+## Media (MinIO)
 - MinIO kjører som egen service eksponert via Traefik på `https://media.tavl.no`.
 - Init‑jobben oppretter bøtta `tavl-media`, åpner public GET, og CORS (GET/PUT) for `https://tavl.no` og `https://ai.tavl.no`.
 - Backend (mothership) trenger disse env‑variablene (se toppnivå `docker-compose.yml`):
-  - `S3_ENDPOINT=https://media.tavl.no`
-  - `S3_REGION=us-east-1`
-  - `S3_BUCKET=tavl-media`
-  - `S3_ACCESS_KEY` og `S3_SECRET_KEY` (samme som MinIO root user/pass)
-  - `S3_FORCE_PATH_STYLE=true`
+  - `MINIO_ENDPOINT=https://media.tavl.no`
+  - `MINIO_REGION=us-east-1`
+  - `MINIO_BUCKET=tavl-media`
+  - `MINIO_ACCESS_KEY` og `MINIO_SECRET_KEY` (samme som MinIO root user/pass)
+  - `MINIO_FORCE_PATH_STYLE=true`
  - Frontend laster opp via presign: POST `/media/presign` → PUT direkte til MinIO → lagrer `publicUrl` i DB.
 
 ## Databasen
