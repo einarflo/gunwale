@@ -11,7 +11,7 @@ import mockup from '../images/tavl-placeholder.jpg';
 import Modal from 'react-modal';
 import randomstring from 'randomstring';
 import { useKeycloak } from '../auth/KeycloakProvider';
-import type { Question } from './game';
+import type { Question } from '../tv/game';
 
 interface GameLite {
   uuid?: string;

@@ -1,4 +1,4 @@
-import { Game, Spinner } from "./selectGame";
+import { Game, Spinner } from "../tv/selectGame";
 import Modal from "react-modal";
 import { useEffect, useState } from "react";
 import styled from "styled-components";

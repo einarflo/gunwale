@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { get, post, put } from "../api";
-import { Question } from "./game";
+import { Question } from "../tv/game";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import GlobalStyles from '../components/landing/GlobalStyles';
