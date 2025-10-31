@@ -8,6 +8,7 @@ import { mediaRouter } from './routes/media';
 import { billingRouter, stripeWebhookHandler } from './routes/billing';
 import { gameInstancePlayersRouter } from './routes/gameInstancePlayers';
 import { gameInstanceAnswersRouter } from './routes/gameInstanceAnswers';
+import { usersRouter } from './routes/users';
 import { requireAuth } from './middleware/auth';
 import { logger } from './lib/logger';
 import crypto from 'crypto';
@@ -78,6 +79,7 @@ export function createApp() {
   app.use('/favorites', favoritesRouter);
   app.use('/tags', tagsRouter);
   app.use('/media', mediaRouter);
+  app.use('/users', usersRouter);
   // game_question routes are wired below
 
   return app;

@@ -1,11 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { requireAuth, getUserId } from '../middleware/auth';
 import { prisma } from '../lib/prisma';
 import sharp from 'sharp';
 import { Readable } from 'stream';
 import { logger } from '../lib/logger';
+import https from 'https';
 
 export const mediaRouter = Router();
 
@@ -18,6 +20,7 @@ const storageConfig = {
   accessKey: env.MINIO_ACCESS_KEY || 'minioadmin',
   secretKey: env.MINIO_SECRET_KEY || 'minioadmin',
   forcePathStyle: String(env.MINIO_FORCE_PATH_STYLE ?? 'true').toLowerCase() === 'true',
+  allowInsecure: String(env.MINIO_ALLOW_INSECURE ?? 'true').toLowerCase() === 'true',
 };
 
 logger.info('media.storage.config', {
@@ -25,6 +28,7 @@ logger.info('media.storage.config', {
   region: storageConfig.region,
   bucket: storageConfig.bucket,
   forcePathStyle: storageConfig.forcePathStyle,
+  allowInsecure: storageConfig.allowInsecure,
   hasCustomCredentials: Boolean(env.MINIO_ACCESS_KEY || env.MINIO_SECRET_KEY),
 });
 
@@ -32,11 +36,19 @@ if (!(env.MINIO_ACCESS_KEY || env.MINIO_SECRET_KEY)) {
   logger.warn('MinIO credentials not provided, using defaults (minioadmin). Override with MINIO_ACCESS_KEY/MINIO_SECRET_KEY for production.');
 }
 
+const httpsAgent = storageConfig.allowInsecure
+  ? new https.Agent({ rejectUnauthorized: false })
+  : undefined;
+if (storageConfig.allowInsecure) {
+  logger.warn('MinIO TLS verification disabled (MINIO_ALLOW_INSECURE=true). Only use this in development.');
+}
+
 const s3 = new S3Client({
   region: storageConfig.region,
   endpoint: storageConfig.endpoint,
   credentials: { accessKeyId: storageConfig.accessKey, secretAccessKey: storageConfig.secretKey },
   forcePathStyle: storageConfig.forcePathStyle,
+  requestHandler: httpsAgent ? new NodeHttpHandler({ httpsAgent }) : undefined,
 });
 
 function extFromType(ct: string) {

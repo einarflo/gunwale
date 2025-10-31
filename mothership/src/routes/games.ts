@@ -6,6 +6,15 @@ import crypto from 'crypto';
 
 export const gamesRouter = Router();
 
+const toNumber = (value: number | bigint | null | undefined): number => {
+  if (value == null) return 0;
+  try {
+    return typeof value === 'bigint' ? Number(value) : value;
+  } catch {
+    return 0;
+  }
+};
+
 // List games for current user (by token sub)
 gamesRouter.get('/', requireAuth(), async (req: Request, res: Response) => {
   const userId = getUserId(req);
@@ -136,6 +145,54 @@ gamesRouter.get('/public', async (req: Request, res: Response) => {
 
     const games = await prisma.game.findMany({ where });
 
+    const creatorIds = Array.from(
+      new Set(
+        games
+          .map(g => (g.created_by ? String(g.created_by) : null))
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+    const creatorMap = new Map<
+      string,
+      {
+        userId: string;
+        username: string;
+        level: number;
+        xp: number;
+        totalPoints: number;
+        playedQuizzes: number;
+        createdQuizzes: number;
+        premiumSince: Date | null;
+      }
+    >();
+    if (creatorIds.length) {
+      const creators = await prisma.users.findMany({
+        where: { user_id: { in: creatorIds } },
+        select: {
+          user_id: true,
+          username: true,
+          level: true,
+          xp: true,
+          total_points: true,
+          played_quizzes: true,
+          created_quizzes: true,
+          premium_since: true,
+        },
+      });
+      for (const creator of creators) {
+        creatorMap.set(creator.user_id, {
+          userId: creator.user_id,
+          username: creator.username,
+          level: toNumber(creator.level),
+          xp: toNumber(creator.xp),
+          totalPoints: toNumber(creator.total_points),
+          playedQuizzes: toNumber(creator.played_quizzes),
+          createdQuizzes: toNumber(creator.created_quizzes),
+          premiumSince: creator.premium_since ?? null,
+        });
+      }
+    }
+
     // Collect tags for all returned games in a single query
     const uuids = games.map(g => g.uuid).filter(Boolean) as string[];
     const tagMap = new Map<string, Array<{ slug: string; name: string }>>();
@@ -184,13 +241,178 @@ gamesRouter.get('/public', async (req: Request, res: Response) => {
           else difficulty = 'hard';
         }
         const tags = tagMap.get(g.uuid) || [];
-        return { ...g, qcount, favCount, plays, tags, participants, avgScore, difficulty } as any;
+        const creatorInfo = g.created_by ? creatorMap.get(String(g.created_by)) : undefined;
+        return {
+          ...g,
+          qcount,
+          favCount,
+          plays,
+          tags,
+          participants,
+          avgScore,
+          difficulty,
+          creator_username: creatorInfo?.username ?? g.created_by_name ?? null,
+          creator_profile: creatorInfo
+            ? {
+                userId: creatorInfo.userId,
+                username: creatorInfo.username,
+                level: creatorInfo.level,
+                xp: creatorInfo.xp,
+                totalPoints: creatorInfo.totalPoints,
+                playedQuizzes: creatorInfo.playedQuizzes,
+                createdQuizzes: creatorInfo.createdQuizzes,
+                premiumSince: creatorInfo.premiumSince,
+              }
+            : null,
+        } as any;
       })
     );
     res.json(enriched);
   } catch (err: any) {
     logger.error('Failed to list public games', { error: err.message });
     res.status(500).json({ message: 'Failed to list public games', error: err.message });
+  }
+});
+
+gamesRouter.get('/recent-played', requireAuth(), async (req: Request, res: Response) => {
+  const userId = getUserId(req);
+  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+  try {
+    const instances = await prisma.$queryRaw<Array<{ id: number; game_id: string | null; created_at: string | null; starttime: string | null }>>`
+      SELECT gi.id, gi.game_id, gi.created_at, gi.starttime
+      FROM game_instance gi
+      WHERE gi.created_by = ${userId}
+        AND gi.game_id IS NOT NULL
+        AND gi.game_id <> ''
+        AND (gi.is_deleted IS NULL OR gi.is_deleted <> '1')
+      ORDER BY gi.id DESC
+      LIMIT 400
+    `;
+
+    const ordered: Array<{ gameId: string; lastPlayedRaw: string | null }>
+      = [];
+    const seen = new Set<string>();
+    for (const inst of instances) {
+      const gid = inst.game_id ? String(inst.game_id) : '';
+      if (!gid || seen.has(gid)) continue;
+      seen.add(gid);
+      const last = inst.created_at && inst.created_at.trim().length ? inst.created_at : (inst.starttime || null);
+      ordered.push({ gameId: gid, lastPlayedRaw: last });
+      if (ordered.length >= 100) break;
+    }
+
+    if (!ordered.length) return res.json([]);
+
+    const games = await prisma.game.findMany({ where: { uuid: { in: ordered.map(o => o.gameId) } } });
+    const gameMap = new Map<string, typeof games[number]>();
+    for (const g of games) {
+      if (g.uuid) gameMap.set(g.uuid, g);
+    }
+
+    const creatorIds = Array.from(new Set(ordered.flatMap(({ gameId }) => {
+      const g = gameMap.get(gameId);
+      return g?.created_by ? [String(g.created_by)] : [];
+    })));
+    const creatorMap = new Map<string, {
+      userId: string;
+      username: string;
+      level: number;
+      xp: number;
+      totalPoints: number;
+      playedQuizzes: number;
+      createdQuizzes: number;
+      premiumSince: Date | null;
+    }>();
+    if (creatorIds.length) {
+      const creators = await prisma.users.findMany({
+        where: { user_id: { in: creatorIds } },
+        select: {
+          user_id: true,
+          username: true,
+          level: true,
+          xp: true,
+          total_points: true,
+          played_quizzes: true,
+          created_quizzes: true,
+          premium_since: true,
+        },
+      });
+      for (const c of creators) {
+        creatorMap.set(c.user_id, {
+          userId: c.user_id,
+          username: c.username,
+          level: Number(c.level ?? 0),
+          xp: Number(c.xp ?? 0),
+          totalPoints: Number(c.total_points ?? 0),
+          playedQuizzes: Number(c.played_quizzes ?? 0),
+          createdQuizzes: Number(c.created_quizzes ?? 0),
+          premiumSince: c.premium_since ?? null,
+        });
+      }
+    }
+
+    const results = await Promise.all(
+      ordered.map(async ({ gameId, lastPlayedRaw }) => {
+        const g = gameMap.get(gameId);
+        if (!g) return null;
+
+        let qcount = 0;
+        let plays = 0;
+        try {
+          qcount = await prisma.game_question.count({
+            where: { game_id: g.uuid, OR: [{ deleted: null }, { NOT: { deleted: '1' } }] },
+          });
+        } catch (_) {}
+        try {
+          plays = await prisma.game_instance.count({
+            where: { game_id: g.uuid, OR: [{ is_deleted: null }, { NOT: { is_deleted: '1' } }] },
+          });
+        } catch (_) {}
+
+        const tagRows = await prisma.game_tags.findMany({
+          where: { game_id: g.uuid },
+          include: { tags: true },
+        }).catch(() => []);
+        const tags = tagRows
+          .map(tr => tr.tags)
+          .filter(Boolean)
+          .map(tag => ({ slug: tag.slug, name: tag.name }));
+
+        const creatorInfo = g.created_by ? creatorMap.get(String(g.created_by)) : undefined;
+
+        return {
+          ...g,
+          qcount,
+          plays,
+          tags,
+          creator_username: creatorInfo?.username ?? g.created_by_name ?? null,
+          creator_profile: creatorInfo ? {
+            userId: creatorInfo.userId,
+            username: creatorInfo.username,
+            level: creatorInfo.level,
+            xp: creatorInfo.xp,
+            totalPoints: creatorInfo.totalPoints,
+            playedQuizzes: creatorInfo.playedQuizzes,
+            createdQuizzes: creatorInfo.createdQuizzes,
+            premiumSince: creatorInfo.premiumSince,
+          } : null,
+          lastPlayedAt: lastPlayedRaw,
+        } as any;
+      })
+    );
+
+    const sorted = results
+      .filter(Boolean)
+      .sort((a: any, b: any) => {
+        const aDate = a?.lastPlayedAt ? new Date(a.lastPlayedAt).getTime() : 0;
+        const bDate = b?.lastPlayedAt ? new Date(b.lastPlayedAt).getTime() : 0;
+        return bDate - aDate;
+      });
+
+    res.json(sorted);
+  } catch (err: any) {
+    logger.error('Failed to list recent games', { userId, error: err?.message || err });
+    res.status(500).json({ message: 'Failed to list recent games', error: err?.message || String(err) });
   }
 });
 

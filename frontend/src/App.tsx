@@ -20,6 +20,7 @@ import ProfilePage from './tv/profilePage';
 import TVGamePlayView from './tv/game';
 import UpgradesPage from './tv/upgradesPage';
 import GamePublic from './tv/gamePublic';
+import CreatorPublic from './tv/creatorPublic';
 import { loadPhoneSession, clearPhoneSession } from './storage/session';
 import { get } from './api';
 import { connectSocket } from './api/socket';
@@ -198,6 +199,7 @@ const App = () => {
       />
       {/* Public routes */}
       <Route path="/discover" element={<Discover />} />
+      <Route path="/creator/:userId" element={<CreatorPublic />} />
       <Route path="/game/:gameId" element={<GamePublic />} />
 
       <Route path="/home" element={

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload, JwtHeader, SigningKeyCallback } from 'jsonwebtoken';
 import { logger } from '../lib/logger';
+import { ensureUserProfile } from '../services/userProfile';
 import jwksClient from 'jwks-rsa';
 import https from 'https';
 
@@ -71,6 +72,26 @@ export const requireAuth = () => {
       const decodedAny = decoded as any;
       const clients = Object.keys(decodedAny?.resource_access || {});
       logger.debug('Auth token decoded', { sub: decodedAny?.sub, aud: audList, clients });
+      const userId = decodedAny?.sub || decodedAny?.email || decodedAny?.preferred_username;
+      if (!userId) {
+        logger.error('Decoded token missing subject identifier', { aud: audList });
+        return res.status(401).json({ message: 'Invalid token', error: 'Missing subject identifier' });
+      }
+      try {
+        const realmRoles: string[] = Array.isArray(decodedAny?.realm_access?.roles) ? decodedAny.realm_access.roles : [];
+        const isPremium = realmRoles.includes('premium');
+        const profile = await ensureUserProfile({
+          userId,
+          username: decodedAny?.preferred_username || decodedAny?.nickname || decodedAny?.name || decodedAny?.email,
+          email: decodedAny?.email,
+          name: decodedAny?.name,
+          isPremium,
+        });
+        (req as any).userProfile = profile;
+      } catch (profileError: any) {
+        logger.error('Failed to ensure user profile', { userId, error: profileError?.message || profileError });
+        return res.status(500).json({ message: 'Failed to ensure user profile', error: profileError?.message || String(profileError) });
+      }
       (req as any).user = decoded;
       return next();
     } catch (err: any) {

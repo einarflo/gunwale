@@ -9,13 +9,13 @@ import ParallaxScroll from "../components/ParallaxScroll";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { keycloak, username, userId, isPremium, logout } = useKeycloak();
+  const { keycloak, username, userId, isPremium, logout, profile: tavlProfile, profileLoading } = useKeycloak();
   const { t } = useI18n();
   const [portalLoading, setPortalLoading] = useState(false);
 
   const tokenParsed = keycloak?.tokenParsed as any | undefined;
 
-  const profile = useMemo(() => {
+  const tokenProfile = useMemo(() => {
     if (!tokenParsed) return {} as any;
     const roles: string[] = tokenParsed?.realm_access?.roles || [];
     const resourceRoles = tokenParsed?.resource_access || {};
@@ -73,31 +73,39 @@ const ProfilePage = () => {
   }, [t]);
 
   const displayName =
-    profile.name ||
+    tavlProfile?.name ||
+    tavlProfile?.username ||
+    tokenProfile.name ||
     username ||
-    profile.preferred_username ||
-    (profile.email ? profile.email.split("@")[0] : "") ||
+    tokenProfile.preferred_username ||
+    (tokenProfile.email ? tokenProfile.email.split("@")[0] : "") ||
     "";
   const avatarLetter = (displayName?.trim?.()[0] || "U").toUpperCase();
+  const statsLoading = profileLoading && !tavlProfile;
+  const formatMetric = useCallback((value: number | undefined | null) => {
+    if (statsLoading) return "…";
+    if (value == null) return "—";
+    return value.toLocaleString();
+  }, [statsLoading]);
   const detailItems = [
-    { label: t("profile.details.name"), value: profile.name || "—" },
-    { label: t("profile.details.username"), value: profile.preferred_username || "—" },
-    { label: t("profile.details.email"), value: profile.email || "—" },
+    { label: t("profile.details.name"), value: tavlProfile?.name || tokenProfile.name || "—" },
+    { label: t("profile.details.username"), value: tavlProfile?.username || tokenProfile.preferred_username || "—" },
+    { label: t("profile.details.email"), value: tavlProfile?.email || tokenProfile.email || "—" },
     {
       label: t("profile.details.roles"),
-      value: (profile.roles || []).length ? (profile.roles || []).join(", ") : "—",
+      value: (tokenProfile.roles || []).length ? (tokenProfile.roles || []).join(", ") : "—",
     },
     {
       label: t("profile.details.groups"),
-      value: (profile.groups || []).length ? (profile.groups || []).join(", ") : "—",
+      value: (tokenProfile.groups || []).length ? (tokenProfile.groups || []).join(", ") : "—",
     },
-    { label: t("profile.details.issuer"), value: profile.iss || "—" },
+    { label: t("profile.details.issuer"), value: tokenProfile.iss || "—" },
     {
       label: t("profile.details.audience"),
-      value: Array.isArray(profile.aud) ? profile.aud.join(", ") : profile.aud || "—",
+      value: Array.isArray(tokenProfile.aud) ? tokenProfile.aud.join(", ") : tokenProfile.aud || "—",
     },
-    { label: t("profile.details.issued"), value: profile.iat ? profile.iat.toLocaleString() : "—" },
-    { label: t("profile.details.expires"), value: profile.exp ? profile.exp.toLocaleString() : "—" },
+    { label: t("profile.details.issued"), value: tokenProfile.iat ? tokenProfile.iat.toLocaleString() : "—" },
+    { label: t("profile.details.expires"), value: tokenProfile.exp ? tokenProfile.exp.toLocaleString() : "—" },
   ];
 
   return (
@@ -150,9 +158,9 @@ const ProfilePage = () => {
                     {t("profile.subscription.subtitle")}
                   </p>
                   <p className="text-2xl font-bold text-white/95">{displayName || t("profile.details.name")}</p>
-                  <p className="text-white/70">{profile.email || t("profile.details.email")}</p>
+                  <p className="text-white/70">{tavlProfile?.email || tokenProfile.email || t("profile.details.email")}</p>
                   <div className="flex flex-wrap gap-2 pt-2">
-                    {(profile.groups || []).slice(0, 3).map((group: string) => (
+                    {(tokenProfile.groups || []).slice(0, 3).map((group: string) => (
                       <span
                         key={group}
                         className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/70 backdrop-blur"
@@ -160,9 +168,9 @@ const ProfilePage = () => {
                         {group}
                       </span>
                     ))}
-                    {(profile.groups || []).length > 3 && (
+                    {(tokenProfile.groups || []).length > 3 && (
                       <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/60">
-                        +{(profile.groups || []).length - 3} {t("profile.details.groups")}
+                        +{(tokenProfile.groups || []).length - 3} {t("profile.details.groups")}
                       </span>
                     )}
                   </div>
@@ -172,19 +180,34 @@ const ProfilePage = () => {
               <div className="mt-10 grid gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.details.roles")}</p>
-                  <p className="mt-2 text-2xl font-bold text-white/90">{(profile.roles || []).length}</p>
+                  <p className="mt-2 text-2xl font-bold text-white/90">{(tokenProfile.roles || []).length}</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.details.groups")}</p>
-                  <p className="mt-2 text-2xl font-bold text-white/90">{(profile.groups || []).length}</p>
+                  <p className="mt-2 text-2xl font-bold text-white/90">{(tokenProfile.groups || []).length}</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/50">
                     {t("profile.details.issued")}
                   </p>
                   <p className="mt-2 text-sm font-semibold text-white/85">
-                    {profile.iat ? profile.iat.toLocaleDateString() : "—"}
+                    {tokenProfile.iat ? tokenProfile.iat.toLocaleDateString() : "—"}
                   </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.stats.level") || "Level"}</p>
+                  <p className="mt-2 text-2xl font-bold text-white/90">{formatMetric(tavlProfile?.level ?? null)}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.stats.xp") || "XP"}</p>
+                  <p className="mt-2 text-2xl font-bold text-white/90">{formatMetric(tavlProfile?.xp ?? null)}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.stats.totalPoints") || "Points"}</p>
+                  <p className="mt-2 text-2xl font-bold text-white/90">{formatMetric(tavlProfile?.totalPoints ?? null)}</p>
                 </div>
               </div>
 
@@ -277,7 +300,7 @@ const ProfilePage = () => {
                 </p>
               </div>
               <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
-                {t("profile.userId")}: {profile.sub || "—"}
+                {t("profile.userId")}: {tokenProfile.sub || "—"}
               </div>
             </div>
 
@@ -298,7 +321,7 @@ const ProfilePage = () => {
                 {t("profile.details.resourceRoles")}
               </p>
               <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-white/10 bg-black/30 p-4 text-xs text-emerald-100 shadow-inner shadow-black/40 backdrop-blur">
-                {JSON.stringify(profile.resourceRoles || {}, null, 2)}
+                {JSON.stringify(tokenProfile.resourceRoles || {}, null, 2)}
               </pre>
             </div>
           </section>

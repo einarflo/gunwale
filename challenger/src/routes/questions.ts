@@ -14,17 +14,21 @@ router.post('/v1/questions', async (req, res) => {
     difficulty = 'mixed',
     language = 'nb',
     model = 'llama3.2:3b-instruct',
-    prompt_version = 'v1'
+    prompt_version = 'v1',
+    target_time = 20,
+    target_score = 1000
   } = (req.body || {}) as any;
 
   if (!title || typeof title !== 'string') return res.status(400).send({ error: 'Missing title' });
   const n = Math.max(1, Math.min(10, Number(count) || 5));
 
-  const schema = JSON.stringify({ questions: [{ text: 'string', difficulty: 'easy|medium|hard', topic: 'string' }] });
+  const schema = JSON.stringify({ questions: [{ text: 'string', difficulty: 'easy|medium|hard', topic: 'string', time: 20, score: 1200 }] });
   const instr = `Du er en norsk quizforfatter. Returner KUN gyldig JSON som matcher schemaet. Skriv på ${language === 'nb' ? 'norsk bokmål' : 'norsk'}.`;
   const rules = [
     `Lag ${n} varierte, korte og presise spørsmål.`,
     difficulty === 'mixed' ? 'Bland vanskelighetsgrad (lett/medium/vanskelig).' : `Hold vanskelighetsgrad: ${difficulty}.`,
+    `Sett feltet "time" til anbefalt svartid i sekunder (heltall innenfor 5-120). Bruk ca ${Math.max(5, Math.min(90, Number(target_time) || 20))} sek som referanse men tilpass etter vanskelighetsgrad.`,
+    `Sett feltet "score" til anbefalt poengsum (heltall innenfor 100-5000). Ta utgangspunkt i ca ${Math.max(100, Math.min(5000, Number(target_score) || 1000))} poeng og juster etter vanskelighetsgrad.`,
     'Unngå overlapp og repetisjon. Ikke skriv forklaringer.'
   ].join(' ');
 
@@ -36,7 +40,7 @@ router.post('/v1/questions', async (req, res) => {
   const kind = 'questions';
   const format = 'json';
   const existingSig = normalizeText((existingQuestions || []).join(' | ')).slice(0, 240);
-  const cacheKey = `${kind}::${model}::${prompt_version}::${normalizeText(title).slice(0, 160)}::${normalizeText(description).slice(0, 200)}::${existingSig}::${n}::${difficulty}`;
+  const cacheKey = `${kind}::${model}::${prompt_version}::${normalizeText(title).slice(0, 160)}::${normalizeText(description).slice(0, 200)}::${existingSig}::${n}::${difficulty}::${Math.round(Math.max(5, Math.min(120, Number(target_time) || 20)))}::${Math.round(Math.max(100, Math.min(5000, Number(target_score) || 1000)))}`;
   const fuzzyParam = (req.query as any)?.fuzzy;
   const fuzzy = fuzzyParam === undefined ? 0 : Math.max(0, Math.min(1, Number(fuzzyParam)));
 
@@ -69,11 +73,23 @@ router.post('/v1/questions', async (req, res) => {
       }
     }
 
-    const payload = await ollamaGenerate({ model, prompt, format, options: { num_predict: 220, temperature: 0.4, top_p: 0.9, repeat_penalty: 1.1, num_ctx: 2048, num_thread: threads } });
+    const payload = await ollamaGenerate({ model, prompt, format, options: { num_predict: 260, temperature: 0.35, top_p: 0.9, repeat_penalty: 1.1, num_ctx: 2048, num_thread: threads } });
 
     let parsed: any;
     try { parsed = JSON.parse(payload); }
     catch { parsed = { raw: payload }; }
+
+    if (parsed?.questions && Array.isArray(parsed.questions)) {
+      parsed.questions = parsed.questions.map((q: any) => {
+        const time = Number(q?.time);
+        const score = Number(q?.score);
+        return {
+          ...q,
+          time: Number.isFinite(time) ? Math.max(5, Math.min(120, Math.round(time))) : undefined,
+          score: Number.isFinite(score) ? Math.max(100, Math.min(5000, Math.round(score))) : undefined,
+        };
+      });
+    }
 
     const cacheId = await setCache({ kind, cacheKey, model, promptVersion: prompt_version, prompt, result: parsed });
     const ms = Date.now() - t0;

@@ -57,7 +57,7 @@ Tips for ytelse og «varm» modell
 - Foreslå alternativer:
   - `curl -s https://ai.tavl.no/v1/options -H 'content-type: application/json' -d '{"question":"Hvem malte Skrik?","correct_answer":"Edvard Munch","option_count":4,"model":"llama3.2:3b-instruct-q4_K_M"}' | jq`
 - Foreslå spørsmål:
-  - `curl -s https://ai.tavl.no/v1/questions -H 'content-type: application/json' -d '{"title":"Norsk historie","description":"Viktige hendelser 1800–2000","count":5,"model":"llama3.2:3b-instruct-q4_K_M"}' | jq`
+- `curl -s https://ai.tavl.no/v1/questions -H 'content-type: application/json' -d '{"title":"Norsk historie","description":"Viktige hendelser 1800–2000","count":5,"model":"llama3.2:3b-instruct-q4_K_M","difficulty":"mixed","target_time":18,"target_score":900}' | jq`
 
 ## Miljøvariabler
 - `OLLAMA_BASE_URL` (default `http://ollama:11434`)

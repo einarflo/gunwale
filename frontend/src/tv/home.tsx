@@ -1,6 +1,6 @@
 import { Game, Spinner } from "./selectGame";
 import Modal from "react-modal";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import randomstring from 'randomstring';
 import { get, post, put } from "../api";
@@ -99,7 +99,10 @@ const Home = () => {
   }
 
   // Example: games with favorite/popular flags (replace with real data)
-  const favoriteGames = games?.filter(game => game.favorite);
+  const [favoriteGames, setFavoriteGames] = useState<any[]>([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [playedGames, setPlayedGames] = useState<any[]>([]);
+  const [playedLoading, setPlayedLoading] = useState(false);
   const popularGames = games?.filter(game => game.popular);
   const filteredGames = games?.filter(game =>
     game.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -108,16 +111,30 @@ const Home = () => {
   // Tabs state and derived datasets
   const [activeTab, setActiveTab] = useState<'mine' | 'favorites' | 'played' | 'trash'>('mine');
   const totalPlays = (games || []).reduce((acc: number, g: any) => acc + (g.plays ?? g.playthroughs ?? 0), 0);
-  const playedGames = useMemo(() => {
-    const arr = (games || []).filter((g: any) => (g.plays ?? g.playthroughs ?? 0) > 0);
-    return arr.sort((a: any, b: any) => (b.plays ?? b.playthroughs ?? 0) - (a.plays ?? a.playthroughs ?? 0));
-  }, [games]);
 
   useEffect(() => {
     if (activeTab === 'trash') {
       loadDeletedGames();
     }
-  }, [activeTab]);
+    if (activeTab === 'favorites' && userId) {
+      setFavoritesLoading(true);
+      get('/favorites/details')
+        .then(res => {
+          setFavoriteGames(Array.isArray(res.data) ? res.data : []);
+        })
+        .catch(() => setFavoriteGames([]))
+        .finally(() => setFavoritesLoading(false));
+    }
+    if (activeTab === 'played' && userId) {
+      setPlayedLoading(true);
+      get('/games/recent-played')
+        .then(res => {
+          setPlayedGames(Array.isArray(res.data) ? res.data : []);
+        })
+        .catch(() => setPlayedGames([]))
+        .finally(() => setPlayedLoading(false));
+    }
+  }, [activeTab, userId]);
 
   return (
     <>
@@ -199,7 +216,7 @@ const Home = () => {
               <span className="pointer-events-none absolute left-5 text-white/60">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 20l-5.6-5.6a7 7 0 10-1.4 1.4L20 21l1-1zM10 16a6 6 0 110-12 6 6 0 010 12z"/></svg>
               </span>
-              <div className="w-full rounded-full bg-white/5 border border-white/10 pl-12 pr-32 py-3 focus-within:ring-4 focus-within:ring-pink-500/30 transition-all">
+              <div className="w-full rounded-full bg-white/5 border border-white/10 pl-12 pr-4 py-3 focus-within:ring-4 focus-within:ring-pink-500/30 transition-all">
                 <input
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
@@ -207,9 +224,6 @@ const Home = () => {
                   className="w-full bg-transparent text-white placeholder:text-white/50 outline-none"
                 />
               </div>
-              <button onClick={() => { /* client-side filter already applied */ }} className="absolute right-3 px-5 py-2 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-medium hover:brightness-110 transition">
-                {t('common.search') || 'Søk'}
-              </button>
             </div>
             <div className="inline-flex self-end md:self-auto rounded-xl border border-white/10 overflow-hidden bg-white/10">
               <button onClick={() => setViewMode('grid')} className={`px-3 py-1.5 text-sm font-semibold ${viewMode === 'grid' ? 'bg-white/20 text-white' : 'text-white/80'}`} aria-pressed={viewMode === 'grid'}>Cards</button>
@@ -225,12 +239,40 @@ const Home = () => {
             ))}
           </div>
 
-      {activeTab === 'favorites' && favoriteGames && favoriteGames.length > 0 && (
+      {activeTab === 'favorites' && favoritesLoading && (
+        <div className="mt-6 flex items-center justify-center">
+          <Spinner />
+        </div>
+      )}
+
+      {activeTab === 'favorites' && !favoritesLoading && favoriteGames && favoriteGames.length === 0 && (
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/80">
+          <div className="text-3xl mb-2">⭐️</div>
+          <div className="text-white font-medium mb-1">
+            {t('home.favorites.emptyTitle') || 'No favorites yet'}
+          </div>
+          <div className="text-white/70 mb-4">
+            {t('home.favorites.emptySubtitle') || 'Mark quizzes as favorites or browse Discover to find something new.'}
+          </div>
+          <button
+            onClick={() => navigate('/discover')}
+            className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition"
+          >
+            {t('home.favorites.goDiscover') || 'Go to Discover'}
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'favorites' && !favoritesLoading && favoriteGames && favoriteGames.length > 0 && (
             <>
               <div className="text-xl font-semibold text-white mb-2 mt-4">{t('home.favorites') || 'Favorites'}</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-                {favoriteGames.map((game, idx) => (
-                  <div key={String(game.uuid)} className="rounded-xl p-0 shadow bg-white/10 backdrop-blur-md hover:bg-white/15 transition cursor-pointer border border-white/10 overflow-hidden anim-fadeUp" style={{ animationDelay: `${idx * 0.05}s` }} onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
+                {favoriteGames.map((game: any, idx: number) => {
+                  const creatorProfile = game.creator_profile;
+                  const creatorName = creatorProfile?.username || game.creator_username || game.created_by_name || (t('discover.unknownCreator') || 'Unknown');
+                  const creatorUserId = creatorProfile?.userId || game.created_by || null;
+                  return (
+                    <div key={String(game.uuid)} className="rounded-xl p-0 shadow bg-white/10 backdrop-blur-md hover:bg-white/15 transition cursor-pointer border border-white/10 overflow-hidden anim-fadeUp" style={{ animationDelay: `${idx * 0.05}s` }} onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                     <div className="relative h-32">
                       <img src={getCover(game)} alt="" className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 to-transparent" />
@@ -258,7 +300,21 @@ const Home = () => {
                         )}
                         {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z" /></svg>{(game as any).status}</span>}
                       </div>
-                      <div className="text-xs text-white/70 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
+                      <div className="text-xs text-white/70 mb-3">
+                        {t('home.by', { name: creatorName }) || `By ${creatorName}`}
+                        {creatorUserId && (
+                          <button
+                            className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/10 bg-white/10 text-[10px] text-white/80 hover:bg-white/15 transition"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/creator/${encodeURIComponent(creatorUserId)}`);
+                            }}
+                          >
+                            {t('home.viewCreator') || 'View creator'}
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M14 3l7 7-7 7v-4H3v-6h11V3z"/></svg>
+                          </button>
+                        )}
+                      </div>
                       <div className="flex gap-2">
                         <button className="relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-3 py-1.5 text-sm text-white font-semibold shadow hover:shadow-lg active:scale-95 transition md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>
                           {t('home.startGame') || 'Start game'}
@@ -268,16 +324,41 @@ const Home = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
-      {activeTab === 'played' && playedGames && playedGames.length > 0 && (
+      {activeTab === 'played' && playedLoading && (
+        <div className="mt-6 flex items-center justify-center">
+          <Spinner />
+        </div>
+      )}
+
+      {activeTab === 'played' && !playedLoading && playedGames && playedGames.length === 0 && (
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/80">
+          <div className="text-3xl mb-2">🕹️</div>
+          <div className="text-white font-medium mb-1">{t('home.played.emptyTitle') || 'Ingen spilte quizer ennå'}</div>
+          <div className="text-white/70 mb-4">{t('home.played.emptySubtitle') || 'Start et spill fra listen din eller oppdag nye quizer.'}</div>
+          <button
+            onClick={() => navigate('/discover')}
+            className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition"
+          >
+            {t('home.played.goDiscover') || 'Oppdag quizer'}
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'played' && !playedLoading && playedGames && playedGames.length > 0 && (
             <>
               <div className="text-xl font-semibold text-white mb-2 mt-4">Spilte</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {playedGames.map((game, idx) => (
-                  <div key={String(game.uuid)} className="rounded-xl p-0 shadow bg-white/10 backdrop-blur-md hover:bg-white/15 transition cursor-pointer border border-white/10 overflow-hidden anim-fadeUp" style={{ animationDelay: `${idx * 0.05}s` }} onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
+                {playedGames.map((game: any, idx: number) => {
+                  const creatorProfile = game.creator_profile;
+                  const creatorName = creatorProfile?.username || game.creator_username || game.created_by_name || (t('discover.unknownCreator') || 'Unknown');
+                  const creatorUserId = creatorProfile?.userId || game.created_by || null;
+                  return (
+                    <div key={String(game.uuid)} className="rounded-xl p-0 shadow bg-white/10 backdrop-blur-md hover:bg-white/15 transition cursor-pointer border border-white/10 overflow-hidden anim-fadeUp" style={{ animationDelay: `${idx * 0.05}s` }} onClick={() => { setSelectedGameId(game.uuid as any); setModalIsOpen(true) }}>
                     <div className="relative h-32">
                       <img src={getCover(game)} alt="" className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
@@ -296,9 +377,29 @@ const Home = () => {
                       <div className="flex items-center gap-3 text-xs text-white/80 mb-3">
                         <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>{(game as any).qcount || 0} {t('home.questions') || 'questions'}</span>
                         <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z" /></svg>{(game as any).plays ?? (game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
+                        {game.lastPlayedAt && (
+                          <span className="inline-flex items-center gap-1" title={t('home.played.lastPlayed') || 'Sist spilt'}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 6v6l3 3 1-1-2.5-2.5V6z" /></svg>
+                            {new Date(game.lastPlayedAt).toLocaleString()}
+                          </span>
+                        )}
                         {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z" /></svg>{(game as any).status}</span>}
                       </div>
-                      <div className="text-xs text-white/70 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
+                      <div className="text-xs text-white/70 mb-3 flex items-center gap-2">
+                        <span>{t('home.by', { name: creatorName }) || `By ${creatorName}`}</span>
+                        {creatorUserId && (
+                          <button
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/10 bg-white/10 text-[10px] text-white/80 hover:bg-white/15 transition"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/creator/${encodeURIComponent(creatorUserId)}`);
+                            }}
+                          >
+                            {t('home.viewCreator') || 'View creator'}
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M14 3l7 7-7 7v-4H3v-6h11V3z"/></svg>
+                          </button>
+                        )}
+                      </div>
                       <div className="flex gap-2">
                         <button className="relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>
                           {t('home.startGame') || 'Start game'}
@@ -308,7 +409,8 @@ const Home = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </>
       )}
@@ -378,7 +480,21 @@ const Home = () => {
                       <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-5a5 5 0 100 10 5 5 0 000-10z" /></svg>{(game as any).plays ?? (game as any).playthroughs ?? 0} {t('home.plays') || 'plays'}</span>
                       {(game as any).status && <span className="inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17l-5 3 1.9-5.6L4 9h6l2-6 2 6h6l-4.9 5.4L17 20z" /></svg>{(game as any).status}</span>}
                     </div>
-                    <div className="text-xs text-white/70 mb-3">{t('home.by', { name: game.created_by_name }) || `By ${game.created_by_name}`}</div>
+                      <div className="text-xs text-white/70 mb-3 flex items-center gap-2">
+                        <span>{t('home.by', { name: (game as any).creatorName }) || `By ${(game as any).creatorName}`}</span>
+                        {(game as any).creatorUserId && (
+                          <button
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/10 bg-white/10 text-[10px] text-white/80 hover:bg-white/15 transition"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/creator/${encodeURIComponent((game as any).creatorUserId)}`);
+                            }}
+                          >
+                            {t('home.viewCreator') || 'View creator'}
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M14 3l7 7-7 7v-4H3v-6h11V3z"/></svg>
+                          </button>
+                        )}
+                      </div>
                     <div className="flex gap-2">
                         <button className="relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition text-sm md:px-3 md:py-1.5 md:text-sm" onClick={e => { e.stopPropagation(); setSelectedGameId(game.uuid as any); setModalIsOpen(true); }}>
                           {t('home.startGame') || 'Start game'}
@@ -415,7 +531,7 @@ const Home = () => {
                             </div>
                           </div>
                         </div>
-                      ))}
+                ))}
                     </div>
                   </div>
                 </div>

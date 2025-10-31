@@ -69,11 +69,18 @@ services:
       - MYSQL_DATABASE=challenger
       - MYSQL_USER=challenger
       - MYSQL_PASSWORD=challenger
-    command: ["--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    command:
+      [
+        "--default-authentication-plugin=mysql_native_password",
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+        "--init-file=/docker-entrypoint-initdb.d/init.sql",
+      ]
     ports:
       - "3306:3306"
     volumes:
       - challenger_db:/var/lib/mysql
+      - ./challenger/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -uchallenger -pchallenger --silent"]
       interval: 10s

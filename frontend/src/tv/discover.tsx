@@ -23,6 +23,18 @@ interface GameLite {
   favCount?: number;
   isPublic?: number;
   created_by_name?: string;
+  created_by?: string | null;
+  creator_username?: string | null;
+  creator_profile?: {
+    userId: string;
+    username: string;
+    level: number;
+    xp: number;
+    totalPoints: number;
+    playedQuizzes: number;
+    createdQuizzes: number;
+    premiumSince?: string | null;
+  } | null;
   created_at?: string | Date | null;
   updated_at?: string | Date | null;
   tags?: Array<{ slug: string; name: string }>;
@@ -51,6 +63,10 @@ const Discover = () => {
   const [newGamePin, setNewGamePin] = useState('');
   const [creating, setCreating] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const openCreatorProfile = (userId?: string | null) => {
+    if (!userId) return;
+    navigate(`/creator/${encodeURIComponent(userId)}`);
+  };
 
   useEffect(() => {
     // Load initial lists
@@ -312,6 +328,46 @@ const Discover = () => {
                     <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-purple-600/30 to-transparent" />
                   )}
                 </div>
+                {(() => {
+                  const creatorProfile = g.creator_profile;
+                  const creatorName =
+                    creatorProfile?.username ||
+                    g.creator_username ||
+                    g.created_by_name ||
+                    (t('discover.unknownCreator') || 'Unknown creator');
+                  const creatorUserId =
+                    creatorProfile?.userId ||
+                    (g as any)?.created_by ||
+                    null;
+                  const isClickable = Boolean(creatorUserId);
+                  return (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isClickable) openCreatorProfile(creatorUserId);
+                      }}
+                      className={`w-full flex items-center justify-between gap-4 px-4 py-3 border-t border-white/10 bg-white/8 transition ${isClickable ? 'hover:bg-white/14 cursor-pointer' : 'opacity-90 cursor-default'}`}
+                    >
+                      <div className="text-left">
+                        <div className="text-[11px] uppercase tracking-widest text-white/60">
+                          {t('discover.creator') || 'Creator'}
+                        </div>
+                        <div className="text-sm font-semibold text-white truncate">{creatorName}</div>
+                      </div>
+                      <div className="flex items-center gap-4 text-[11px] text-white/80">
+                        <span className="inline-flex items-center gap-1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-3.8L6 21l1.5-7.5L2 9h7z"/></svg>
+                          {t('discover.levelShort') || 'Lvl'} {creatorProfile ? creatorProfile.level : '—'}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4a8 8 0 108 8 8.01 8.01 0 00-8-8zm0 14a6 6 0 116-6 6.007 6.007 0 01-6 6zm-.5-10h1v4h-1zm0 5h1v1h-1z"/></svg>
+                          {t('discover.xpShort') || 'XP'} {creatorProfile ? creatorProfile.xp.toLocaleString() : '—'}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })()}
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="text-lg font-bold text-white truncate drop-shadow">{g.name}</div>
@@ -439,7 +495,11 @@ const Discover = () => {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="text-2xl font-extrabold text-white drop-shadow" style={{ textShadow: '0 0 12px rgba(236,72,153,0.4)' }}>{g.name}</div>
-                  <div className="text-white/90">{t('home.by', { name: g.created_by_name || '—' }) || `By ${g.created_by_name || '—'}`}</div>
+                  <div className="text-white/90">
+                    {t('home.by', {
+                      name: g.creator_username || g.created_by_name || t('discover.unknownCreator') || 'Unknown',
+                    }) || `By ${g.creator_username || g.created_by_name || 'Unknown'}`}
+                  </div>
                 </div>
                 <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${isPublic ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>{isPublic ? (t('home.public') || 'Public') : (t('home.private') || 'Private')}</span>
               </div>
