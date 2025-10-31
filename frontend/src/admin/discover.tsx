@@ -7,11 +7,13 @@ import ParallaxScroll from '../components/ParallaxScroll';
 import Header from '../components/landing/Header';
 import Footer from '../components/Footer';
 import { useI18n } from '../i18n/I18nProvider';
-import mockup from '../images/tavl-placeholder.jpg';
 import Modal from 'react-modal';
 import randomstring from 'randomstring';
 import { useKeycloak } from '../auth/KeycloakProvider';
 import type { Question } from '../tv/game';
+import GameCard from './components/GameCard';
+import { buildGameCardLabels } from './utils/gameCardLabels';
+import { toGameCardGame } from './utils/toGameCardGame';
 
 interface GameLite {
   uuid?: string;
@@ -175,12 +177,7 @@ const Discover = () => {
       });
   };
 
-  // Color utility for subtle per-card accents
-  const hslFromString = (str: string) => {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-    return `hsl(${h % 360} 70% 55% / 0.35)`;
-  };
+  const cardLabels = buildGameCardLabels(t);
 
   const gradientForTag = (slug: string) => {
     let h = 0;
@@ -307,133 +304,55 @@ const Discover = () => {
 
         {!loading && !error && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((g, idx) => {
+            {filtered.map((g) => {
               const gid = String(g.uuid || g.id);
-              const fav = favorites.has(gid);
-              const cover = (g as any).cover_image_url || (g as any).coverImageUrl || null;
-              const tagKey = (g.tags && g.tags.length ? (g.tags[0].slug || g.tags[0].name) : '') || gid;
+              const cardGame = toGameCardGame(g, {
+                id: gid,
+                description: g.description || t('home.noDescription') || 'No description',
+                questionCount: g.qcount ?? 0,
+                playCount: g.plays ?? 0,
+                favoriteCount: g.favCount ?? null,
+                participantCount: (g as any).participants ?? null,
+                difficulty: (g as any).difficulty ?? null,
+                creatorName:
+                  g.creator_profile?.username ||
+                  g.creator_username ||
+                  g.created_by_name ||
+                  (t('discover.unknownCreator') || 'Unknown creator'),
+                creatorUserId: g.creator_profile?.userId || g.created_by || null,
+                tags: Array.isArray(g.tags) ? g.tags : undefined,
+                isFavorite: favorites.has(gid),
+                isPublic: (((g as any).isPublic ?? 0) === 1) || (g as any).isPublic === true,
+                accentKey:
+                  (g.tags && g.tags.length ? g.tags[0].slug || g.tags[0].name : gid) || gid,
+                lastPlayedAt: (g as any).lastPlayedAt ?? null,
+              });
+
+              const actions = [
+                {
+                  label: t('home.startGame') || 'Start game',
+                  kind: 'primary' as const,
+                  onClick: (gameCard: any) => openDetails(gameCard.id),
+                },
+              ];
+
               return (
-              <div key={gid} className="group relative rounded-xl border border-white/10 bg-white/10 backdrop-blur-md hover:bg-white/15 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(236,72,153,0.15)] transition-all duration-200 cursor-pointer overflow-hidden" onClick={() => openDetails(gid)}>
-                <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${hslFromString(tagKey)}, transparent)` }} />
-                <div className={`relative ${idx % 6 === 0 ? 'aspect-[16/8]' : 'aspect-[16/9]'} overflow-hidden`}>
-                  {cover ? (
-                    <img src={cover} alt={g.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
-                  ) : (
-                    <div className="h-full w-full relative">
-                      <img src={mockup} alt={`${g.name} cover placeholder`} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
-                      <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${hslFromString(gid + (g.name || ''))}, transparent)` }} />
-                    </div>
-                  )}
-                  {(idx % 6 === 0) && (
-                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-purple-600/30 to-transparent" />
-                  )}
-                </div>
-                {(() => {
-                  const creatorProfile = g.creator_profile;
-                  const creatorName =
-                    creatorProfile?.username ||
-                    g.creator_username ||
-                    g.created_by_name ||
-                    (t('discover.unknownCreator') || 'Unknown creator');
-                  const creatorUserId =
-                    creatorProfile?.userId ||
-                    (g as any)?.created_by ||
-                    null;
-                  const isClickable = Boolean(creatorUserId);
-                  return (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (isClickable) openCreatorProfile(creatorUserId);
-                      }}
-                      className={`w-full flex items-center justify-between gap-4 px-4 py-3 border-t border-white/10 bg-white/8 transition ${isClickable ? 'hover:bg-white/14 cursor-pointer' : 'opacity-90 cursor-default'}`}
-                    >
-                      <div className="text-left">
-                        <div className="text-[11px] uppercase tracking-widest text-white/60">
-                          {t('discover.creator') || 'Creator'}
-                        </div>
-                        <div className="text-sm font-semibold text-white truncate">{creatorName}</div>
-                      </div>
-                      <div className="flex items-center gap-4 text-[11px] text-white/80">
-                        <span className="inline-flex items-center gap-1">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-3.8L6 21l1.5-7.5L2 9h7z"/></svg>
-                          {t('discover.levelShort') || 'Lvl'} {creatorProfile ? creatorProfile.level : '—'}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4a8 8 0 108 8 8.01 8.01 0 00-8-8zm0 14a6 6 0 116-6 6.007 6.007 0 01-6 6zm-.5-10h1v4h-1zm0 5h1v1h-1z"/></svg>
-                          {t('discover.xpShort') || 'XP'} {creatorProfile ? creatorProfile.xp.toLocaleString() : '—'}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })()}
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="text-lg font-bold text-white truncate drop-shadow">{g.name}</div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleFavorite(gid); }}
-                        title={fav ? 'Fjern fra favoritter' : 'Legg til favoritt'}
-                        aria-label={fav ? 'Remove favorite' : 'Add favorite'}
-                        className={`rounded-full border px-2 py-1 text-xs ${fav ? 'bg-rose-500/30 border-rose-300 text-rose-100' : 'bg-white/10 border-white/10 text-white hover:bg-white/20'}`}
-                      >
-                        {fav ? '♥' : '♡'}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="text-sm text-white/80 line-clamp-2 mb-2">{g.description || (t('home.noDescription') || 'No description')}</div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-white/80">
-                    <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z"/></svg>{g.qcount || 0} {t('home.questions') || 'questions'}</span>
-                    {g.created_at && (
-                      <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Created">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm.5 5h-1v6l5 3 .5-.866-4.5-2.634V7z"/></svg>
-                        {new Date(g.created_at).toLocaleDateString()}
-                      </span>
-                    )}
-                    {g.updated_at && (
-                      <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Updated">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 6v4l3 3 1-1-3-3V6z"/></svg>
-                        {new Date(g.updated_at).toLocaleDateString()}
-                      </span>
-                    )}
-                    <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Plays">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                      {g.plays ?? 0} {t('home.plays') || 'plays'}
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Participants">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 3-1.34 3-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V20h14v-3.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                      {(g as any).participants ?? 0}
-                    </span>
-                    {(g as any).difficulty && (
-                      <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Difficulty">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12h18v2H3z"/></svg>
-                        {String((g as any).difficulty)}
-                      </span>
-                    )}
-                    <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1" title="Favorites">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1.01 4.22 2.5C11.09 5.01 12.76 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                      {g.favCount ?? 0}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); openDetails(gid); }} className="rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-3 py-1.5 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition">{t('home.startGame') || 'Start game'}</button>
-                  </div>
-                  {Array.isArray(g.tags) && g.tags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {g.tags.slice(0, 6).map(tag => (
-                        <span key={tag.slug} className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold bg-white/10 text-white border border-white/10">
-                          {t('tags.' + tag.slug) || tag.name}
-                        </span>
-                      ))}
-                      {g.tags.length > 6 && (
-                        <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold bg-white/10 text-white border border-white/10">+{g.tags.length - 6}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );})}
+                <GameCard
+                  key={cardGame.id}
+                  game={cardGame}
+                  labels={cardLabels}
+                  actions={actions}
+                  className="group"
+                  onClick={(gameCard) => openDetails(gameCard.id)}
+                  onToggleFavorite={(gameCard) => toggleFavorite(gameCard.id)}
+                  onCreatorClick={(gameCard) => {
+                    if (gameCard.creatorUserId) {
+                      openCreatorProfile(gameCard.creatorUserId);
+                    }
+                  }}
+                />
+              );
+            })}
           </div>
         )}
 

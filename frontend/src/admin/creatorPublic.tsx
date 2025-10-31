@@ -6,7 +6,9 @@ import Header from "../components/landing/Header";
 import ParallaxOrbs from "../components/ParallaxOrbs";
 import ParallaxScroll from "../components/ParallaxScroll";
 import { useI18n } from "../i18n/I18nProvider";
-import mockup from "../images/tavl-placeholder.jpg";
+import GameCard from "./components/GameCard";
+import { buildGameCardLabels } from "./utils/gameCardLabels";
+import { toGameCardGame } from "./utils/toGameCardGame";
 
 interface CreatorProfile {
   userId: string;
@@ -120,6 +122,8 @@ const CreatorPublic = () => {
     navigate(`/game/${encodeURIComponent(gameId)}`);
   };
 
+  const cardLabels = buildGameCardLabels(t);
+
   return (
     <div
       className="relative min-h-screen bg-[#1e1b4b] text-white overflow-hidden"
@@ -183,62 +187,37 @@ const CreatorPublic = () => {
 
         {!loading && !error && games.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {games.map((g, idx) => {
+            {games.map((g) => {
               const gid = String(g.uuid || g.id);
-              const cover = (g as any).cover_image_url || (g as any).coverImageUrl || null;
+              const cardGame = toGameCardGame(g, {
+                id: gid,
+                description: g.description || t("home.noDescription") || "No description",
+                questionCount: g.qcount ?? 0,
+                playCount: g.plays ?? 0,
+                favoriteCount: g.favCount ?? null,
+                participantCount: g.participants ?? null,
+                tags: Array.isArray(g.tags) ? g.tags : undefined,
+                isPublic: (((g as any).isPublic ?? 0) === 1) || (g as any).isPublic === true,
+                accentKey: `${gid}-${g.name || ''}`,
+              });
+
+              const actions = [
+                {
+                  label: t("home.startGame") || "Start game",
+                  kind: "primary" as const,
+                  onClick: (gameCard: any) => openGame(gameCard.id),
+                },
+              ];
+
               return (
-                <div
-                  key={gid}
-                  onClick={() => openGame(gid)}
-                  className="group relative rounded-xl border border-white/10 bg-white/10 backdrop-blur-md hover:bg-white/15 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(236,72,153,0.15)] transition-all duration-200 cursor-pointer overflow-hidden"
-                >
-                  <div className={`relative ${idx % 6 === 0 ? "aspect-[16/8]" : "aspect-[16/9]"} overflow-hidden`}>
-                    {cover ? (
-                      <img src={cover} alt={g.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
-                    ) : (
-                      <img src={mockup} alt={`${g.name} placeholder`} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
-                    )}
-                    {(idx % 6 === 0) && (
-                      <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-purple-600/30 to-transparent" />
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="text-lg font-bold text-white mb-1">{g.name}</div>
-                    <div className="text-sm text-white/80 line-clamp-2 mb-2">{g.description || t("home.noDescription") || "No description"}</div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-white/80 mb-3">
-                      <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8l6 6H6z" /></svg>
-                        {g.qcount || 0} {t("home.questions") || "questions"}
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                        {g.plays ?? 0} {t("home.plays") || "plays"}
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10 inline-flex items-center gap-1">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm.5 5h-1v6l5 3 .5-.866-4.5-2.634V7z" /></svg>
-                        {g.updated_at ? new Date(g.updated_at).toLocaleDateString() : "—"}
-                      </span>
-                    </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); openGame(gid); }}
-                      className="rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-3 py-1.5 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition"
-                    >
-                      {t("home.startGame") || "Start game"}
-                    </button>
-                    {Array.isArray(g.tags) && g.tags.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {g.tags.slice(0, 6).map(tag => (
-                          <span key={tag.slug} className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold bg-white/10 text-white border border-white/10">
-                            {t('tags.' + tag.slug) || tag.name}
-                          </span>
-                        ))}
-                        {g.tags.length > 6 && (
-                          <span className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold bg-white/10 text-white border border-white/10">+{g.tags.length - 6}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <GameCard
+                  key={cardGame.id}
+                  game={cardGame}
+                  labels={cardLabels}
+                  actions={actions}
+                  className="group"
+                  onClick={(gameCard) => openGame(gameCard.id)}
+                />
               );
             })}
           </div>

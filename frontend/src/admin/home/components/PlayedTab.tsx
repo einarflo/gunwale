@@ -1,0 +1,103 @@
+import { Spinner } from "../../../tv/selectGame";
+import GameCard from "../../components/GameCard";
+import { Translate } from "../types";
+import { buildGameCardLabels } from "../../utils/gameCardLabels";
+import { toGameCardGame } from "../../utils/toGameCardGame";
+
+type PlayedTabProps = {
+  isLoading: boolean;
+  playedGames: any[];
+  t: Translate;
+  onOpenGame: (id: string) => void;
+  onEditGame: (id: string) => void;
+  onViewCreator: (creatorUserId: string) => void;
+};
+
+const PlayedTab = ({
+  isLoading,
+  playedGames,
+  t,
+  onOpenGame,
+  onEditGame,
+  onViewCreator,
+}: PlayedTabProps) => {
+  if (isLoading) {
+    return (
+      <div className="mt-6 flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (!playedGames || playedGames.length === 0) {
+    return (
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/80">
+        <div className="text-3xl mb-2">🎮</div>
+        <div className="text-white font-medium mb-1">
+          {t("home.played.emptyTitle") || "Ingen spilte quizer ennå"}
+        </div>
+        <div className="text-white/70">
+          {t("home.played.emptySubtitle") || "Start et spill for å se historikken din her."}
+        </div>
+      </div>
+    );
+  }
+
+  const labels = buildGameCardLabels(t);
+
+  return (
+    <>
+      <div className="text-xl font-semibold text-white mb-2 mt-4">{t("home.played") || "Spilte"}</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        {playedGames.map((raw: any) => {
+          const cardGame = toGameCardGame(raw, {
+            description: raw.description || t("home.noDescription") || "No description",
+            questionCount: raw.qcount ?? 0,
+            playCount: raw.plays ?? raw.playthroughs ?? 0,
+            participantCount: raw.participants ?? null,
+            favoriteCount: raw.favCount ?? null,
+            isPublic: ((raw.isPublic ?? 0) === 1) || raw.isPublic === true,
+            creatorName:
+              raw.creator_profile?.username ||
+              raw.creator_username ||
+              raw.created_by_name ||
+              null,
+            creatorUserId: raw.creator_profile?.userId || raw.created_by || null,
+            tags: Array.isArray(raw.tags) ? raw.tags : undefined,
+            lastPlayedAt: raw.lastPlayedAt ?? null,
+          });
+
+          const actions = [
+            {
+              label: t("home.startGame") || "Start game",
+              kind: "primary" as const,
+              onClick: (gameCard: any) => onOpenGame(gameCard.id),
+            },
+            {
+              label: t("home.edit") || "Edit",
+              kind: "secondary" as const,
+              onClick: (gameCard: any) => onEditGame(gameCard.id),
+            },
+          ];
+
+          return (
+            <GameCard
+              key={cardGame.id}
+              game={cardGame}
+              labels={labels}
+              actions={actions}
+              onClick={(gameCard) => onOpenGame(gameCard.id)}
+              onCreatorClick={(gameCard) => {
+                if (gameCard.creatorUserId) {
+                  onViewCreator(gameCard.creatorUserId);
+                }
+              }}
+            />
+          );
+        })}
+      </div>
+    </>
+  );
+};
+
+export default PlayedTab;
