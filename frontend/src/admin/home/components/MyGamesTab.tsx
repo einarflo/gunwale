@@ -108,6 +108,7 @@ const MyGamesTab = ({
               participantCount: raw.participants ?? null,
               isPublic: ((raw.isPublic ?? 0) === 1) || raw.isPublic === true,
               tags: Array.isArray(raw.tags) ? raw.tags : undefined,
+              ownedByCurrentUser: true,
             });
 
             const actions = [
@@ -115,11 +116,6 @@ const MyGamesTab = ({
                 label: t("home.startGame") || "Start game",
                 kind: "primary" as const,
                 onClick: (gameCard: any) => onOpenGame(gameCard.id),
-              },
-              {
-                label: t("home.edit") || "Edit",
-                kind: "secondary" as const,
-                onClick: (gameCard: any) => onEditGame(gameCard.id),
               },
             ];
 
@@ -130,6 +126,7 @@ const MyGamesTab = ({
                 labels={labels}
                 actions={actions}
                 onClick={(gameCard) => onOpenGame(gameCard.id)}
+                onEdit={(gameCard) => onEditGame(gameCard.id)}
               />
             );
           })}

@@ -70,6 +70,25 @@ export const toGameCardGame = (raw: any, overrides: Overrides = {}): GameCardGam
     raw.creatorUserId ??
     null;
 
+  const creatorLevel =
+    overrides.creatorLevel ??
+    raw.creator_profile?.level ??
+    raw.creator_level ??
+    raw.level ??
+    raw.creator_profile?.stats?.level ??
+    raw.creator?.level ??
+    null;
+
+  const creatorIsPremium =
+    overrides.creatorIsPremium ??
+    (raw.creator_profile?.isPremium ??
+      raw.creator_profile?.premium ??
+      (raw.creator_profile?.premiumSince ? true : undefined) ??
+      raw.creator_profile?.is_premium ??
+      raw.creator_is_premium ??
+      raw.creator?.isPremium ??
+      null);
+
   const tags =
     overrides.tags ??
     (Array.isArray(raw.tags) ? raw.tags : Array.isArray(raw.tagList) ? raw.tagList : undefined);
@@ -101,5 +120,8 @@ export const toGameCardGame = (raw: any, overrides: Overrides = {}): GameCardGam
         : tags && tags.length > 0
         ? String(tags[0].slug || tags[0].name)
         : String(id)),
+    creatorLevel: creatorLevel != null ? Number(creatorLevel) : null,
+    creatorIsPremium: creatorIsPremium != null ? Boolean(creatorIsPremium) : null,
+    ownedByCurrentUser: overrides.ownedByCurrentUser ?? null,
   };
 };

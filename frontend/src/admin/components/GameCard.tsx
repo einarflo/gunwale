@@ -13,6 +13,7 @@ export type GameCardLabels = {
   viewCreator: string;
   public: string;
   private: string;
+  level: string;
 };
 
 export type GameCardAction = {
@@ -29,6 +30,7 @@ type GameCardProps = {
   onClick?: (game: GameCardGame) => void;
   onToggleFavorite?: (game: GameCardGame) => void;
   onCreatorClick?: (game: GameCardGame) => void;
+  onEdit?: (game: GameCardGame) => void;
   className?: string;
 };
 
@@ -69,6 +71,7 @@ const GameCard = ({
   onClick,
   onToggleFavorite,
   onCreatorClick,
+  onEdit,
   className,
 }: GameCardProps) => {
   const clickable = typeof onClick === "function";
@@ -107,6 +110,14 @@ const GameCard = ({
       onCreatorClick?.(game);
     }
   };
+
+  const showCreatorInfo = Boolean(game.creatorName);
+  const creatorIsPremium = Boolean(game.creatorIsPremium);
+  const creatorLevel =
+    game.creatorLevel != null && !Number.isNaN(game.creatorLevel)
+      ? Math.max(0, Math.floor(game.creatorLevel))
+      : null;
+  const canEdit = Boolean(onEdit && game.ownedByCurrentUser);
 
   return (
     <div
@@ -218,14 +229,60 @@ const GameCard = ({
             )}
           </div>
         )}
-        {actions && actions.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
-            {actions.map((action, index) => {
+        {showCreatorInfo && (
+          <button
+            type="button"
+            onClick={handleCreatorClick}
+            disabled={!onCreatorClick || !game.creatorUserId}
+            className={`w-full text-left transition ${
+              onCreatorClick && game.creatorUserId
+                ? "hover:scale-[1.01]"
+                : "cursor-default opacity-90"
+            }`}
+          >
+            <div
+              className={`flex items-center gap-3 rounded-2xl border px-3 py-2 ${
+                creatorIsPremium
+                  ? "border-amber-200/40 bg-gradient-to-r from-amber-400/20 via-pink-500/15 to-indigo-500/20"
+                  : "border-white/10 bg-white/5"
+              }`}
+            >
+              <div
+                className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold text-white shadow-inner ${
+                  creatorIsPremium
+                    ? "bg-gradient-to-br from-amber-400 via-pink-500 to-purple-600"
+                    : "bg-white/15"
+                }`}
+              >
+                {creatorLevel != null ? creatorLevel : "—"}
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-white/60">
+                  {labels.creator}
+                </div>
+                <div className="text-sm font-semibold text-white truncate">
+                  {game.creatorName}
+                </div>
+              </div>
+              {onCreatorClick && game.creatorUserId && (
+                <div className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-white/80">
+                  {labels.viewCreator}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14 3l7 7-7 7v-4H3v-6h11V3z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          </button>
+        )}
+        {(actions?.length || canEdit) && (
+          <div className="mb-3 flex flex-wrap gap-2 pt-1">
+            {actions?.map((action, index) => {
               const kind = action.kind ?? (index === 0 ? "primary" : "secondary");
               const baseClasses =
                 kind === "primary"
-                  ? "relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition text-sm"
-                  : "rounded-lg bg-white/10 border border-white/10 px-4 py-2 text-white font-semibold shadow hover:bg-white/20 active:scale-95 transition text-sm";
+                  ? "relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2.5 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition text-sm"
+                  : "rounded-lg bg-white/10 border border-white/10 px-4 py-2.5 text-white font-semibold shadow hover:bg-white/20 active:scale-95 transition text-sm";
               return (
                 <button
                   key={`${action.label}-${index}`}
@@ -238,23 +295,13 @@ const GameCard = ({
                 </button>
               );
             })}
-          </div>
-        )}
-        {game.creatorName && (
-          <div className="flex items-center justify-between gap-3 text-xs text-white/80">
-            <span>
-              {labels.creator}: <span className="font-semibold text-white">{game.creatorName}</span>
-            </span>
-            {onCreatorClick && game.creatorUserId && (
+            {canEdit && (
               <button
                 type="button"
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/10 bg-white/10 text-[11px] text-white/80 hover:bg-white/15 transition"
-                onClick={handleCreatorClick}
+                className="rounded-lg bg-white/10 border border-white/15 px-4 py-2.5 text-white font-semibold shadow hover:bg-white/20 active:scale-95 transition text-sm"
+                onClick={() => onEdit?.(game)}
               >
-                {labels.viewCreator}
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14 3l7 7-7 7v-4H3v-6h11V3z" />
-                </svg>
+                Rediger
               </button>
             )}
           </div>

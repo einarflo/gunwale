@@ -3,6 +3,7 @@ import GameCard from "../../components/GameCard";
 import { Translate } from "../types";
 import { buildGameCardLabels } from "../../utils/gameCardLabels";
 import { toGameCardGame } from "../../utils/toGameCardGame";
+import { useKeycloak } from "../../../auth/KeycloakProvider";
 
 type FavoritesTabProps = {
   isLoading: boolean;
@@ -23,6 +24,8 @@ const FavoritesTab = ({
   onEditGame,
   onViewCreator,
 }: FavoritesTabProps) => {
+  const { userId: currentUserId } = useKeycloak();
+
   if (isLoading) {
     return (
       <div className="mt-6 flex items-center justify-center">
@@ -61,6 +64,15 @@ const FavoritesTab = ({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         {favorites.map((raw: any) => {
+          const ownerId =
+            raw.created_by ??
+            raw.createdBy ??
+            raw.creator_profile?.userId ??
+            null;
+          const ownedByCurrentUser =
+            currentUserId != null && ownerId != null
+              ? String(ownerId) === String(currentUserId)
+              : false;
           const cardGame = toGameCardGame(raw, {
             description: raw.description || t("home.noDescription") || "No description",
             questionCount: raw.qcount ?? 0,
@@ -74,9 +86,20 @@ const FavoritesTab = ({
               raw.created_by_name ||
               null,
             creatorUserId: raw.creator_profile?.userId || raw.created_by || null,
+            creatorLevel:
+              raw.creator_profile?.level ??
+              raw.creator_level ??
+              raw.level ??
+              null,
+            creatorIsPremium:
+              raw.creator_profile?.isPremium ??
+              raw.creator_profile?.premium ??
+              (raw.creator_profile?.premiumSince ? true : undefined) ??
+              null,
             tags: Array.isArray(raw.tags) ? raw.tags : undefined,
             isFavorite: true,
             lastPlayedAt: raw.lastPlayedAt ?? null,
+            ownedByCurrentUser,
           });
 
           const actions = [
@@ -84,11 +107,6 @@ const FavoritesTab = ({
               label: t("home.startGame") || "Start game",
               kind: "primary" as const,
               onClick: (gameCard: any) => onOpenGame(gameCard.id),
-            },
-            {
-              label: t("home.edit") || "Edit",
-              kind: "secondary" as const,
-              onClick: (gameCard: any) => onEditGame(gameCard.id),
             },
           ];
 
@@ -99,6 +117,7 @@ const FavoritesTab = ({
               labels={labels}
               actions={actions}
               onClick={(gameCard) => onOpenGame(gameCard.id)}
+              onEdit={(gameCard) => onEditGame(gameCard.id)}
               onCreatorClick={(gameCard) => {
                 if (gameCard.creatorUserId) {
                   onViewCreator(gameCard.creatorUserId);

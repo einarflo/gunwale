@@ -3,6 +3,7 @@ import GameCard from "../../components/GameCard";
 import { Translate } from "../types";
 import { buildGameCardLabels } from "../../utils/gameCardLabels";
 import { toGameCardGame } from "../../utils/toGameCardGame";
+import { useKeycloak } from "../../../auth/KeycloakProvider";
 
 type PlayedTabProps = {
   isLoading: boolean;
@@ -21,6 +22,8 @@ const PlayedTab = ({
   onEditGame,
   onViewCreator,
 }: PlayedTabProps) => {
+  const { userId: currentUserId } = useKeycloak();
+
   if (isLoading) {
     return (
       <div className="mt-6 flex items-center justify-center">
@@ -50,6 +53,15 @@ const PlayedTab = ({
       <div className="text-xl font-semibold text-white mb-2 mt-4">{t("home.played") || "Spilte"}</div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {playedGames.map((raw: any) => {
+          const ownerId =
+            raw.created_by ??
+            raw.createdBy ??
+            raw.creator_profile?.userId ??
+            null;
+          const ownedByCurrentUser =
+            currentUserId != null && ownerId != null
+              ? String(ownerId) === String(currentUserId)
+              : false;
           const cardGame = toGameCardGame(raw, {
             description: raw.description || t("home.noDescription") || "No description",
             questionCount: raw.qcount ?? 0,
@@ -63,8 +75,19 @@ const PlayedTab = ({
               raw.created_by_name ||
               null,
             creatorUserId: raw.creator_profile?.userId || raw.created_by || null,
+            creatorLevel:
+              raw.creator_profile?.level ??
+              raw.creator_level ??
+              raw.level ??
+              null,
+            creatorIsPremium:
+              raw.creator_profile?.isPremium ??
+              raw.creator_profile?.premium ??
+              (raw.creator_profile?.premiumSince ? true : undefined) ??
+              null,
             tags: Array.isArray(raw.tags) ? raw.tags : undefined,
             lastPlayedAt: raw.lastPlayedAt ?? null,
+            ownedByCurrentUser,
           });
 
           const actions = [
@@ -72,11 +95,6 @@ const PlayedTab = ({
               label: t("home.startGame") || "Start game",
               kind: "primary" as const,
               onClick: (gameCard: any) => onOpenGame(gameCard.id),
-            },
-            {
-              label: t("home.edit") || "Edit",
-              kind: "secondary" as const,
-              onClick: (gameCard: any) => onEditGame(gameCard.id),
             },
           ];
 
@@ -87,6 +105,7 @@ const PlayedTab = ({
               labels={labels}
               actions={actions}
               onClick={(gameCard) => onOpenGame(gameCard.id)}
+              onEdit={(gameCard) => onEditGame(gameCard.id)}
               onCreatorClick={(gameCard) => {
                 if (gameCard.creatorUserId) {
                   onViewCreator(gameCard.creatorUserId);

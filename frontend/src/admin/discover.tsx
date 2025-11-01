@@ -36,6 +36,8 @@ interface GameLite {
     playedQuizzes: number;
     createdQuizzes: number;
     premiumSince?: string | null;
+    isPremium?: boolean;
+    premium?: boolean;
   } | null;
   created_at?: string | Date | null;
   updated_at?: string | Date | null;
@@ -320,6 +322,18 @@ const Discover = () => {
                   g.created_by_name ||
                   (t('discover.unknownCreator') || 'Unknown creator'),
                 creatorUserId: g.creator_profile?.userId || g.created_by || null,
+                creatorLevel:
+                  g.creator_profile?.level ??
+                  (g as any).creator_level ??
+                  null,
+                creatorIsPremium:
+                  g.creator_profile?.premiumSince
+                    ? true
+                    : g.creator_profile?.isPremium ??
+                        g.creator_profile?.premium ??
+                        ((g as any).creator_is_premium != null
+                          ? Boolean((g as any).creator_is_premium)
+                          : null),
                 tags: Array.isArray(g.tags) ? g.tags : undefined,
                 isFavorite: favorites.has(gid),
                 isPublic: (((g as any).isPublic ?? 0) === 1) || (g as any).isPublic === true,

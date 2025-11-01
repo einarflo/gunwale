@@ -22,4 +22,7 @@ export type GameCardGame = {
   creatorUserId?: string | null;
   tags?: GameCardTag[];
   accentKey?: string | null;
+  creatorLevel?: number | null;
+  creatorIsPremium?: boolean | null;
+  ownedByCurrentUser?: boolean | null;
 };

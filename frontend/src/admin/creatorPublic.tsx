@@ -20,6 +20,8 @@ interface CreatorProfile {
   createdQuizzes: number | null;
   premiumSince?: string | null;
   memberSince?: string | null;
+  isPremium?: boolean | null;
+  premium?: boolean | null;
 }
 
 interface CreatorGame {
@@ -198,6 +200,12 @@ const CreatorPublic = () => {
                 participantCount: g.participants ?? null,
                 tags: Array.isArray(g.tags) ? g.tags : undefined,
                 isPublic: (((g as any).isPublic ?? 0) === 1) || (g as any).isPublic === true,
+                creatorName: profile?.username || (g as any).created_by_name || null,
+                creatorLevel: profile?.level ?? null,
+                creatorIsPremium:
+                  profile?.premiumSince != null
+                    ? true
+                    : profile?.isPremium ?? profile?.premium ?? null,
                 accentKey: `${gid}-${g.name || ''}`,
               });
 
