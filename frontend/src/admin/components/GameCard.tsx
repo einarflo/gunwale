@@ -13,7 +13,6 @@ export type GameCardLabels = {
   viewCreator: string;
   public: string;
   private: string;
-  level: string;
 };
 
 export type GameCardAction = {
@@ -118,6 +117,17 @@ const GameCard = ({
       ? Math.max(0, Math.floor(game.creatorLevel))
       : null;
   const canEdit = Boolean(onEdit && game.ownedByCurrentUser);
+  const privacyLabel = game.isPublic ? labels.public : labels.private;
+  const privacyIcon = game.isPublic ? (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 3a9 9 0 019 9 9 9 0 01-18 0 9 9 0 019-9zm0 2a7 7 0 100 14 7 7 0 000-14zm0 3a4 4 0 014 4h-2a2 2 0 10-2 2v2h-2v-2a4 4 0 012-7z" />
+    </svg>
+  ) : (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M6 10V8a6 6 0 0112 0v2h1a1 1 0 011 1v9a1 1 0 01-1 1H5a1 1 0 01-1-1v-9a1 1 0 011-1h1zm2-2a4 4 0 118 0v2H8V8zm-1 4v7h10v-7H7z" />
+    </svg>
+  );
+  const actionButtons = actions?.filter(Boolean) ?? [];
 
   return (
     <div
@@ -174,23 +184,61 @@ const GameCard = ({
           </button>
         )}
       </div>
-      <div className="p-6">
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div className="text-lg font-bold text-white line-clamp-2">{game.title}</div>
-          {game.isPublic != null && (
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-white/10 text-white border border-white/10 shrink-0">
-              {game.isPublic ? labels.public : labels.private}
-            </span>
+      <div className="px-6 py-5 space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/60">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 border border-white/10 text-white">
+                {privacyIcon}
+              </span>
+              <span className="truncate">{privacyLabel}</span>
+            </div>
+            <div className="mt-2 text-lg font-semibold leading-snug text-white line-clamp-2">
+              {game.title}
+            </div>
+          </div>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit?.(game);
+              }}
+              className="shrink-0 rounded-full bg-white/10 border border-white/15 p-2 text-white hover:bg-white/20 transition"
+              aria-label="Rediger"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM21.41 6.34a1.25 1.25 0 000-1.77l-1.98-1.98a1.25 1.25 0 00-1.77 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+              </svg>
+            </button>
           )}
         </div>
         {game.description && (
-          <div className="text-sm text-white/80 line-clamp-2 mb-3">{game.description}</div>
+          <div className="text-sm leading-relaxed text-white/80 line-clamp-3">
+            {game.description}
+          </div>
         )}
-        <div className="flex flex-wrap items-center gap-2 text-xs text-white/80 mb-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-white/80">
+          {playCount && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              {playCount} {labels.plays}
+            </span>
+          )}
+          {participantCount && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V20h6v-1c0-1.54.6-2.94 1.58-4C6.82 14.37 6.4 14 8 14c1.6 0 3.18.37 4.42 1.5A5.96 5.96 0 0116 13c3.33 0 6 1.34 6 3.5V20h-6v-1c0-1.54-.6-2.94-1.58-4C17.18 14.37 17.6 14 16 14z" />
+              </svg>
+              {participantCount} {labels.participants}
+            </span>
+          )}
           {favoriteCount && (
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1 4.5 2.09C12.09 5 13.76 4 15.5 4 18 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1 4.5 2.09C12.09 5 13.76 4 15.5 4 18 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54z" />
               </svg>
               {favoriteCount} {labels.favorites}
             </span>
@@ -213,7 +261,7 @@ const GameCard = ({
           )}
         </div>
         {tags.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1">
             {tags.slice(0, 6).map((tag) => (
               <span
                 key={`${tag.slug || tag.name}`}
@@ -235,9 +283,7 @@ const GameCard = ({
             onClick={handleCreatorClick}
             disabled={!onCreatorClick || !game.creatorUserId}
             className={`w-full text-left transition ${
-              onCreatorClick && game.creatorUserId
-                ? "hover:scale-[1.01]"
-                : "cursor-default opacity-90"
+              onCreatorClick && game.creatorUserId ? "hover:scale-[1.01]" : "cursor-default opacity-90"
             }`}
           >
             <div
@@ -275,14 +321,14 @@ const GameCard = ({
             </div>
           </button>
         )}
-        {(actions?.length || canEdit) && (
-          <div className="mb-3 flex flex-wrap gap-2 pt-1">
-            {actions?.map((action, index) => {
+        {actionButtons.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            {actionButtons.map((action, index) => {
               const kind = action.kind ?? (index === 0 ? "primary" : "secondary");
               const baseClasses =
                 kind === "primary"
-                  ? "relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2.5 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition text-sm"
-                  : "rounded-lg bg-white/10 border border-white/10 px-4 py-2.5 text-white font-semibold shadow hover:bg-white/20 active:scale-95 transition text-sm";
+                  ? "relative overflow-hidden rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition text-sm"
+                  : "rounded-lg bg-white/10 border border-white/10 px-4 py-2 text-white font-semibold shadow hover:bg-white/20 active:scale-95 transition text-sm";
               return (
                 <button
                   key={`${action.label}-${index}`}
@@ -295,15 +341,6 @@ const GameCard = ({
                 </button>
               );
             })}
-            {canEdit && (
-              <button
-                type="button"
-                className="rounded-lg bg-white/10 border border-white/15 px-4 py-2.5 text-white font-semibold shadow hover:bg-white/20 active:scale-95 transition text-sm"
-                onClick={() => onEdit?.(game)}
-              >
-                Rediger
-              </button>
-            )}
           </div>
         )}
       </div>

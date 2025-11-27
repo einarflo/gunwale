@@ -209,20 +209,11 @@ const CreatorPublic = () => {
                 accentKey: `${gid}-${g.name || ''}`,
               });
 
-              const actions = [
-                {
-                  label: t("home.startGame") || "Start game",
-                  kind: "primary" as const,
-                  onClick: (gameCard: any) => openGame(gameCard.id),
-                },
-              ];
-
               return (
                 <GameCard
                   key={cardGame.id}
                   game={cardGame}
                   labels={cardLabels}
-                  actions={actions}
                   className="group"
                   onClick={(gameCard) => openGame(gameCard.id)}
                 />

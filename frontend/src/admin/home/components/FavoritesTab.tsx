@@ -102,20 +102,11 @@ const FavoritesTab = ({
             ownedByCurrentUser,
           });
 
-          const actions = [
-            {
-              label: t("home.startGame") || "Start game",
-              kind: "primary" as const,
-              onClick: (gameCard: any) => onOpenGame(gameCard.id),
-            },
-          ];
-
           return (
             <GameCard
               key={cardGame.id}
               game={cardGame}
               labels={labels}
-              actions={actions}
               onClick={(gameCard) => onOpenGame(gameCard.id)}
               onEdit={(gameCard) => onEditGame(gameCard.id)}
               onCreatorClick={(gameCard) => {

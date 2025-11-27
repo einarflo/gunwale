@@ -342,20 +342,11 @@ const Discover = () => {
                 lastPlayedAt: (g as any).lastPlayedAt ?? null,
               });
 
-              const actions = [
-                {
-                  label: t('home.startGame') || 'Start game',
-                  kind: 'primary' as const,
-                  onClick: (gameCard: any) => openDetails(gameCard.id),
-                },
-              ];
-
               return (
                 <GameCard
                   key={cardGame.id}
                   game={cardGame}
                   labels={cardLabels}
-                  actions={actions}
                   className="group"
                   onClick={(gameCard) => openDetails(gameCard.id)}
                   onToggleFavorite={(gameCard) => toggleFavorite(gameCard.id)}
