@@ -31,8 +31,8 @@ const fadeIn = {
 
 const SectionTitle: React.FC<{ title: string; subtitle?: string }> = ({ title, subtitle }) => (
   <div className="text-center max-w-2xl mx-auto mb-10">
-    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">{title}</h2>
-    {subtitle && <p className="text-white/70">{subtitle}</p>}
+    <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">{title}</h2>
+    {subtitle && <p className="text-slate-600">{subtitle}</p>}
   </div>
 );
 
@@ -43,18 +43,18 @@ const FeaturedCard: React.FC<{ quiz: Quiz }> = ({ quiz }) => (
   <motion.div
     variants={fadeInUp}
     whileHover={{ scale: 1.02 }}
-    className="rounded-xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/10 shadow-xl transition-transform duration-200"
+    className="rounded-xl overflow-hidden bg-white backdrop-blur-sm border border-slate-100 shadow-xl transition-transform duration-200"
   >
     <div className="aspect-[16/9] overflow-hidden">
       <img src={quiz.image || mockup} alt={quiz.title} className="h-full w-full object-cover" />
     </div>
     <div className="p-4">
-      <div className="text-white font-semibold mb-2">{quiz.title}</div>
+      <div className="text-slate-900 font-semibold mb-2">{quiz.title}</div>
       <div className="flex flex-wrap gap-2">
         {quiz.tags.map((tag) => (
           <span
             key={tag}
-            className="text-xs px-2.5 py-1 rounded-full bg-indigo-500/30 text-indigo-200"
+            className="text-xs px-2.5 py-1 rounded-full bg-rose-100 text-rose-700"
           >
             {tag}
           </span>
@@ -103,7 +103,7 @@ const QuizCard: React.FC<{ q: QuizApiItem }> = ({ q }) => {
   const id = String(q.uuid || q.id);
   const tags = q.tags || [];
   const diff = q.difficulty || 'Unknown';
-  const badgeClass = diffClasses[diff] || 'bg-white/10 text-white/80';
+  const badgeClass = diffClasses[diff] || 'bg-rose-100 text-rose-700';
   const badgeLight = diffLightClasses[diff] || 'bg-gray-100 text-gray-700';
   const moreTags = Math.max(0, (tags?.length || 0) - 3);
   const tint = hslFromString(id + (q.name || 'tavl'));
@@ -112,7 +112,7 @@ const QuizCard: React.FC<{ q: QuizApiItem }> = ({ q }) => {
     <Link
       to={`/game/${encodeURIComponent(id)}`}
       aria-label={`Open quiz ${q.name}`}
-      className="group relative rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm transition hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent min-w-[260px] sm:min-w-[280px] snap-start"
+      className="group relative rounded-xl border border-rose-100 bg-white backdrop-blur-sm transition hover:shadow-xl hover:shadow-rose-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white min-w-[260px] sm:min-w-[280px] snap-start"
     >
       <div className="relative aspect-[16/10] overflow-hidden rounded-t-xl">
         {cover ? (
@@ -133,12 +133,12 @@ const QuizCard: React.FC<{ q: QuizApiItem }> = ({ q }) => {
             <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${tint}, transparent)` }} />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/15 to-transparent" />
         {/* Hover/Focus CTA */}
         <div className="absolute inset-0 hidden place-items-center group-hover:grid focus-within:grid">
           <Link
             to={`/game/${encodeURIComponent(id)}`}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-medium shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-rose-500 to-amber-400 text-white font-medium shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           >
             Play now
           </Link>
@@ -239,36 +239,36 @@ export const FeaturedQuizzes: React.FC<{ limit?: number }> = ({ limit = 12 }) =>
   };
 
   return (
-    <section className="relative mt-20 text-white w-full">
+    <section className="relative mt-20 text-slate-900 w-full">
       {/* Local background glows specifically for Featured row */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_60%,rgba(99,102,241,0.22),transparent_60%),radial-gradient(60%_40%_at_80%_40%,rgba(236,72,153,0.22),transparent_60%),radial-gradient(40%_30%_at_50%_50%,rgba(168,85,247,0.16),transparent_62%)]" />
-        <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_12%_58%,rgba(255,255,255,0.8)_0_2px,transparent_3px),radial-gradient(circle_at_88%_42%,rgba(255,255,255,0.8)_0_2px,transparent_3px)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_60%,rgba(248,113,113,0.2),transparent_60%),radial-gradient(60%_40%_at_80%_40%,rgba(239,68,68,0.22),transparent_60%),radial-gradient(40%_30%_at_50%_50%,rgba(248,113,113,0.12),transparent_62%)]" />
+        <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_12%_58%,rgba(248,113,113,0.6)_0_2px,transparent_3px),radial-gradient(circle_at_88%_42%,rgba(239,68,68,0.6)_0_2px,transparent_3px)]" />
       </div>
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
       <div className="container mx-auto px-8">
         <div className="text-center max-w-2xl mx-auto mb-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">Featured quizzes</h2>
-          <p className="text-white/70">Curated sets to get you started</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">Featured quizzes</h2>
+          <p className="text-slate-600">Curated sets to get you started</p>
         </div>
       </div>
       {loading && (
         <div className="relative">
           <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-2 px-6 sm:px-8" style={{ WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 8%, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%)', maskImage: 'linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 8%, rgba(0,0,0,1) 92%, rgba(0,0,0,0) 100%)' }}>
             {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="min-w-[260px] sm:min-w-[280px] rounded-xl border border-white/10 bg-white/5 overflow-hidden snap-start">
-                <div className="aspect-[16/10] bg-[linear-gradient(90deg,rgba(255,255,255,0.06)_25%,rgba(255,255,255,0.15)_37%,rgba(255,255,255,0.06)_63%)] bg-[length:400%_100%] animate-[shimmer_1.2s_infinite]" />
-                <div className="p-4 h-14 bg-white/5" />
+              <div key={i} className="min-w-[260px] sm:min-w-[280px] rounded-xl border border-slate-100 bg-white overflow-hidden snap-start shadow-sm">
+                <div className="aspect-[16/10] bg-[linear-gradient(90deg,rgba(248,113,113,0.06)_25%,rgba(248,113,113,0.15)_37%,rgba(248,113,113,0.06)_63%)] bg-[length:400%_100%] animate-[shimmer_1.2s_infinite]" />
+                <div className="p-4 h-14 bg-white" />
               </div>
             ))}
           </div>
         </div>
       )}
       {!loading && error && (
-        <div className="mx-auto max-w-xl rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-100">
+        <div className="mx-auto max-w-xl rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700">
           <div className="flex items-center justify-between gap-3">
             <span>{error}</span>
-            <button onClick={retry} className="rounded-lg px-3 py-1.5 bg-rose-500/30 hover:bg-rose-500/40 text-white">Try again</button>
+            <button onClick={retry} className="rounded-lg px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white">Try again</button>
           </div>
         </div>
       )}
@@ -283,14 +283,14 @@ export const FeaturedQuizzes: React.FC<{ limit?: number }> = ({ limit = 12 }) =>
           <button
             aria-label="Scroll left"
             onClick={() => scrollByCards(-1)}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 border border-white/10 p-2 text-white hover:bg-white/20"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white border border-rose-100 p-2 text-rose-600 hover:bg-rose-50 shadow-sm"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             aria-label="Scroll right"
             onClick={() => scrollByCards(1)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/10 border border-white/10 p-2 text-white hover:bg-white/20"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white border border-rose-100 p-2 text-rose-600 hover:bg-rose-50 shadow-sm"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -399,58 +399,58 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
 
   return (
     <div
-      className="relative min-h-screen bg-[#1e1b4b] text-white overflow-hidden"
-      style={{ fontFamily: 'Inter, "Plus Jakarta Sans", Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' }}
+      className="relative min-h-screen bg-white text-slate-900 overflow-hidden"
+      style={{ fontFamily: 'Inter, \"Plus Jakarta Sans\", Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' }}
     >
       {/* Layered gradients and subtle glow (Tailwind only) */}
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.18)_0%,transparent_55%),radial-gradient(circle_at_80%_70%,rgba(168,85,247,0.16)_0%,transparent_55%),linear-gradient(to_bottom_right,rgba(236,72,153,0.12),rgba(99,102,241,0.08),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.04)_0%,transparent_70%)] animate-pulse-slow" />
       {/* Parallax orbs reacting to mouse movement */}
       <ParallaxOrbs />
       {/* Parallax layers that follow scroll */}
       <ParallaxScroll />
       {/* Top band glows + stars extending behind nav */}
       <div className="pointer-events-none absolute top-0 left-0 right-0 h-[65vh] -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(50%_35%_at_15%_10%,rgba(255,255,255,0.22)_0%,transparent_60%),radial-gradient(45%_30%_at_85%_8%,rgba(255,255,255,0.18)_0%,transparent_62%),radial-gradient(30%_25%_at_50%_0%,rgba(255,255,255,0.12)_0%,transparent_65%)]" />
-        <div className="absolute inset-0 opacity-90 animate-pulse-slow bg-[radial-gradient(circle_at_8%_16%,rgba(255,255,255,0.9)_0_1px,transparent_2px),radial-gradient(circle_at_14%_28%,rgba(255,255,255,0.7)_0_1px,transparent_2px),radial-gradient(circle_at_22%_12%,rgba(255,255,255,0.8)_0_1px,transparent_2px),radial-gradient(circle_at_32%_22%,rgba(255,255,255,0.65)_0_1px,transparent_2px),radial-gradient(circle_at_41%_9%,rgba(255,255,255,0.9)_0_1px,transparent_2px),radial-gradient(circle_at_55%_14%,rgba(255,255,255,0.75)_0_1px,transparent_2px),radial-gradient(circle_at_63%_6%,rgba(255,255,255,0.85)_0_1px,transparent_2px),radial-gradient(circle_at_72%_18%,rgba(255,255,255,0.7)_0_1px,transparent_2px),radial-gradient(circle_at_82%_10%,rgba(255,255,255,0.8)_0_1px,transparent_2px),radial-gradient(circle_at_90%_22%,rgba(255,255,255,0.75)_0_1px,transparent_2px)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(50%_35%_at_15%_10%,rgba(99,102,241,0.18)_0%,transparent_60%),radial-gradient(45%_30%_at_85%_8%,rgba(168,85,247,0.16)_0%,transparent_62%),radial-gradient(30%_25%_at_50%_0%,rgba(236,72,153,0.1)_0%,transparent_65%)]" />
+        <div className="absolute inset-0 opacity-70 animate-pulse-slow bg-[radial-gradient(circle_at_8%_16%,rgba(99,102,241,0.55)_0_1px,transparent_2px),radial-gradient(circle_at_14%_28%,rgba(168,85,247,0.5)_0_1px,transparent_2px),radial-gradient(circle_at_22%_12%,rgba(236,72,153,0.5)_0_1px,transparent_2px),radial-gradient(circle_at_32%_22%,rgba(168,85,247,0.45)_0_1px,transparent_2px),radial-gradient(circle_at_41%_9%,rgba(99,102,241,0.6)_0_1px,transparent_2px),radial-gradient(circle_at_55%_14%,rgba(168,85,247,0.5)_0_1px,transparent_2px),radial-gradient(circle_at_63%_6%,rgba(236,72,153,0.5)_0_1px,transparent_2px),radial-gradient(circle_at_72%_18%,rgba(168,85,247,0.45)_0_1px,transparent_2px),radial-gradient(circle_at_82%_10%,rgba(99,102,241,0.55)_0_1px,transparent_2px),radial-gradient(circle_at_90%_22%,rgba(236,72,153,0.5)_0_1px,transparent_2px)]" />
       </div>
       {/* Bottom band glows + extra stars for lower sections */}
       <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[70vh] -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_90%,rgba(236,72,153,0.25),transparent_60%),radial-gradient(50%_35%_at_80%_85%,rgba(79,70,229,0.25),transparent_60%),radial-gradient(40%_30%_at_50%_100%,rgba(168,85,247,0.18),transparent_62%)]" />
-        <div className="absolute inset-0 opacity-80 animate-pulse-slow bg-[radial-gradient(circle_at_12%_82%,rgba(255,255,255,0.9)_0_2px,transparent_3px),radial-gradient(circle_at_24%_88%,rgba(255,255,255,0.7)_0_2px,transparent_3px),radial-gradient(circle_at_36%_78%,rgba(255,255,255,0.8)_0_2px,transparent_3px),radial-gradient(circle_at_58%_90%,rgba(255,255,255,0.75)_0_2px,transparent_3px),radial-gradient(circle_at_72%_80%,rgba(255,255,255,0.85)_0_2px,transparent_3px),radial-gradient(circle_at_86%_92%,rgba(255,255,255,0.7)_0_2px,transparent_3px)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_90%,rgba(99,102,241,0.18),transparent_60%),radial-gradient(50%_35%_at_80%_85%,rgba(168,85,247,0.18),transparent_60%),radial-gradient(40%_30%_at_50%_100%,rgba(236,72,153,0.14),transparent_62%)]" />
+        <div className="absolute inset-0 opacity-70 animate-pulse-slow bg-[radial-gradient(circle_at_12%_82%,rgba(99,102,241,0.55)_0_2px,transparent_3px),radial-gradient(circle_at_24%_88%,rgba(168,85,247,0.5)_0_2px,transparent_3px),radial-gradient(circle_at_36%_78%,rgba(236,72,153,0.5)_0_2px,transparent_3px),radial-gradient(circle_at_58%_90%,rgba(168,85,247,0.45)_0_2px,transparent_3px),radial-gradient(circle_at_72%_80%,rgba(99,102,241,0.5)_0_2px,transparent_3px),radial-gradient(circle_at_86%_92%,rgba(236,72,153,0.45)_0_2px,transparent_3px)]" />
       </div>
-      <Header />
+      <Header forceDark />
 
       <main className="relative z-10">
       {/* Hero */}
       <section className="relative px-6 sm:px-8 pt-28 sm:pt-24 pb-16 sm:pb-20">
         {/* Light radial glows and tiny star-like speckles */}
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_10%,rgba(255,255,255,0.20),transparent_62%),radial-gradient(40%_30%_at_85%_20%,rgba(255,255,255,0.14),transparent_62%),radial-gradient(35%_28%_at_55%_15%,rgba(255,255,255,0.10),transparent_65%)]" />
-          <div className="absolute inset-0 opacity-90 animate-pulse-slow bg-[radial-gradient(circle_at_12%_28%,rgba(255,255,255,0.9)_0_1px,transparent_2px),radial-gradient(circle_at_24%_42%,rgba(255,255,255,0.8)_0_1px,transparent_2px),radial-gradient(circle_at_36%_18%,rgba(255,255,255,0.7)_0_1px,transparent_2px),radial-gradient(circle_at_48%_34%,rgba(255,255,255,0.85)_0_1px,transparent_2px),radial-gradient(circle_at_60%_20%,rgba(255,255,255,0.8)_0_1px,transparent_2px),radial-gradient(circle_at_72%_38%,rgba(255,255,255,0.75)_0_1px,transparent_2px),radial-gradient(circle_at_84%_26%,rgba(255,255,255,0.7)_0_1px,transparent_2px),radial-gradient(circle_at_18%_60%,rgba(255,255,255,0.8)_0_1px,transparent_2px),radial-gradient(circle_at_34%_68%,rgba(255,255,255,0.9)_0_1px,transparent_2px),radial-gradient(circle_at_50%_62%,rgba(255,255,255,0.75)_0_1px,transparent_2px),radial-gradient(circle_at_66%_58%,rgba(255,255,255,0.7)_0_1px,transparent_2px),radial-gradient(circle_at_82%_64%,rgba(255,255,255,0.8)_0_1px,transparent_2px)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_10%,rgba(99,102,241,0.16),transparent_62%),radial-gradient(40%_30%_at_85%_20%,rgba(168,85,247,0.12),transparent_62%),radial-gradient(35%_28%_at_55%_15%,rgba(236,72,153,0.1),transparent_65%)]" />
+          <div className="absolute inset-0 opacity-70 animate-pulse-slow bg-[radial-gradient(circle_at_12%_28%,rgba(99,102,241,0.45)_0_1px,transparent_2px),radial-gradient(circle_at_24%_42%,rgba(168,85,247,0.42)_0_1px,transparent_2px),radial-gradient(circle_at_36%_18%,rgba(236,72,153,0.4)_0_1px,transparent_2px),radial-gradient(circle_at_48%_34%,rgba(168,85,247,0.38)_0_1px,transparent_2px),radial-gradient(circle_at_60%_20%,rgba(99,102,241,0.4)_0_1px,transparent_2px),radial-gradient(circle_at_72%_38%,rgba(168,85,247,0.38)_0_1px,transparent_2px),radial-gradient(circle_at_84%_26%,rgba(236,72,153,0.4)_0_1px,transparent_2px),radial-gradient(circle_at_18%_60%,rgba(168,85,247,0.36)_0_1px,transparent_2px),radial-gradient(circle_at_34%_68%,rgba(99,102,241,0.4)_0_1px,transparent_2px),radial-gradient(circle_at_50%_62%,rgba(168,85,247,0.36)_0_1px,transparent_2px),radial-gradient(circle_at_66%_58%,rgba(236,72,153,0.36)_0_1px,transparent_2px),radial-gradient(circle_at_82%_64%,rgba(99,102,241,0.36)_0_1px,transparent_2px)]" />
         </div>
         <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center min-h-[60vh] md:min-h-[70vh]">
           <motion.div variants={fadeInUp} initial="hidden" animate="show">
-            <h1 className="text-5xl sm:text-6xl font-extrabold text-white mb-6 leading-tight">
+            <h1 className="text-5xl sm:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
               <span>Play smarter,</span>
               <br />
               <span>climb faster.</span>
             </h1>
-            <p className="text-white/70 text-base sm:text-lg mb-10 max-w-xl">
+            <p className="text-slate-600 text-base sm:text-lg mb-10 max-w-xl">
               Real-time multiplayer quizzes with upgrades, power-ups, and beautifully fast interactions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex items-center bg-white/10 backdrop-blur-sm border border-white/10 rounded-full p-1 w-full sm:w-auto">
+              <div className="flex items-center bg-white shadow-sm border border-rose-100 rounded-full p-1 w-full sm:w-auto">
                 <input
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
                   placeholder="Join game pin"
-                  className="bg-transparent placeholder-white/60 text-white px-4 py-3 outline-none w-full sm:w-64"
+                  className="bg-transparent placeholder-slate-400 text-slate-900 px-4 py-3 outline-none w-full sm:w-64"
                 />
                 <button
                   onClick={() => { setGamePin?.(pin); onJoin(); }}
-                  className="rounded-full bg-white text-indigo-600 px-6 py-2.5 font-semibold hover:bg-indigo-50 transition-colors duration-200 shadow-sm"
+                  className="rounded-full bg-rose-600 text-white px-6 py-2.5 font-semibold hover:bg-rose-500 transition-colors duration-200 shadow-sm"
                 >
                   Join
                 </button>
@@ -463,9 +463,9 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
             variants={fadeIn}
             className="relative hidden md:block"
           >
-            <div className="absolute -inset-6 bg-pink-400/20 blur-2xl rounded-3xl pointer-events-none" />
-            <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/10 backdrop-blur-sm shadow-2xl shadow-pink-500/20">
-              <img src={mockup} alt="Tavl mockup" className="w-full h-full object-cover" />
+            <div className="absolute -inset-6 bg-rose-200/40 blur-2xl rounded-3xl pointer-events-none" />
+            <div className="relative rounded-3xl overflow-hidden border border-rose-100 bg-white backdrop-blur-sm shadow-2xl shadow-rose-200/80">
+              <img src={mockup} alt="Tavl mockup" className="w-full h-full object-cover grayscale-[8%]" />
             </div>
           </motion.div>
         </div>
@@ -482,7 +482,7 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
           variants={fadeInUp}
-          className="relative rounded-3xl overflow-hidden px-4 sm:px-8 py-4 sm:py-6 pl-6 pr-6 md:pl-14 md:pr-14 lg:pl-20 lg:pr-20 lg:py-10 bg-white/10 backdrop-blur-md border border-white/10 shadow-[0_10px_50px_rgba(0,0,0,0.25)] h-[145px] md:h-[145px] lg:h-[190px]"
+          className="relative rounded-3xl overflow-hidden px-4 sm:px-8 py-4 sm:py-6 pl-6 pr-6 md:pl-14 md:pr-14 lg:pl-20 lg:pr-20 lg:py-10 bg-white backdrop-blur-md border border-rose-100 shadow-[0_20px_70px_rgba(244,63,94,0.14)] h-[145px] md:h-[145px] lg:h-[190px]"
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
@@ -492,7 +492,7 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
               key={selectedUpgrade}
               className="absolute inset-0 pointer-events-none"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.85 }}
+              animate={{ opacity: 0.55 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.35 }}
               style={{
@@ -500,7 +500,7 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
               }}
             />
           </AnimatePresence>
-          <div className="absolute inset-0 pointer-events-none opacity-50 bg-[radial-gradient(60%_40%_at_15%_10%,rgba(255,255,255,0.45),transparent_60%)]" />
+          <div className="absolute inset-0 pointer-events-none opacity-40 bg-[radial-gradient(60%_40%_at_15%_10%,rgba(248,113,113,0.35),transparent_60%)]" />
           {/* Swipe left/right on mobile to change upgrade; buttons removed */}
 
           {/* Upgrade content */}
@@ -514,11 +514,11 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
             </div>
             <div className="flex-1 min-w-0 text-left">
               <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="text-xs px-2.5 py-1 rounded-full bg-gradient-to-r from-indigo-400/30 via-purple-400/30 to-pink-400/30 text-white ring-1 ring-white/20 shadow-sm">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-gradient-to-r from-rose-100 via-rose-200 to-amber-100 text-rose-700 ring-1 ring-rose-200 shadow-sm">
                   {upgradesData[selectedUpgrade].price}
                 </span>
                 {upgradesData[selectedUpgrade].premium && (
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400/35 via-rose-400/35 to-pink-500/40 text-white ring-1 ring-white/20 shadow-sm">
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-200 via-rose-200 to-rose-300 text-rose-800 ring-1 ring-rose-200 shadow-sm">
                     Premium
                   </span>
                 )}
@@ -526,7 +526,7 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
               <div className="text-lg sm:text-xl md:text-2xl font-semibold mb-1 truncate">
                 {upgradesData[selectedUpgrade].header}
               </div>
-              <div className="text-white/70 text-sm sm:text-base leading-snug max-h-[48px] sm:max-h-[52px] overflow-hidden">
+              <div className="text-slate-600 text-sm sm:text-base leading-snug max-h-[48px] sm:max-h-[52px] overflow-hidden">
                 {upgradesData[selectedUpgrade].description}
               </div>
             </div>
@@ -543,8 +543,8 @@ export default function LandingPage({ signIn, playMode, setGamePin }: LandingPag
               className={[
                 "h-2.5 w-2.5 rounded-full transition-all duration-200",
                 idx === selectedUpgrade
-                  ? "bg-white/90 shadow-[0_0_0_4px_rgba(255,255,255,0.15)]"
-                  : "bg-white/40 hover:bg-white/60"
+                  ? "bg-rose-500 shadow-[0_0_0_4px_rgba(244,63,94,0.2)]"
+                  : "bg-rose-200 hover:bg-rose-300"
               ].join(' ')}
             />
           ))}

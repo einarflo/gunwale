@@ -10,9 +10,10 @@ import { useI18n } from "../../i18n/I18nProvider";
 interface HeaderProps {
   signIn?: () => void;
   playMode?: () => void;
+  forceDark?: boolean;
 }
 
-export default function Header({ signIn, playMode }: HeaderProps) {
+export default function Header({ signIn, playMode, forceDark }: HeaderProps) {
   const navigate = useNavigate();
   const { logout, username, isAuthenticated, login } = useKeycloak();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -60,13 +61,15 @@ export default function Header({ signIn, playMode }: HeaderProps) {
     setHeaderHeight(el.offsetHeight + mt);
   }, [menuOpen]);
 
+  const isDark = forceDark || scrolled;
+
   return (
     <>
     <header className="fixed top-0 left-0 right-0 z-50">
       <div
         className={[
           "transition-all duration-200 mx-3 sm:mx-6 mt-3 rounded-2xl",
-          scrolled
+          isDark
             ? "bg-[#0d0b24]/80 backdrop-blur-md border border-white/10 shadow-lg shadow-black/20"
             : "bg-[#0d0b24]/40 backdrop-blur-md border border-white/10"
         ].join(' ')}
