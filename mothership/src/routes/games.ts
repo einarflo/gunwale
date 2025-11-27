@@ -104,51 +104,143 @@ gamesRouter.get('/public', async (req: Request, res: Response) => {
   const q = (req.query.q as string | undefined)?.trim();
   const tagsParam = (req.query.tags as string | undefined)?.trim();
   const mode = String((req.query.mode as string | undefined) || 'any').toLowerCase();
+  const sort = String((req.query.sort as string | undefined) || 'popular').toLowerCase();
+  const limitParam = Number.parseInt(String(req.query.limit ?? ''), 10);
+  const pageParam = Number.parseInt(String(req.query.page ?? ''), 10);
+  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 60) : 24;
+  const page = Number.isFinite(pageParam) && pageParam >= 0 ? pageParam : 0;
+  const offset = page * limit;
+
+  const toNumeric = (val: any): number => {
+    if (val == null) return 0;
+    if (typeof val === 'number') return val;
+    if (typeof val === 'bigint') return Number(val);
+    const parsed = Number(val);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
   try {
-    let gameIdsFilter: string[] | null = null;
+    let tagIds: number[] = [];
     if (tagsParam) {
-      const slugs = [...new Set(tagsParam.split(',').map(s => s.trim().toLowerCase()).filter(Boolean))];
+      const slugs = [...new Set(tagsParam.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean))];
       if (slugs.length) {
         const tagRows = await prisma.tags.findMany({ where: { slug: { in: slugs } } });
-        const tagIds = tagRows.map(t => t.id);
-        if (tagIds.length) {
-          const rows = await prisma.game_tags.findMany({ where: { tag_id: { in: tagIds } }, select: { game_id: true, tag_id: true } });
-          if (mode === 'all') {
-            const counts = new Map<string, number>();
-            for (const r of rows) counts.set(r.game_id, (counts.get(r.game_id) || 0) + 1);
-            gameIdsFilter = [...counts.entries()].filter(([, c]) => c >= tagIds.length).map(([id]) => id);
-          } else {
-            gameIdsFilter = [...new Set(rows.map(r => r.game_id))];
-          }
-          if (gameIdsFilter.length === 0) {
-            return res.json([]);
-          }
+        tagIds = tagRows.map((t) => t.id);
+        if (!tagIds.length) {
+          return res.json([]);
         }
       }
     }
 
-    const where: any = {
-      isPublic: 1,
-      OR: [{ deleted: null }, { NOT: { deleted: '1' } }],
-      ...(gameIdsFilter ? { uuid: { in: gameIdsFilter } } : {}),
-    };
-    if (q) {
-      where.AND = [
-        {
-          OR: [
-            { name: { contains: q } },
-            { description: { contains: q } },
-          ],
-        },
-      ];
+    const joinClauses: string[] = [];
+    const whereClauses: string[] = [
+      'g.isPublic = 1',
+      `(g.deleted IS NULL OR g.deleted <> '1')`,
+    ];
+    const orderParts: string[] = [];
+    const params: any[] = [];
+
+    if (tagIds.length) {
+      const placeholders = tagIds.map(() => '?').join(',');
+      joinClauses.push(`
+        LEFT JOIN (
+          SELECT gt.game_id, COUNT(DISTINCT gt.tag_id) AS match_count
+          FROM game_tags gt
+          WHERE gt.tag_id IN (${placeholders})
+          GROUP BY gt.game_id
+        ) mtc ON mtc.game_id = g.uuid
+      `);
+      params.push(...tagIds);
+      if (mode === 'all') {
+        whereClauses.push('COALESCE(mtc.match_count, 0) >= ?');
+      } else {
+        whereClauses.push('COALESCE(mtc.match_count, 0) > 0');
+      }
     }
 
-    const games = await prisma.game.findMany({ where });
+    if (q) {
+      whereClauses.push('(g.name LIKE ? OR g.description LIKE ?)');
+      params.push(`%${q}%`, `%${q}%`);
+    }
+
+    if (tagIds.length && mode === 'all') {
+      params.push(tagIds.length);
+    }
+
+    if (tagIds.length) {
+      orderParts.push('COALESCE(mtc.match_count, 0) DESC');
+    }
+    switch (sort) {
+      case 'recent':
+        orderParts.push(`COALESCE(NULLIF(g.updated_at, ''), NULLIF(g.created_at, ''), '') DESC`);
+        break;
+      case 'favourites':
+        orderParts.push('favCount DESC');
+        break;
+      case 'questions':
+        orderParts.push('qcount DESC');
+        break;
+      case 'popular':
+      default:
+        orderParts.push('plays DESC');
+        break;
+    }
+    orderParts.push('g.id DESC');
+
+    const query = `
+      SELECT
+        g.id,
+        g.uuid,
+        g.name,
+        g.description,
+        g.status,
+        g.playthroughs,
+        g.currentquestion,
+        g.starttime,
+        g.deleted,
+        g.isPublic,
+        g.created_by,
+        g.created_by_name,
+        g.created_at,
+        g.updated_at,
+        g.cover_image_url,
+        ${tagIds.length ? 'COALESCE(mtc.match_count, 0)' : '0'} AS match_count,
+        (SELECT COUNT(*) FROM game_question gq WHERE gq.game_id = g.uuid AND (gq.deleted IS NULL OR gq.deleted <> '1')) AS qcount,
+        (SELECT COUNT(*) FROM favourite_games fg WHERE fg.game_id = g.uuid) AS favCount,
+        (SELECT COUNT(*) FROM game_instance gi WHERE gi.game_id = g.uuid AND (gi.is_deleted IS NULL OR gi.is_deleted <> '1')) AS plays
+      FROM game g
+      ${joinClauses.join('\n')}
+      WHERE ${whereClauses.join(' AND ')}
+      ORDER BY ${orderParts.join(', ')}
+      LIMIT ?
+      OFFSET ?
+    `;
+
+    params.push(limit, offset);
+    const rows = await prisma.$queryRawUnsafe<Array<Record<string, any>>>(query, ...params);
+    if (!rows.length) {
+      return res.json([]);
+    }
+
+    const uuids = rows.map((r) => r.uuid).filter(Boolean) as string[];
+    const tagMap = new Map<string, Array<{ slug: string; name: string }>>();
+    if (uuids.length) {
+      const links = await prisma.game_tags.findMany({
+        where: { game_id: { in: uuids } },
+        include: { tags: true },
+      });
+      for (const link of links) {
+        if (!link?.game_id || !link.tags) continue;
+        const arr = tagMap.get(link.game_id) || [];
+        arr.push({ slug: link.tags.slug, name: link.tags.name });
+        tagMap.set(link.game_id, arr);
+      }
+    }
 
     const creatorIds = Array.from(
       new Set(
-        games
-          .map(g => (g.created_by ? String(g.created_by) : null))
+        rows
+          .map((r) => (r.created_by ? String(r.created_by) : null))
           .filter((id): id is string => Boolean(id))
       )
     );
@@ -193,57 +285,37 @@ gamesRouter.get('/public', async (req: Request, res: Response) => {
       }
     }
 
-    // Collect tags for all returned games in a single query
-    const uuids = games.map(g => g.uuid).filter(Boolean) as string[];
-    const tagMap = new Map<string, Array<{ slug: string; name: string }>>();
-    if (uuids.length) {
-      const links = await prisma.game_tags.findMany({
-        where: { game_id: { in: uuids } },
-        include: { tags: true },
-      });
-      for (const l of links) {
-        if (!l?.game_id || !l?.tags) continue;
-        const arr = tagMap.get(l.game_id) || [];
-        arr.push({ slug: l.tags.slug, name: l.tags.name });
-        tagMap.set(l.game_id, arr);
-      }
-    }
-
     const enriched = await Promise.all(
-      games.map(async (g) => {
-        let qcount = 0;
-        let favCount = 0;
-        let plays = 0;
+      rows.map(async (row) => {
+        const { match_count, ...rest } = row;
+        const uuid = rest.uuid as string | undefined;
+        const qcount = toNumeric(rest.qcount);
+        const favCount = toNumeric(rest.favCount);
+        const plays = toNumeric(rest.plays);
         let participants = 0;
         let avgScore = 0;
         let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
-        try {
-          qcount = await prisma.game_question.count({
-            where: { game_id: g.uuid, OR: [{ deleted: null }, { NOT: { deleted: '1' } }] },
-          });
-        } catch (_) {}
-        try {
-          favCount = await prisma.favourite_games.count({ where: { game_id: g.uuid } });
-        } catch (_) {}
-        try {
-          plays = await prisma.game_instance.count({ where: { game_id: g.uuid, OR: [{ is_deleted: null }, { NOT: { is_deleted: '1' } }] } });
-        } catch (_) {}
-        try {
-          const players = await prisma.game_instance_players.findMany({ where: { game_id: g.uuid }, select: { score: true } });
-          participants = players.length;
-          const total = players.reduce((acc, p) => acc + Number(p.score || 0), 0);
-          avgScore = participants ? Math.round(total / participants) : 0;
-        } catch (_) {}
+        if (uuid) {
+          try {
+            const players = await prisma.game_instance_players.findMany({ where: { game_id: uuid }, select: { score: true } });
+            participants = players.length;
+            const total = players.reduce((acc, p) => acc + Number(p.score || 0), 0);
+            avgScore = participants ? Math.round(total / participants) : 0;
+          } catch (_) {}
+        }
+
         if (qcount > 0) {
           const avgPerQ = avgScore / qcount;
           if (avgPerQ >= 750) difficulty = 'easy';
           else if (avgPerQ >= 450) difficulty = 'medium';
           else difficulty = 'hard';
         }
-        const tags = tagMap.get(g.uuid) || [];
-        const creatorInfo = g.created_by ? creatorMap.get(String(g.created_by)) : undefined;
+
+        const creatorInfo = rest.created_by ? creatorMap.get(String(rest.created_by)) : undefined;
+        const tags = uuid ? tagMap.get(uuid) || [] : [];
+
         return {
-          ...g,
+          ...rest,
           qcount,
           favCount,
           plays,
@@ -251,7 +323,8 @@ gamesRouter.get('/public', async (req: Request, res: Response) => {
           participants,
           avgScore,
           difficulty,
-          creator_username: creatorInfo?.username ?? g.created_by_name ?? null,
+          tagMatchCount: toNumeric(match_count),
+          creator_username: creatorInfo?.username ?? rest.created_by_name ?? null,
           creator_profile: creatorInfo
             ? {
                 userId: creatorInfo.userId,
@@ -267,6 +340,7 @@ gamesRouter.get('/public', async (req: Request, res: Response) => {
         } as any;
       })
     );
+
     res.json(enriched);
   } catch (err: any) {
     logger.error('Failed to list public games', { error: err.message });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { get, post, del } from '../api';
 import GlobalStyles from '../components/landing/GlobalStyles';
@@ -44,21 +44,31 @@ interface GameLite {
   tags?: Array<{ slug: string; name: string }>;
   cover_image_url?: string | null;
   coverImageUrl?: string | null;
+  tagMatchCount?: number;
 }
+
+const PAGE_SIZE = 24;
 
 const Discover = () => {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { userId, isAuthenticated, login } = useKeycloak();
   const [term, setTerm] = useState('');
+  const [appliedTerm, setAppliedTerm] = useState('');
+  const [searchNonce, setSearchNonce] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [fetchingMore, setFetchingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<GameLite[]>([]);
+  const [currentPage, setCurrentPage] = useState(-1);
+  const [hasMore, setHasMore] = useState(true);
+  const requestSeq = useRef(0);
+  const fetchingMoreRef = useRef(false);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [allTags, setAllTags] = useState<Array<{ id: number; name: string; slug: string }>>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [tagModeAll, setTagModeAll] = useState(false);
-  const [showAllTags, setShowAllTags] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'favourites' | 'questions'>('popular');
 
   // Modal state for details + start
@@ -72,9 +82,87 @@ const Discover = () => {
     navigate(`/creator/${encodeURIComponent(userId)}`);
   };
 
+  const fetchPage = useCallback(async (pageToLoad: number, opts?: { reset?: boolean }) => {
+    const reset = opts?.reset ?? false;
+    const seq = ++requestSeq.current;
+    const slugs = Array.from(selected);
+    const qval = appliedTerm.trim();
+    const mode = tagModeAll ? 'all' : 'any';
+
+    if (reset) {
+      setLoading(true);
+      setError(null);
+      setHasMore(true);
+      fetchingMoreRef.current = false;
+      setFetchingMore(false);
+    } else {
+      if (fetchingMoreRef.current) return;
+      fetchingMoreRef.current = true;
+      setFetchingMore(true);
+    }
+
+    const params = new URLSearchParams();
+    params.set('limit', String(PAGE_SIZE));
+    params.set('page', String(pageToLoad));
+    params.set('sort', sortBy);
+    if (qval) params.set('q', qval);
+    if (slugs.length) {
+      params.set('tags', slugs.join(','));
+      params.set('mode', mode);
+    }
+
+    try {
+      const res = await get(`/games/public?${params.toString()}`);
+      if (requestSeq.current !== seq) return;
+      const payload = Array.isArray(res.data) ? res.data : [];
+      setResults(prev => {
+        if (reset) return payload;
+        const seen = new Map(prev.map(g => [String(g.uuid || g.id), g]));
+        const merged = [...prev];
+        for (const item of payload) {
+          const key = String(item.uuid || item.id);
+          if (seen.has(key)) {
+            const index = merged.findIndex(g => String(g.uuid || g.id) === key);
+            if (index >= 0) merged[index] = item;
+          } else {
+            seen.set(key, item);
+            merged.push(item);
+          }
+        }
+        return merged;
+      });
+      setHasMore(payload.length === PAGE_SIZE);
+      if (payload.length) {
+        setCurrentPage(pageToLoad);
+      } else if (reset) {
+        setCurrentPage(-1);
+      }
+      setError(null);
+    } catch (err) {
+      if (requestSeq.current !== seq) return;
+      setError('Failed to load');
+      if (reset) {
+        setResults([]);
+        setCurrentPage(-1);
+      } else {
+        setHasMore(false);
+      }
+    } finally {
+      if (reset) {
+        if (requestSeq.current === seq) {
+          setLoading(false);
+        }
+        fetchingMoreRef.current = false;
+      } else {
+        fetchingMoreRef.current = false;
+        if (requestSeq.current === seq) {
+          setFetchingMore(false);
+        }
+      }
+    }
+  }, [selected, appliedTerm, tagModeAll, sortBy]);
+
   useEffect(() => {
-    // Load initial lists
-    refresh();
     get('/tags').then(res => setAllTags(Array.isArray(res.data) ? res.data : [])).catch(() => setAllTags([]));
     if (isAuthenticated) {
       get('/favorites/').then(res => { const ids: string[] = res.data?.gameIds || []; setFavorites(new Set(ids.map(String))); }).catch(() => {});
@@ -83,42 +171,82 @@ const Discover = () => {
     }
   }, [isAuthenticated]);
 
-  const refresh = (opts?: { slugs?: string[]; q?: string; all?: boolean }) => {
-    setLoading(true);
-    const slugs = opts?.slugs ?? Array.from(selected);
-    const qval = (opts?.q ?? term).trim();
-    const all = opts?.all ?? tagModeAll;
-    const params = new URLSearchParams();
-    if (qval) params.set('q', qval);
-    if (slugs.length) {
-      params.set('tags', slugs.join(','));
-      params.set('mode', all ? 'all' : 'any');
-    }
-    get(`/games/public?${params.toString()}`)
-      .then(res => setResults(Array.isArray(res.data) ? res.data : []))
-      .catch(() => { setError('Failed to load'); setResults([]); })
-      .finally(() => setLoading(false));
-  };
+  useEffect(() => {
+    fetchPage(0, { reset: true });
+  }, [fetchPage, searchNonce]);
 
-  // client-side sort for better UX (server already filters)
+  useEffect(() => {
+    if (!hasMore || loading || fetchingMore || currentPage < 0) return;
+    const node = loadMoreRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          fetchPage(currentPage + 1);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, loading, fetchingMore, currentPage, fetchPage]);
+
+  const hasTagFilters = selected.size > 0;
   const filtered = useMemo(() => {
     const arr = [...results];
-    switch (sortBy) {
-      case 'recent':
-        arr.sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime());
-        break;
-      case 'popular':
-        arr.sort((a, b) => (b.plays || 0) - (a.plays || 0));
-        break;
-      case 'favourites':
-        arr.sort((a, b) => (b.favCount || 0) - (a.favCount || 0));
-        break;
-      case 'questions':
-        arr.sort((a, b) => (b.qcount || 0) - (a.qcount || 0));
-        break;
-    }
+    const toTime = (value: unknown) => {
+      if (!value) return 0;
+      const time = new Date(value as any).getTime();
+      return Number.isFinite(time) ? time : 0;
+    };
+    arr.sort((a, b) => {
+      if (hasTagFilters) {
+        const scoreA = Number((a as any).tagMatchCount ?? (a as any).match_count ?? 0);
+        const scoreB = Number((b as any).tagMatchCount ?? (b as any).match_count ?? 0);
+        if (scoreA !== scoreB) return scoreB - scoreA;
+      }
+      switch (sortBy) {
+        case 'recent': {
+          const timeA = toTime(a.updated_at || a.created_at);
+          const timeB = toTime(b.updated_at || b.created_at);
+          if (timeA !== timeB) return timeB - timeA;
+          break;
+        }
+        case 'popular': {
+          const playsA = Number(a.plays || 0);
+          const playsB = Number(b.plays || 0);
+          if (playsA !== playsB) return playsB - playsA;
+          break;
+        }
+        case 'favourites': {
+          const favA = Number(a.favCount || 0);
+          const favB = Number(b.favCount || 0);
+          if (favA !== favB) return favB - favA;
+          break;
+        }
+        case 'questions': {
+          const qA = Number(a.qcount || 0);
+          const qB = Number(b.qcount || 0);
+          if (qA !== qB) return qB - qA;
+          break;
+        }
+      }
+      const idA = String(a.uuid || a.id || '');
+      const idB = String(b.uuid || b.id || '');
+      return idA.localeCompare(idB);
+    });
     return arr;
-  }, [results, sortBy]);
+  }, [results, sortBy, hasTagFilters]);
+
+  const executeSearch = () => {
+    const trimmed = term.trim();
+    if (trimmed === appliedTerm) {
+      setSearchNonce(n => n + 1);
+    } else {
+      setAppliedTerm(trimmed);
+    }
+  };
 
   const toggleFavorite = async (gameId: string) => {
     if (!isAuthenticated) {
@@ -142,11 +270,15 @@ const Discover = () => {
   };
 
   const toggleTag = (slug: string) => {
-    const ns = new Set(selected);
-    if (ns.has(slug)) ns.delete(slug); else ns.add(slug);
-    setSelected(ns);
-    // immediately refresh using the new set to avoid stale state on first click
-    refresh({ slugs: Array.from(ns) });
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(slug)) {
+        next.delete(slug);
+      } else {
+        next.add(slug);
+      }
+      return next;
+    });
   };
 
   const openDetails = (gameId: string) => {
@@ -223,12 +355,22 @@ const Discover = () => {
               <input
                 value={term}
                 onChange={e => setTerm(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') refresh(); }}
+                onKeyDown={e => { if (e.key === 'Enter') executeSearch(); }}
                 placeholder={t('home.searchPlaceholder') || 'Search for quizzes...'}
                 className="w-full pl-10 pr-10 py-2 rounded-lg border border-white/10 bg-white/10 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/30 text-sm md:text-base"
               />
               {!!term && (
-                <button onClick={() => { setTerm(''); refresh({ q: '' }); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white">
+                <button
+                  onClick={() => {
+                    setTerm('');
+                    if (appliedTerm === '') {
+                      setSearchNonce(n => n + 1);
+                    } else {
+                      setAppliedTerm('');
+                    }
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+                >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               )}
@@ -241,7 +383,7 @@ const Discover = () => {
                 <option value="favourites">Most favourites</option>
                 <option value="questions">Most questions</option>
               </select>
-              <button onClick={() => refresh()} className="rounded-md bg-gradient-to-r from-indigo-500 to-pink-500 text-white text-sm font-semibold px-3 py-2 shadow hover:shadow-lg transition">Search</button>
+              <button onClick={executeSearch} className="rounded-md bg-gradient-to-r from-indigo-500 to-pink-500 text-white text-sm font-semibold px-3 py-2 shadow hover:shadow-lg transition">Search</button>
             </div>
           </div>
           {/* Selected tags chips */}
@@ -256,15 +398,24 @@ const Discover = () => {
                   </span>
                 );
               })}
-              <button onClick={() => { setSelected(new Set()); refresh({ slugs: [] }); }} className="text-xs text-white/70 underline">Clear</button>
+              <button onClick={() => { setSelected(new Set()); setTagModeAll(false); }} className="text-xs text-white/70 underline">Clear</button>
             </div>
           )}
         </div>
 
         {/* Tag filters as gradient cards row */}
         <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-3 md:p-4 shadow-sm mb-4">
-          <div className="flex items-center justify-start mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
             <div className="text-sm font-semibold text-white/80">Browse tags</div>
+            {selected.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setTagModeAll(prev => !prev)}
+                className={`text-xs px-3 py-1 rounded-full border transition ${tagModeAll ? 'bg-white/20 border-white/40 text-white' : 'bg-white/5 border-white/10 text-white/80'} hover:bg-white/20`}
+              >
+                {tagModeAll ? 'Match all selected' : 'Match any selected'}
+              </button>
+            )}
           </div>
           <div className="overflow-x-auto no-scrollbar -mx-2 px-2">
             <div className="flex items-stretch gap-3 py-1">
@@ -359,6 +510,15 @@ const Discover = () => {
               );
             })}
           </div>
+        )}
+
+        {filtered.length > 0 && (
+          <>
+            {fetchingMore && !loading && (
+              <div className="mt-6 text-center text-white/70">Loading more…</div>
+            )}
+            <div ref={loadMoreRef} className="h-12 w-full" />
+          </>
         )}
 
         {/* Create new quiz CTA after grid */}
