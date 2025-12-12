@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import whiteLogo from '../images/tavl-white.png';
 import axios from 'axios';
-import { ErrorText, Footer, PrimaryButtonLocal as PrimaryButton, TextInputField } from './gamepin';
+import { ErrorText, PrimaryButtonLocal as PrimaryButton, TextInputField } from './gamepin';
 import TopLeftLogo from '../components/TopLeftLogo';
 
 interface SiginProps {
@@ -54,7 +54,6 @@ const Signin = ({ toGameMode, setLoggedInUser }: SiginProps) => {
                 }
               }} />
               <PrimaryButton onClick={() => handleLogin()}>Sign in</PrimaryButton>
-              <Footer>or create a new user&nbsp;<div onClick={() => {}} style={{ color: "#9084FA", textDecoration: "underline", fontFamily: "Coll", cursor: "pointer" }}>here</div>.</Footer>
             </ContentLeft>
         </LeftSide>
         <RightSide>

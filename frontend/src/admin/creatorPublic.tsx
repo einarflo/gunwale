@@ -128,30 +128,30 @@ const CreatorPublic = () => {
 
   return (
     <div
-      className="relative min-h-screen bg-[#1e1b4b] text-white overflow-hidden"
+      className="relative min-h-screen bg-white text-slate-900 overflow-hidden"
       style={{ fontFamily: 'Inter, "Plus Jakarta Sans", Poppins, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' }}
     >
       <GlobalStyles />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(106,113,250,0.2)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(156,138,250,0.18)_0%,transparent_60%),linear-gradient(to_bottom_right,rgba(106,113,250,0.12),rgba(156,138,250,0.08),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(106,113,250,0.05)_0%,transparent_70%)] animate-pulse-slow" />
       <ParallaxOrbs />
       <ParallaxScroll />
       <Header />
 
-      <div className="mx-auto mt-20 max-w-6xl px-4 py-6 md:px-6 md:py-8 text-white">
+      <div className="mx-auto mt-20 max-w-6xl px-4 py-6 md:px-6 md:py-8 text-slate-900">
         <button
           onClick={() => navigate("/discover")}
-          className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-2 text-sm font-semibold hover:bg-white/20 transition"
+          className="mb-4 inline-flex items-center gap-2 rounded-full bg-white border border-[#6a71fa]/30 px-3 py-2 text-sm font-semibold text-[#6a71fa] hover:bg-[#6a71fa]/10 transition"
         >
           ← {t("creator.back") || "Back to Discover"}
         </button>
 
-        <div className="rounded-3xl border border-white/10 bg-white/10 backdrop-blur-xl p-6 md:p-8 shadow-[0_18px_60px_rgba(15,23,42,0.35)] mb-6">
+        <div className="rounded-3xl border border-slate-100 bg-white backdrop-blur-xl p-6 md:p-8 shadow-[0_18px_60px_rgba(0,0,0,0.08)] mb-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="space-y-2">
-              <div className="text-xs uppercase tracking-[0.25em] text-white/60">{t("creator.title") || "Creator"}</div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-white drop-shadow">{title}</h1>
-              <p className="text-white/70 max-w-2xl">
+              <div className="text-xs uppercase tracking-[0.25em] text-slate-500">{t("creator.title") || "Creator"}</div>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 drop-shadow">{title}</h1>
+              <p className="text-slate-600 max-w-2xl">
                 {t("creator.subtitle") || "Public quizzes published by this creator."}
               </p>
             </div>
@@ -159,10 +159,10 @@ const CreatorPublic = () => {
               {stats.map((stat) => (
                 <div
                   key={stat.key}
-                  className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-center shadow-inner shadow-indigo-900/20"
+                  className="rounded-2xl border border-slate-100 bg-white px-4 py-3 text-center shadow-sm"
                 >
-                  <div className="text-[11px] uppercase tracking-[0.2em] text-white/60">{stat.label}</div>
-                  <div className="mt-1 text-lg font-semibold text-white">{stat.value}</div>
+                  <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500">{stat.label}</div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900">{stat.value}</div>
                 </div>
               ))}
             </div>
@@ -170,19 +170,19 @@ const CreatorPublic = () => {
         </div>
 
         {loading && (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/80">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-600">
             {t("common.loading") || "Loading…"}
           </div>
         )}
 
         {error && !loading && (
-          <div className="rounded-2xl border border-rose-300/40 bg-rose-500/20 p-6 text-center text-white">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-700">
             {error}
           </div>
         )}
 
         {!loading && !error && games.length === 0 && (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/80">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-600">
             {t("creator.none") || "This creator has no public quizzes yet."}
           </div>
         )}

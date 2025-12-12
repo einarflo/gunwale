@@ -17,7 +17,7 @@ export default function Authorizing() {
       } else {
         navigate("/", { replace: true });
       }
-    }, 1200); // Wait 1.2s for state to sync
+    }, 3000); // Wait 1.2s for state to sync
     return () => clearTimeout(timer);
   }, [keycloak?.authenticated, navigate]);
 

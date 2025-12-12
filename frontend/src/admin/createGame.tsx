@@ -41,18 +41,18 @@ const CreateGame = () => {
 
     return (
       <>
-        <div className="relative min-h-screen bg-[#1e1b4b] text-white overflow-hidden" style={{ fontFamily: 'Inter, "Plus Jakarta Sans", Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' }}>
+        <div className="relative min-h-screen bg-white text-slate-900 overflow-hidden" style={{ fontFamily: 'Inter, "Plus Jakarta Sans", Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' }}>
           <GlobalStyles />
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(106,113,250,0.2)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(156,138,250,0.18)_0%,transparent_60%),linear-gradient(to_bottom_right,rgba(106,113,250,0.12),rgba(156,138,250,0.08),transparent)]" />
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(106,113,250,0.05)_0%,transparent_70%)] animate-pulse-slow" />
           <ParallaxOrbs />
           <ParallaxScroll />
           <div className="mx-auto max-w-6xl px-6 pt-24 pb-12">
             <div className="mb-6">
-              <div className="text-2xl sm:text-3xl font-bold text-white drop-shadow">Ny quiz</div>
-              <div className="text-white/80">Gi quizen et navn, beskrivelse og tags.</div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 drop-shadow">Ny quiz</div>
+              <div className="text-slate-600">Gi quizen et navn, beskrivelse og tags.</div>
             </div>
-            <div className="rounded-3xl p-6 sm:p-8 shadow-xl bg-white/10 backdrop-blur-md border border-white/10">
+            <div className="rounded-3xl p-6 sm:p-8 shadow-xl bg-white backdrop-blur-md border border-slate-100">
               <GameForm
                 title="Quiznavn og beskrivelse"
                 showImageUpload

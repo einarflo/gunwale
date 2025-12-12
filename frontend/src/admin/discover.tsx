@@ -326,27 +326,19 @@ const Discover = () => {
   return (
     <>
       <div className="relative min-h-screen bg-[#1e1b4b] text-white overflow-hidden" style={{ fontFamily: 'Inter, \"Plus Jakarta Sans\", Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' }}>
-        <GlobalStyles />
+        
         {/* Background layers to match GamePublic/Landing */}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
         <ParallaxOrbs />
         <ParallaxScroll />
-        <Header />
+        <Header white />
         <div className="mx-auto mt-20 max-w-6xl px-4 py-6 md:px-6 md:py-8 text-white">
         <div className="relative before:absolute before:inset-0 before:content-[''] before:bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.15),transparent_70%)] before:-z-10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-            <div>
-              <div className="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-pink-100 drop-shadow" style={{ textShadow: '0 0 12px rgba(236,72,153,0.4)' }}>Discover</div>
-              <div className="text-white/80">Search public quizzes and explore suggestions.</div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => navigate('/home')} className="rounded-full bg-white/10 border border-white/10 px-3 py-2 text-white text-sm font-semibold hover:bg-white/20 transition">{t('common.back') || 'Back'}</button>
-            </div>
-          </div>
+
 
         {/* Search + sort */}
-        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-3 md:p-4 shadow-sm mb-3">
+        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10  p-3 md:p-4 shadow-sm mb-3">
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
             <div className="relative flex-1">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/60">

@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, ChangeEvent, KeyboardEvent } from "react";
 import styled, { keyframes } from "styled-components";
-import TopLeftLogo from "../components/TopLeftLogo";
-import logo from '../images/tavl-logo.png';
+import logo from "../images/tavl-logo.png";
 import { useNavigate, useParams } from "react-router-dom";
 import { get } from "../api";
 import { useI18n } from "../i18n/I18nProvider";
-import GlobalStyles from "../components/landing/GlobalStyles";
+import Header from "../components/landing/Header";
 import ParallaxOrbs from "../components/ParallaxOrbs";
 import ParallaxScroll from "../components/ParallaxScroll";
 
@@ -16,84 +15,126 @@ interface GamePinProps {
 }
 
 const GamePin = ({ setGameId, setGameInstanceId, setGamePin }: GamePinProps) => {
-    // get gamePin from url params
-    const { gamePin } = useParams<{ gamePin: string }>();
+  // get gamePin from url params
+  const { gamePin } = useParams<{ gamePin: string }>();
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(false);
-    const { t } = useI18n();
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { t } = useI18n();
 
-    useEffect(() => {
-        if (gamePin) {
-            setEnteredGamePin(gamePin);
-        }
-    }, [gamePin]);
+  useEffect(() => {
+    if (gamePin) {
+      setEnteredGamePin(gamePin);
+    }
+  }, [gamePin]);
 
-  const setPin = (pin: string | undefined) => {
-    if (pin && pin.length > 0 && pin !== '0') {
-      setLoading(true);
-      get(`/game_instance/${pin}/`)
-        .then(res => {
-          if (res.data && res.data['status'] === 'created') {
-            setGameId(res.data['game_id']);
-            setGameInstanceId(res.data['id']);
-            setGamePin(pin);
-            setError(false);
-            setLoading(false);
-            navigate('/username');
-          } else {
-            setError(true);
-            setLoading(false);
-          }
-        })
-        .catch(err => {
-          console.log(err);
-          setLoading(false);
-        });
-    } else {
-      setError(true);
+  const [enteredGamePin, setEnteredGamePin] = useState<string>("");
+
+  const navigate = useNavigate();
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEnteredGamePin(e.target.value);
+  };
+
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setPin(enteredGamePin);
     }
   };
 
-    const [enteredGamePin, setEnteredGamePin] = useState<string>("");
+  const setPin = (pin: string | undefined) => {
+    const trimmedPin = pin?.trim();
+    if (!trimmedPin) {
+      setErrorMessage(t("join.errorMissing"));
+      return;
+    }
 
-    const navigate = useNavigate();
+    if (trimmedPin === "0") {
+      setErrorMessage(t("join.errorInvalid"));
+      return;
+    }
 
-    return (
-        <GamePinWrapper>
-            <BackgroundLayers />
-            <Viewport>
-                <TopLeftLogo />
+    setLoading(true);
+    setErrorMessage(null);
+    get(`/game_instance/${trimmedPin}/`)
+      .then((res) => {
+        if (res.data && res.data["status"] === "created") {
+          setGameId(res.data["game_id"]);
+          setGameInstanceId(res.data["id"]);
+          setGamePin(trimmedPin);
+          navigate("/username");
+        } else {
+          setErrorMessage(t("join.errorInvalid"));
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        setErrorMessage(t("join.errorNetwork"));
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  return (
+    <GamePinWrapper>
+      <Header />
+      {/* Layered gradients and subtle glow (Tailwind only) */}
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(121,127,252,0.2)_0%,transparent_55%),radial-gradient(circle_at_80%_70%,rgba(107,113,250,0.18)_0%,transparent_55%),linear-gradient(to_bottom_right,rgba(121,127,252,0.12),rgba(107,113,250,0.1),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(121,127,252,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+      {/* Parallax orbs reacting to mouse movement */}
+      <ParallaxOrbs />
+      {/* Parallax layers that follow scroll */}
+      <ParallaxScroll />
+      <Backdrop>
+        <Content>
+          <Card className="relative rounded-3xl border border-slate-200/80 bg-white/60 shadow-xl shadow-indigo-200/40 overflow-hidden p-5 sm:p-6">
+            <div className="absolute inset-0 bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
+            <div className="absolute -right-10 -top-16 h-60 w-60 rounded-full bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
+            <div className="relative space-y-3">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="space-y-2">
+                    <div className="text-2xl sm:text-2xl font-bold text-white">Got a game pin?</div>
+                    <p className="text-sm text-white/80 max-w-sm">
+                      Enter your game PIN to join a quiz and start playing!
+                    </p>
+                  </div>
+                </div>
+                {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
+                <div className="flex justify-center">
+                  <input
+                    id="game-pin-input"
+                    autoFocus={false}
+                    tabIndex={0}
+                    inputMode="numeric"
+                    type={"number"}
+                    value={enteredGamePin}
+                    onChange={handleChange}
+                    onKeyPress={handleKeyPress}
+                    placeholder={"Enter game PIN"}
+                    className="text-center bg-white/5 rounded-full border border-white  px-4 py-3 text-lg font-bold text-white shadow-sm placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-base mt-6 mb-6"
+                  />
+                </div>
                 <button
-                  style={{
-                    position: 'absolute', left: 24, top: 24,
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff', borderRadius: 9999,
-                    padding: '8px 12px', cursor: 'pointer', zIndex: 20
-                  }}
-                  onClick={() => navigate('/')}
-                >← {t('common.back')}</button>
-                <Content>
-                        <Card>
-                        <Logo src={logo}/>
-                        {loading ? <Spinner /> : (
-                            <>
-                                {error && <ErrorText>{t('join.errorInvalid')}</ErrorText>}
-                                <TextInputField autoFocus={false} tabIndex={0} placeholder={t('join.label')} type={"number"} value={enteredGamePin} onChange={(e: { target: { value: String; }; }) => setEnteredGamePin(e.target.value.toString())} onKeyPress={(e: any)  => {
-                                    if ((e.key === 'Enter') && ((e.target as HTMLTextAreaElement).value !== undefined)) {
-                                      setPin(enteredGamePin)
-                                    }
-                                }}/>
-                                <PrimaryButtonLocal onClick={() => setPin(enteredGamePin)}>{t('join.play') || 'PLAY'}</PrimaryButtonLocal>
-                                <Footer>{t('join.orCreate') || 'or create a new game'}&nbsp;<div onClick={() => navigate('/home')} style={{ color: '#fff', textDecoration: 'underline', fontFamily: 'Coll', cursor: 'pointer' }}>{t('join.here') || 'here'}</div>.</Footer>
-                            </>
-                        )}
-                        </Card>
-                </Content>
-            </Viewport>
-        </GamePinWrapper>
-    );
+                  onClick={() => setPin(enteredGamePin)}
+                  className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-full bg-white text-[#6A71FA] px-5 py-3 text-sm font-semibold hover:bg-[#6A71FA] hover:text-white transition-colors shadow-lg shadow-indigo-200/50"
+                >
+                  Play Tavl
+                  <span aria-hidden className="text-lg leading-none">→</span>
+                </button>
+              </div>
+
+          </Card>
+          <div className="text-center font-bold text-black/60">
+            {t("join.orCreate") || "or create a new game"}&nbsp;
+            <InlineLink onClick={() => navigate("/home")}>
+              {t("join.here") || "here"}
+            </InlineLink>
+            .
+          </div>
+        </Content>
+      </Backdrop>
+    </GamePinWrapper>
+  );
 }
 
 const GamePinWrapper = styled.div`
@@ -101,14 +142,18 @@ const GamePinWrapper = styled.div`
     height: 100dvh;
     width: 100vw;
     overflow: hidden;
-    background: #1e1b4b;
+    background: radial-gradient(circle at 18% 18%, rgba(99,102,241,0.12), transparent 34%),
+                radial-gradient(circle at 80% 82%, rgba(236,72,153,0.12), transparent 34%),
+                #ffffff;
 `;
 
-export const Viewport = styled.div`
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1;
+const Backdrop = styled.div`
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px 28px;
 `;
 
 export const Logo = styled.img`
@@ -122,34 +167,60 @@ export const Logo = styled.img`
 
 
 const Content = styled.div`
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
+    z-index: 1;
     min-width: 300px;
-    max-width: 80vw;
+    max-width: 440px;
+    width: 100%;
+    display: grid;
+    gap: 16px;
 `;
 
 export const Card = styled.div`
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  backdrop-filter: blur(16px);
+  background: #ffffff;
+  border: 1px solid rgba(15,23,42,0.08);
   border-radius: 20px;
-  padding: 28px 22px;
-  min-width: 320px;
+  padding: 38px 30px;
+  box-shadow: 0 16px 50px rgba(15,23,42,0.08);
 `;
 
 export const ErrorText = styled.div`
     text-align: center;
-    padding-bottom: 20px;
-    padding-top: 20px;
-    color: #fecaca;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 25vw;
-    min-width: 300px;
-    width: -webkit-fill-available;
-    font-family : 'Coll';
+    padding: 14px 12px;
+    color: #ffffffff;
+    margin: 0 auto 14px;
+    width: 100%;
+    border-radius: 12px;
+    background: rgba(255, 0, 0, 0.35);
+    border: 1px solid rgba(239,68,68,0.22);
+    font-size: 0.8rem;
+    font-weight: 600;
+`;
+
+export const Heading = styled.h1`
+  color: #0f172a;
+  text-align: center;
+  font-size: 1.7rem;
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+  font-family: 'Coll';
+`;
+
+export const Subheading = styled.p`
+  color: rgba(15,23,42,0.72);
+  text-align: center;
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  font-family: 'Coll';
+`;
+
+export const InputLabel = styled.label`
+  display: block;
+  color: rgba(15,23,42,0.9);
+  font-size: 0.95rem;
+  margin: 10px auto 6px;
+  width: 100%;
+  font-family: 'Coll';
 `;
 
 export const TextInputField = styled.input`
@@ -157,26 +228,26 @@ export const TextInputField = styled.input`
     text-align: center;
     display: block;
     width: 100%;
-    padding: .375rem .75rem;
-    font-size: 1.5rem;
+    padding: 16px 18px;
+    font-size: 1.8rem;
+    letter-spacing: 0.14em;
     line-height: 1.5;
     background-clip: padding-box;
-    background: rgba(255,255,255,0.08);
-    color: #fff;
+    background: rgba(255,255,255,0.9);
+    color: #0f172a;
     transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s, transform .15s ease-in-out, background .15s;
     max-width: 500px;
-    margin: auto;
-    border: 1px solid rgba(255,255,255,0.15);
-    margin-bottom: 20px;
-    margin-top: 18px;
+    margin: 2px auto 16px;
+    border: 1px solid rgba(15,23,42,0.12);
     border-radius: 14px;
     width: -webkit-fill-available;
-    &::placeholder { color: rgba(255,255,255,0.6); }
+    &::placeholder { color: rgba(15,23,42,0.45); }
     &:focus {
         outline: none;
-        border-color: rgba(255,255,255,0.3);
-        box-shadow: 0 0 0 6px rgba(236,72,153,0.18);
+        border-color: rgba(99,102,241,0.45);
+        box-shadow: 0 14px 40px rgba(99,102,241,0.16);
         transform: translateY(-1px);
+        background: #ffffff;
     }
 `;
 
@@ -184,27 +255,21 @@ export const PrimaryButtonLocal = styled.div`
     font-family : 'Coll';
     text-align: center;
     display: block;
-    width: 85%;
-    padding: .375rem .75rem;
-    font-size: 1.1rem;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    font-size: 1.15rem;
     line-height: 1.5;
-    color: #ffffff;
     background-clip: padding-box;
     position: relative;
     overflow: hidden;
     transition: transform .15s ease-in-out, box-shadow .15s ease-in-out, background .2s ease-in-out;
     max-width: 500px;
     margin: auto;
-    margin-bottom: 30px;
-    margin-top: 16px;
-    background: linear-gradient(90deg, #6366f1, #ec4899);
+    margin-bottom: 18px;
+    margin-top: 14px;
     cursor: pointer;
-    border-radius: 14px;
     box-shadow: 0 12px 24px rgba(0,0,0,0.3);
-    &:hover {
-        transform: translateY(-1px) scale(1.01);
-        box-shadow: 0 16px 36px rgba(0,0,0,0.35);
-    }
+
     &::after {
       content: '';
       position: absolute; inset: 0; background: linear-gradient(110deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 100%);
@@ -214,50 +279,10 @@ export const PrimaryButtonLocal = styled.div`
     }
 `;
 
-export const Footer = styled.div`
-    display: flex;
-    justify-content: center;
-    color: rgba(255,255,255,0.85);
-    font-size: 1.2rem;
-    text-align: center;
-    font-family: "Coll";
+const InlineLink = styled.span`
+  color: #4f46e5;
+  text-decoration: underline;
+  cursor: pointer;
 `;
-
-const rotate = keyframes`
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-`;
-
-const Spinner = styled.div`
-width: 50px;
-height: 50px;
-margin-left: auto;
-margin-right: auto;
-left: 50%;
-border: 3px solid rgba(59,130,246,.25);
-border-radius: 50%;
-border-top-color: #3b82f6;
-animation: spin 1s ease-in-out infinite;
--webkit-animation: ${rotate} 1s ease-in-out infinite;
-`;
-
-function BackgroundLayers() {
-  return (
-    <>
-      <GlobalStyles />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
-      <ParallaxOrbs />
-      <ParallaxScroll />
-    </>
-  );
-}
-
-export { BackgroundLayers };
 
 export default GamePin;

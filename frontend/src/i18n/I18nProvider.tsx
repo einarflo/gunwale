@@ -52,6 +52,7 @@ const bundles: Bundle = {
     'join.label': 'Game pin',
     'join.errorMissing': 'Please enter a game pin',
     'join.errorInvalid': 'Wrong game pin. Try another?',
+    'join.errorNetwork': 'Could not connect. Check your connection and try again.',
     'join.play': 'PLAY',
     'join.orCreate': 'or create a new game',
     'join.here': 'here',
@@ -163,6 +164,12 @@ const bundles: Bundle = {
     'home.played.emptySubtitle': 'Start a game from your list or discover new quizzes to play.',
     'home.played.goDiscover': 'Browse Discover',
     'home.played.lastPlayed': 'Last played',
+    // Landing
+    'landing.discover.badge': 'See what is live in Discover',
+    'landing.discover.title': 'Find a quiz that is ready to play',
+    'landing.discover.body': 'Jump into finished quizzes from the community — filter by tag, host a room, and start in seconds.',
+    'landing.discover.metric': 'rooms ready now',
+    'landing.discover.cta': 'Browse Discover',
     // Tags
     'tags.educational': 'Educational',
     'tags.party': 'Party',
@@ -171,6 +178,8 @@ const bundles: Bundle = {
     'tags.trivia': 'Trivia',
     'tags.music': 'Music',
     'tags.sports': 'Sports',
+    'tags.geography': 'Geography',
+    'tags.filmTv': 'Film & TV',
   },
   nb: {
     // Common
@@ -218,6 +227,7 @@ const bundles: Bundle = {
     'join.label': 'Game pin',
     'join.errorMissing': 'Skriv inn en game pin',
     'join.errorInvalid': 'Feil game pin. Prøv en annen?',
+    'join.errorNetwork': 'Fikk ikke kontakt. Sjekk nettverket og prøv igjen.',
     'join.play': 'SPILL',
     'join.orCreate': 'eller lag et nytt spill',
     'join.here': 'her',

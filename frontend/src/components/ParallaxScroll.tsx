@@ -54,10 +54,10 @@ export default function ParallaxScroll() {
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(46% 32% at 12% 18%, rgba(99,102,241,0.22), transparent 60%),\
-             radial-gradient(40% 30% at 88% 30%, rgba(236,72,153,0.22), transparent 62%),\
-             radial-gradient(34% 26% at 50% 8%, rgba(168,85,247,0.18), transparent 65%),\
-             radial-gradient(20% 16% at 70% 70%, rgba(59,130,246,0.16), transparent 70%)'
+            'radial-gradient(46% 32% at 12% 18%, rgba(121,127,252,0.22), transparent 60%),\
+             radial-gradient(40% 30% at 88% 30%, rgba(107,113,250,0.22), transparent 62%),\
+             radial-gradient(34% 26% at 50% 8%, rgba(121,127,252,0.18), transparent 65%),\
+             radial-gradient(20% 16% at 70% 70%, rgba(107,113,250,0.16), transparent 70%)'
         }}
       />
       {/* Static big bottom glow for depth */}

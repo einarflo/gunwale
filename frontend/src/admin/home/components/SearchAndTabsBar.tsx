@@ -19,28 +19,28 @@ const SearchAndTabsBar = ({
   onTabChange,
   t,
 }: SearchAndTabsBarProps) => (
-  <>
+  <div className="rounded-3xl p-8 shadow-xl bg-white backdrop-blur-md border border-slate-100">
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3 sm:mb-4">
       <div className="relative flex items-center w-full max-w-3xl">
-        <span className="pointer-events-none absolute left-5 text-white/60">
+        <span className="pointer-events-none absolute left-5 text-slate-400">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M21 20l-5.6-5.6a7 7 0 10-1.4 1.4L20 21l1-1zM10 16a6 6 0 110-12 6 6 0 010 12z" />
           </svg>
         </span>
-        <div className="w-full rounded-full bg-white/5 border border-white/10 pl-12 pr-4 py-3 focus-within:ring-4 focus-within:ring-pink-500/30 transition-all">
+        <div className="w-full rounded-full bg-white border border-slate-200 pl-12 pr-4 py-3 shadow-sm focus-within:ring-4 focus-within:ring-[#6a71fa]/30 transition-all">
           <input
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t("home.searchPlaceholder") || "Finn quizer…"}
-            className="w-full bg-transparent text-white placeholder:text-white/50 outline-none"
+            className="w-full bg-transparent text-slate-900 placeholder:text-slate-400 outline-none"
           />
         </div>
       </div>
-      <div className="inline-flex self-end md:self-auto rounded-xl border border-white/10 overflow-hidden bg-white/10">
+      <div className="inline-flex self-end md:self-auto rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm">
         <button
           onClick={() => onViewModeChange("grid")}
           className={`px-3 py-1.5 text-sm font-semibold ${
-            viewMode === "grid" ? "bg-white/20 text-white" : "text-white/80"
+            viewMode === "grid" ? "bg-[#6a71fa]/15 text-[#2f2f55]" : "text-slate-600"
           }`}
           aria-pressed={viewMode === "grid"}
         >
@@ -49,7 +49,7 @@ const SearchAndTabsBar = ({
         <button
           onClick={() => onViewModeChange("list")}
           className={`px-3 py-1.5 text-sm font-semibold ${
-            viewMode === "list" ? "bg-white/20 text-white" : "text-white/80"
+            viewMode === "list" ? "bg-[#6a71fa]/15 text-[#2f2f55]" : "text-slate-600"
           }`}
           aria-pressed={viewMode === "list"}
         >
@@ -64,8 +64,8 @@ const SearchAndTabsBar = ({
           onClick={() => onTabChange(tab)}
           className={`rounded-full px-3 py-1.5 text-sm border ${
             activeTab === tab
-              ? "bg-white/20 text-white border-white/10"
-              : "bg-white/10 text-white/80 border-white/10 hover:bg-white/15"
+              ? "bg-[#6a71fa]/15 text-[#2f2f55] border-[#6a71fa]/30"
+              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
           }`}
         >
           {tab === "mine"
@@ -78,7 +78,7 @@ const SearchAndTabsBar = ({
         </button>
       ))}
     </div>
-  </>
+  </div>
 );
 
 export default SearchAndTabsBar;

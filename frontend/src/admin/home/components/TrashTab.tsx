@@ -14,10 +14,10 @@ const TrashTab = ({ deletedGames, onRestore, t }: TrashTabProps) => {
   const labels = buildGameCardLabels(t);
 
   return (
-    <div className="rounded-2xl p-6 shadow-xl bg-white/10 backdrop-blur-md border border-white/10">
-      <div className="text-xl font-semibold text-white mb-2">Papirkurv</div>
+    <div className="rounded-2xl p-6 shadow-sm bg-white border border-slate-200">
+      <div className="text-xl font-semibold text-slate-900 mb-2">Papirkurv</div>
       {deletedGames.length === 0 ? (
-        <div className="text-white/70">{t("home.trash.empty") || "No deleted quizzes"}</div>
+        <div className="text-slate-600">{t("home.trash.empty") || "No deleted quizzes"}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {deletedGames.map((raw: any) => {

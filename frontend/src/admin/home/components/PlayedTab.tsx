@@ -34,12 +34,12 @@ const PlayedTab = ({
 
   if (!playedGames || playedGames.length === 0) {
     return (
-      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-white/80">
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-600 shadow-sm">
         <div className="text-3xl mb-2">🎮</div>
-        <div className="text-white font-medium mb-1">
+        <div className="text-slate-900 font-medium mb-1">
           {t("home.played.emptyTitle") || "Ingen spilte quizer ennå"}
         </div>
-        <div className="text-white/70">
+        <div className="text-slate-600">
           {t("home.played.emptySubtitle") || "Start et spill for å se historikken din her."}
         </div>
       </div>
@@ -50,7 +50,7 @@ const PlayedTab = ({
 
   return (
     <>
-      <div className="text-xl font-semibold text-white mb-2 mt-4">{t("home.played") || "Spilte"}</div>
+      <div className="text-xl font-semibold text-slate-900 mb-2 mt-4">{t("home.played") || "Spilte"}</div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {playedGames.map((raw: any) => {
           const ownerId =

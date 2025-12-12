@@ -181,23 +181,7 @@ const App = () => {
       <Route path="/authorizing" element={<Authorizing />} />
       <Route path="/stripe-return" element={<RequireAuth><StripeReturn /></RequireAuth>} />
       <Route path="/purchase" element={<Purchase />} />
-      <Route
-        path="/"
-        element={
-          <LandingPage
-            signIn={() => {
-              if (keycloak?.authenticated) {
-                navigate('/home');
-              } else {
-                login();
-              }
-            }}
-            playMode={() => navigate('/join')}
-            setGamePin={() => {}}
-          />
-        }
-      />
-      {/* Public routes */}
+      <Route path="/" element={<LandingPage/>}/>
       <Route path="/discover" element={<Discover />} />
       <Route path="/creator/:userId" element={<CreatorPublic />} />
       <Route path="/game/:gameId" element={<GamePublic />} />

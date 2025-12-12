@@ -358,6 +358,7 @@ const TickImage = styled.img`
 const TickText = styled.div`
   color: #ffffff;
   font-family: 'Coll';
+  height: 105px;
 `;
 
 const TickTitle = styled.div`

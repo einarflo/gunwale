@@ -14,11 +14,11 @@ const BottomCta: React.FC = () => {
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            to="/discover"
-            aria-label="Try Tavl for free"
-            className="px-6 py-3.5 md:px-8 md:py-4 rounded-full bg-gradient-to-r from-rose-500 to-amber-400 text-white font-semibold shadow-lg hover:shadow-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+            to="/home"
+            aria-label="Log in to Tavl"
+            className="px-6 py-3.5 md:px-8 md:py-4 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white font-semibold shadow-lg hover:shadow-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
           >
-            Try Tavl for free
+            Log in to Tavl
           </Link>
           <Link
             to="/join"
@@ -29,7 +29,6 @@ const BottomCta: React.FC = () => {
           </Link>
         </div>
       </div>
-      <p className="mt-8 text-center text-slate-500">Trusted by quiz nights, classrooms and teams</p>
     </section>
   );
 };

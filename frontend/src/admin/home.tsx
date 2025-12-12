@@ -182,15 +182,15 @@ const Home = () => {
   return (
     <>
       <div
-        className="relative pt-20 min-h-screen bg-[#1e1b4b] text-white overflow-hidden"
+        className="relative pt-20 min-h-screen bg-white text-slate-900 overflow-hidden"
         style={{
           fontFamily:
             'Inter, "Plus Jakarta Sans", Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
         }}
       >
         <GlobalStyles />
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_28%,rgba(93,184,104,0.18)_0%,transparent_58%),radial-gradient(circle_at_82%_32%,rgba(249,116,116,0.18)_0%,transparent_58%),radial-gradient(circle_at_50%_12%,rgba(156,138,250,0.22)_0%,transparent_60%),linear-gradient(to_bottom_right,rgba(16,24,39,0.08),rgba(156,138,250,0.08),transparent)]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(156,138,250,0.06)_0%,transparent_72%),radial-gradient(circle_at_70%_80%,rgba(93,184,104,0.12)_0%,transparent_60%)] animate-pulse-slow" />
         <ParallaxOrbs />
         <ParallaxScroll />
 
@@ -211,7 +211,7 @@ const Home = () => {
         {isPremium && <PremiumBanner t={t} onUpgrade={handleUpgrade} />}
 
         <div className="mx-auto max-w-6xl px-6 py-8">
-          <div className="rounded-3xl p-8 shadow-xl bg-white/10 backdrop-blur-md border border-white/10">
+          <div className="">
             <SearchAndTabsBar
               searchTerm={searchTerm}
               onSearchChange={(value) => setSearchTerm(value)}

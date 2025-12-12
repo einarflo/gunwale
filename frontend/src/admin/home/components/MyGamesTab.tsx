@@ -4,6 +4,7 @@ import GameCard from "../../components/GameCard";
 import { ViewMode, Translate } from "../types";
 import { buildGameCardLabels } from "../../utils/gameCardLabels";
 import { toGameCardGame } from "../../utils/toGameCardGame";
+import LogoLoader from "../../../components/utils/LogoLoader";
 
 const ListSpinner = styled(Spinner)`
   border: 3px solid rgba(59, 130, 246, 0.25);
@@ -38,42 +39,42 @@ const MyGamesTab = ({
   onDiscover,
 }: MyGamesTabProps) => (
   <>
-    <div className="text-xl font-semibold text-white mb-4">
+    <div className="text-xl font-semibold text-slate-900 mb-4">
       {t("home.yourGames") || "Your games"}
     </div>
     {(() => {
       if (loading) {
         return (
           <div className="flex justify-center items-center h-32">
-            <ListSpinner />
+            <LogoLoader />
           </div>
         );
       }
 
       if (error) {
-        return <div className="text-red-500">{t("common.error") || "An error occurred"}</div>;
+        return <div className="text-red-600">{t("common.error") || "An error occurred"}</div>;
       }
 
       if (!games || games.length === 0) {
         return (
-          <div className="rounded-2xl bg-white/10 backdrop-blur-md p-6 sm:p-8 border border-white/10 text-center shadow">
-            <div className="text-xl sm:text-2xl font-bold text-white mb-2">
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-8 text-center shadow-sm">
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
               {t("home.noGames.title") || "No games yet"}
             </div>
-            <div className="text-white/70 mb-4 sm:mb-6">
+            <div className="text-slate-600 mb-4 sm:mb-6">
               {t("home.noGames.subtitle") ||
                 "Create your first quiz or discover examples to get started."}
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={onCreateGame}
-                className="rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 text-sm text-white font-bold shadow hover:shadow-lg active:scale-95 transition md:px-3 md:py-1.5 md:text-sm"
+                className="rounded-xl bg-gradient-to-r from-[#6a71fa] to-[#9c8afa] px-4 py-2 text-sm text-white font-bold shadow hover:shadow-lg active:scale-95 transition md:px-3 md:py-1.5 md:text-sm"
               >
                 {t("home.create") || "New quiz"}
               </button>
               <button
                 onClick={onDiscover}
-                className="rounded-xl bg-white/10 px-4 py-2 text-sm text-white font-semibold shadow border border-white/10 hover:bg-white/20 transition md:px-3 md:py-1.5 md:text-sm"
+                className="rounded-xl bg-white px-4 py-2 text-sm text-[#2f2f55] font-semibold shadow border border-slate-200 hover:bg-slate-50 transition md:px-3 md:py-1.5 md:text-sm"
               >
                 {t("home.discover") || "Discover"}
               </button>
@@ -84,7 +85,7 @@ const MyGamesTab = ({
 
       if (filteredGames && filteredGames.length === 0) {
         return (
-          <div className="text-center text-gray-300">
+          <div className="text-center text-slate-500">
             {t("home.search.noMatches", { term: `«${searchTerm}»` }) ||
               `No results for ${searchTerm}`}
           </div>

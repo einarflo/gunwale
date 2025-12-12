@@ -17,22 +17,22 @@ export default function ParallaxOrbs() {
     <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
       {/* Top-left orb */}
       <div
-        className="absolute -top-24 -left-24 h-[22rem] w-[22rem] rounded-full bg-indigo-400/30 blur-3xl"
+        className="absolute -top-24 -left-24 h-[22rem] w-[22rem] rounded-full bg-[#6A71FA]/30 blur-3xl"
         style={{ transform: `translate(${p.x}px, ${p.y}px)` }}
       />
       {/* Bottom-right orb */}
       <div
-        className="absolute -bottom-24 -right-24 h-[26rem] w-[26rem] rounded-full bg-fuchsia-400/35 blur-3xl"
+        className="absolute -bottom-24 -right-24 h-[26rem] w-[26rem] rounded-full bg-[#9C8AFA]/35 blur-3xl"
         style={{ transform: `translate(${-p.x}px, ${-p.y}px)` }}
       />
       {/* Mid-left orb */}
       <div
-        className="absolute top-1/3 -left-16 h-72 w-72 rounded-full bg-purple-400/30 blur-3xl"
+        className="absolute top-1/3 -left-16 h-72 w-72 rounded-full bg-[#6A71FA]/28 blur-3xl"
         style={{ transform: `translate(${p.x * 0.6}px, ${p.y * 0.6}px)` }}
       />
       {/* Mid-right orb */}
       <div
-        className="absolute bottom-1/3 -right-10 h-64 w-64 rounded-full bg-pink-400/30 blur-3xl"
+        className="absolute bottom-1/3 -right-10 h-64 w-64 rounded-full bg-[#9C8AFA]/28 blur-3xl"
         style={{ transform: `translate(${-p.x * 0.5}px, ${-p.y * 0.5}px)` }}
       />
       {/* Soft center glow */}

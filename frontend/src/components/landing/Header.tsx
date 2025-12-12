@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { ArrowRight, LogOut, User } from "lucide-react";
 import tavlWhite from "../../images/tavl-white.png";
+import tavlLogo from "../../images/tavl-logo.png";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useKeycloak } from "../../auth/KeycloakProvider";
@@ -8,12 +9,10 @@ import LanguageSwitcher from "../LanguageSwitcher";
 import { useI18n } from "../../i18n/I18nProvider";
 
 interface HeaderProps {
-  signIn?: () => void;
-  playMode?: () => void;
-  forceDark?: boolean;
+  white?: boolean;
 }
 
-export default function Header({ signIn, playMode, forceDark }: HeaderProps) {
+export default function Header({ white }: HeaderProps) {
   const navigate = useNavigate();
   const { logout, username, isAuthenticated, login } = useKeycloak();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,48 +60,46 @@ export default function Header({ signIn, playMode, forceDark }: HeaderProps) {
     setHeaderHeight(el.offsetHeight + mt);
   }, [menuOpen]);
 
-  const isDark = forceDark || scrolled;
-
   return (
     <>
     <header className="fixed top-0 left-0 right-0 z-50">
       <div
         className={[
-          "transition-all duration-200 mx-3 sm:mx-6 mt-3 rounded-2xl",
-          isDark
-            ? "bg-[#0d0b24]/80 backdrop-blur-md border border-white/10 shadow-lg shadow-black/20"
-            : "bg-[#0d0b24]/40 backdrop-blur-md border border-white/10"
+          "transition-all duration-200 mx-3 sm:mx-6 mt-3 rounded-2xl relative  bg-cover",
+          white
+            ? (scrolled ? "bg-white" : "bg-white")
+            : "bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)]"
         ].join(' ')}
         ref={headerBoxRef}
       >
-      <div className="container mx-auto px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between">
+      <div className="container mx-auto px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between relative z-10">
         <div
           className="flex items-center gap-3 cursor-pointer select-none"
-          onClick={() => navigate(isAuthenticated ? '/home' : '/')}
+          onClick={() => navigate('/')}
         >
           <img
-            src={tavlWhite}
+            src={white ? tavlLogo : tavlWhite}
             alt="tavl"
             className="h-7 sm:h-8 opacity-100 transition-opacity duration-200"
           />
         </div>
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-2 text-sm rounded-full border border-white/10 bg-white/5 px-2 py-1">
+        <nav className={["hidden md:flex items-center gap-2 text-sm rounded-full border px-2 py-1", white ? " bg-[#6A71FA]" : "border-white/10 bg-white/5"].join(' ')}>
           <button
             onClick={() => navigate('/home')}
-            className="relative group text-white/90 hover:text-white transition-colors duration-200 font-semibold rounded-full px-4 py-2 hover:bg-white/10"
+            className={["relative group transition-colors duration-200 font-bold rounded-full px-4 py-2 ", white ? "text-white hover:text-[#6A71FA] hover:bg-white/90" : "text-white/90 hover:text-white hover:bg-white/10"].join(' ')}
           >
             {t('header.library')}
           </button>
           <button
             onClick={() => navigate('/discover')}
-            className="relative group text-white/90 hover:text-white transition-colors duration-200 font-semibold rounded-full px-4 py-2 hover:bg-white/10"
+            className={["relative group transition-colors duration-200 font-bold rounded-full px-4 py-2", white ? "text-white hover:text-[#6A71FA]  hover:bg-white/90" : "text-white/90 hover:text-white hover:bg-white/10"].join(' ')}
           >
             {t('home.discover')}
           </button>
           <button
             onClick={() => navigate('/home/upgrades')}
-            className="relative group text-white/90 hover:text-white transition-colors duration-200 font-semibold rounded-full px-4 py-2 hover:bg-white/10"
+            className={["relative group transition-colors duration-200 font-bold rounded-full px-4 py-2", white ? "text-white hover:text-[#6A71FA]  hover:bg-white/90" : "text-white/90 hover:text-white hover:bg-white/10"].join(' ')}
           >
             {t('header.upgrades')}
           </button>
@@ -111,20 +108,17 @@ export default function Header({ signIn, playMode, forceDark }: HeaderProps) {
         <div className="hidden md:flex items-center gap-3">
           <button
             onClick={() => navigate('/join')}
-            className="hidden lg:inline-flex rounded-full bg-white text-indigo-600 px-5 py-2 text-sm hover:bg-indigo-50 transition-colors duration-200 font-semibold shadow-sm"
+            className={["hidden lg:inline-flex rounded-full px-5 py-2 text-sm transition-colors duration-200 font-semibold shadow-sm", white ? "bg-[#6A71FA] text-white hover:text-[#6A71FA]  hover:bg-white/90" : "bg-white hover:bg-indigo-50 text-indigo-600"].join(' ')}
           >
             Join a game
           </button>
           {!isAuthenticated && (
             <button
               onClick={login}
-              className="inline-flex items-center gap-3 rounded-full bg-white/10 border border-white/10 px-2.5 py-1.5 text-sm text-white hover:bg-white/20 transition-colors duration-200"
+              className={["inline-flex items-center gap-3 rounded-full px-5 py-2 text-sm transition-colors duration-200", white ? "bg-white border border-[#6A71FA] text-[#6A71FA] hover:bg-[#6A71FA] hover:text-white" : "bg-white/10 border border-white/10 text-white hover:bg-white/20 "].join(' ')}
               aria-label="Sign in"
             >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
-                <User className="h-4 w-4" />
-              </span>
-              <span className="font-medium">Sign in</span>
+              <span className="font-bold">Sign in</span>
               <ArrowRight className="h-4 w-4 opacity-80" />
             </button>
           )}
@@ -134,31 +128,29 @@ export default function Header({ signIn, playMode, forceDark }: HeaderProps) {
                 onClick={() => setUserMenuOpen(v => !v)}
                 aria-haspopup="menu"
                 aria-expanded={userMenuOpen}
-                className="inline-flex items-center gap-3 rounded-full bg-white/10 border border-white/10 px-2.5 py-1.5 text-sm text-white hover:bg-white/20 transition-colors duration-200"
+                className={["inline-flex items-center gap-3 rounded-full px-4 py-1 text-sm transition-colors duration-200", white ? "bg-white border border-[#6A71FA] text-[#6A71FA] hover:bg-[#6A71FA] hover:text-white" : "bg-white/10 border border-white/10 text-white hover:bg-white/20 "].join(' ')}
                 title={username || ''}
               >
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
                   <User className="h-4 w-4" />
                 </span>
-                <span className="hidden lg:block max-w-[160px] truncate font-medium">{username}</span>
+                <span className="hidden lg:block max-w-[160px] truncate font-bold">{username}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M7 10l5 5 5-5z"/></svg>
               </button>
               {userMenuOpen && (
-                <div role="menu" className="absolute right-0 mt-2 w-60 rounded-2xl border border-white/10 bg-[#0d0b24]/90 backdrop-blur-md shadow-xl shadow-black/30 p-2 z-40 text-white/90">
-                  <button onClick={() => { navigate('/home/profile'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">
+                <div role="menu" className="absolute right-0 mt-2 w-60 rounded-2xl bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover shadow-xl shadow-black/30 p-2 z-40 text-sm font-bold hover:bg-indigo-50">
+                  <button onClick={() => { navigate('/home/profile'); setUserMenuOpen(false); }} className="w-full mb-1 text-left rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600 bg-white/10 text-white">
                     Profile
                   </button>
-                  <button onClick={() => { navigate('/home/achievements'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">
+                  {/*
+                  <button onClick={() => { navigate('/home/achievements'); setUserMenuOpen(false); }} className="w-full mb-1 text-left rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600 bg-white/10 text-white">
                     Achievements
                   </button>
-                  <button onClick={() => { navigate('/home/settings'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">
+                  <button onClick={() => { navigate('/home/settings'); setUserMenuOpen(false); }} className="w-full mb-1 text-left rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600  bg-white/10 text-white">
                     Settings
                   </button>
-                  <div className="px-3 py-2">
-                    <div className="text-xs text-white/60 mb-1">{t('header.language')}</div>
-                    <LanguageSwitcher />
-                  </div>
-                  <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full inline-flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-white/10 text-red-300">
+                  */}
+                  <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full mb-1 inline-flex items-center gap-2 rounded-lg px-3 py-2  hover:bg-white hover:text-indigo-600  bg-white/10 text-white">
                     Logout <LogOut className="h-4 w-4" />
                   </button>
                 </div>
@@ -173,25 +165,18 @@ export default function Header({ signIn, playMode, forceDark }: HeaderProps) {
               onClick={() => setUserMenuOpen(v => !v)}
               aria-haspopup="menu"
               aria-expanded={userMenuOpen}
-              className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 transition-colors duration-200"
+              className={["inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors duration-200", white ? "bg-white border border-[#6A71FA] text-[#6A71FA] hover:bg-[#6A71FA] hover:text-white" : "bg-white/10 border border-white/10 text-white hover:bg-white/20 "].join(' ')}
               title="Menu"
             >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
-                <User className="h-4 w-4" />
-              </span>
-              <span className="max-w-[140px] truncate font-medium">Menu</span>
+              <span className="max-w-[140px] truncate font-bold">Menu</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M7 10l5 5 5-5z"/></svg>
             </button>
             {userMenuOpen && (
-              <div role="menu" className="absolute right-4 mt-2 w-60 rounded-2xl border border-white/10 bg-[#0d0b24]/90 backdrop-blur-md shadow-xl shadow-black/30 p-2 z-40 text-white/90">
-                <button onClick={() => { navigate('/join'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Play</button>
-                <button onClick={() => { navigate('/discover'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('home.discover')}</button>
-                <button onClick={() => { navigate('/home/upgrades'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('header.upgrades')}</button>
-                <div className="px-3 py-2">
-                  <div className="text-xs text-white/60 mb-1">{t('header.language')}</div>
-                  <LanguageSwitcher />
-                </div>
-                <button onClick={() => { setUserMenuOpen(false); login(); }} className="w-full inline-flex items-center justify-between rounded-lg px-3 py-2 bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-medium">
+              <div role="menu" className="absolute right-4 mt-2 w-60 rounded-2xl border bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover shadow-xl shadow-black/30 p-2 z-40 text-white/90">
+                <button onClick={() => { navigate('/join'); setUserMenuOpen(false); }} className="w-full text-left font-bold rounded-lg px-3 py-2 hover:bg-white/10">Play</button>
+                <button onClick={() => { navigate('/discover'); setUserMenuOpen(false); }} className="w-full text-left font-bold rounded-lg px-3 py-2 hover:bg-white/10">{t('home.discover')}</button>
+                <button onClick={() => { navigate('/home/upgrades'); setUserMenuOpen(false); }} className="w-full text-left font-bold rounded-lg px-3 py-2 hover:bg-white/10">{t('header.upgrades')}</button>
+                <button onClick={() => { setUserMenuOpen(false); login(); }} className="w-full inline-flex items-center justify-between font-bold rounded-lg px-3 py-2 bg-gradient-to-r from-indigo-500 to-pink-500 text-white">
                   {t('header.signin')} <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
@@ -203,41 +188,34 @@ export default function Header({ signIn, playMode, forceDark }: HeaderProps) {
               onClick={() => setUserMenuOpen(v => !v)}
               aria-haspopup="menu"
               aria-expanded={userMenuOpen}
-              className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 transition-colors duration-200"
+              className={["inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font transition-colors duration-200", white ? "bg-white border border-[#6A71FA] text-[#6A71FA] hover:bg-[#6A71FA] hover:text-white" : "bg-white/10 border border-white/10 text-white hover:bg-white/20 "].join(' ')}
               title={username || ''}
             >
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
                 <User className="h-4 w-4" />
               </span>
-              <span className="max-w-[140px] truncate font-medium">{username}</span>
+              <span className="max-w-[140px] truncate font-bold">{username}</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M7 10l5 5 5-5z"/></svg>
             </button>
             {userMenuOpen && (
-              <div role="menu" className="absolute right-4 mt-2 w-60 rounded-2xl border border-white/10 bg-[#0d0b24]/90 backdrop-blur-md shadow-xl shadow-black/30 p-2 z-40 text-white/90">
+              <div role="menu" className="absolute right-4 mt-2 w-60 rounded-2xl border bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover shadow-xl shadow-black/30 p-2 z-40 text-white/90 font-bold text-sm">
                 {/* Primary navigation (visible here on mobile since header links are hidden) */}
-                <button onClick={() => { navigate('/home'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('header.library')}</button>
-                <button onClick={() => { navigate('/discover'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('home.discover')}</button>
-                <button onClick={() => { navigate('/home/upgrades'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">{t('header.upgrades')}</button>
-                <div className="h-px bg-white/10 my-1" />
-                <button onClick={() => { navigate('/home/profile'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Profile</button>
-                <button onClick={() => { navigate('/home/achievements'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Achievements</button>
-                <button onClick={() => { navigate('/home/settings'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Settings</button>
-                <div className="px-3 py-2">
-                  <div className="text-xs text-white/60 mb-1">{t('header.language')}</div>
-                  <LanguageSwitcher />
-                </div>
-                <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full inline-flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-white/10 text-red-300">Logout <LogOut className="h-4 w-4" /></button>
+                <button onClick={() => { navigate('/home'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600 bg-white/10 text-white">{t('header.library')}</button>
+                <button onClick={() => { navigate('/discover'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600 bg-white/10 text-white">{t('home.discover')}</button>
+                <button onClick={() => { navigate('/home/upgrades'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600 bg-white/10 text-white">{t('header.upgrades')}</button>
+                <button onClick={() => { navigate('/home/profile'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600 bg-white/10 text-white">Profile</button>
+                {/*
+                <button onClick={() => { navigate('/home/achievements'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600 bg-white/10 text-white">Achievements</button>
+                <button onClick={() => { navigate('/home/settings'); setUserMenuOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600 bg-white/10 text-white">Settings</button>
+                */}
+                <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full inline-flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-white hover:text-indigo-600 bg-white/10 text-white text-red-300">Logout <LogOut className="h-4 w-4" /></button>
               </div>
             )}
           </div>
         )}
       </div>
       </div>
-      {/* Mobile menu panel */}
-      {/* previous hamburger panel removed; we use the dropdown above */}
     </header>
-    {/* Spacer to prevent content from being covered by fixed header */}
-
     </>
   );
 }

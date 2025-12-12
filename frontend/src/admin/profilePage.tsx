@@ -110,15 +110,15 @@ const ProfilePage = () => {
 
   return (
     <div
-      className="relative min-h-screen bg-[#1e1b4b] text-white overflow-hidden"
+      className="relative min-h-screen bg-white text-slate-900 overflow-hidden"
       style={{
         fontFamily:
           'Inter, "Plus Jakarta Sans", Poppins, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
       }}
     >
       <GlobalStyles />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.35)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.35)_0%,transparent_60%),linear-gradient(to_bottom_right,#4f46e5,#9333ea,#ec4899)]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(106,113,250,0.2)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(156,138,250,0.18)_0%,transparent_60%),linear-gradient(to_bottom_right,rgba(106,113,250,0.12),rgba(156,138,250,0.08),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(106,113,250,0.05)_0%,transparent_70%)] animate-pulse-slow" />
       <ParallaxOrbs />
       <ParallaxScroll />
 
@@ -146,30 +146,32 @@ const ProfilePage = () => {
           </header> */}
 
           <div className="grid gap-6 lg:grid-cols-[1.55fr,1fr] mt-10">
-            <section className="rounded-3xl border border-white/10 bg-white/8 p-6 sm:p-8 shadow-[0_18px_60px_rgba(15,23,42,0.35)] backdrop-blur-xl">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-[0_18px_60px_rgba(0,0,0,0.08)]">
               <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-8">
+                {/*
                 <div className="relative">
                   <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-3xl bg-gradient-to-br from-indigo-400/80 via-purple-500/80 to-pink-500/80 flex items-center justify-center text-3xl font-extrabold shadow-lg shadow-purple-900/40 border border-white/20">
                     {avatarLetter}
                   </div>
                 </div>
+                */}
                 <div className="space-y-2 text-sm sm:text-base">
-                  <p className="text-[13px] uppercase tracking-[0.2em] text-white/50">
+                  <p className="text-[13px] uppercase tracking-[0.2em] text-slate-500">
                     {t("profile.subscription.subtitle")}
                   </p>
-                  <p className="text-2xl font-bold text-white/95">{displayName || t("profile.details.name")}</p>
-                  <p className="text-white/70">{tavlProfile?.email || tokenProfile.email || t("profile.details.email")}</p>
+                  <p className="text-2xl font-bold text-slate-900">{displayName || t("profile.details.name")}</p>
+                  <p className="text-slate-600">{tavlProfile?.email || tokenProfile.email || t("profile.details.email")}</p>
                   <div className="flex flex-wrap gap-2 pt-2">
                     {(tokenProfile.groups || []).slice(0, 3).map((group: string) => (
                       <span
                         key={group}
-                        className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/70 backdrop-blur"
+                        className="inline-flex items-center rounded-full border border-slate-200 bg-[#6a71fa]/10 px-3 py-1 text-[11px] font-semibold text-[#2f2f55]"
                       >
                         {group}
                       </span>
                     ))}
                     {(tokenProfile.groups || []).length > 3 && (
-                      <span className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/60">
+                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
                         +{(tokenProfile.groups || []).length - 3} {t("profile.details.groups")}
                       </span>
                     )}
@@ -178,50 +180,50 @@ const ProfilePage = () => {
               </div>
 
               <div className="mt-10 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.details.roles")}</p>
-                  <p className="mt-2 text-2xl font-bold text-white/90">{(tokenProfile.roles || []).length}</p>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{t("profile.details.roles")}</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">{(tokenProfile.roles || []).length}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.details.groups")}</p>
-                  <p className="mt-2 text-2xl font-bold text-white/90">{(tokenProfile.groups || []).length}</p>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{t("profile.details.groups")}</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">{(tokenProfile.groups || []).length}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                     {t("profile.details.issued")}
                   </p>
-                  <p className="mt-2 text-sm font-semibold text-white/85">
+                  <p className="mt-2 text-sm font-semibold text-slate-800">
                     {tokenProfile.iat ? tokenProfile.iat.toLocaleDateString() : "—"}
                   </p>
                 </div>
               </div>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.stats.level") || "Level"}</p>
-                  <p className="mt-2 text-2xl font-bold text-white/90">{formatMetric(tavlProfile?.level ?? null)}</p>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{t("profile.stats.level") || "Level"}</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(tavlProfile?.level ?? null)}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.stats.xp") || "XP"}</p>
-                  <p className="mt-2 text-2xl font-bold text-white/90">{formatMetric(tavlProfile?.xp ?? null)}</p>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{t("profile.stats.xp") || "XP"}</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(tavlProfile?.xp ?? null)}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center shadow-inner shadow-indigo-900/20">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">{t("profile.stats.totalPoints") || "Points"}</p>
-                  <p className="mt-2 text-2xl font-bold text-white/90">{formatMetric(tavlProfile?.totalPoints ?? null)}</p>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{t("profile.stats.totalPoints") || "Points"}</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">{formatMetric(tavlProfile?.totalPoints ?? null)}</p>
                 </div>
               </div>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 <button
                   onClick={openAccount}
-                  className="group inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white hover:bg-white/20 transition shadow-lg shadow-indigo-900/25"
+                  className="group inline-flex items-center justify-center gap-2 rounded-2xl border border-[#6a71fa]/30 bg-[#6a71fa]/12 px-4 py-3 text-sm font-semibold text-[#2f2f55] hover:bg-[#6a71fa]/16 transition shadow-sm"
                 >
                   <span>{t("profile.accountSettings")}</span>
                   <span aria-hidden className="transition-transform group-hover:translate-x-1">↗</span>
                 </button>
                 <button
                   onClick={logout}
-                  className="group inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white/80 hover:bg-white/14 transition shadow-lg shadow-indigo-900/20"
+                  className="group inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition shadow-sm"
                 >
                   <span>{t("profile.signOut")}</span>
                   <span aria-hidden className="transition-transform group-hover:translate-x-1">→</span>

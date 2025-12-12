@@ -19,8 +19,8 @@ export default function UpgradesSection({ upgrades, selectedUpgrade, setSelected
       </div>
       {/* Main Upgrade Display */}
       <div className="mb-12">
-        <div className="glass relative overflow-hidden rounded-3xl p-8 max-w-4xl mx-auto">
-          <div className="absolute -inset-1 opacity-60" style={{background:"radial-gradient(800px 200px at 10% 10%, rgba(59,130,246,0.15), transparent 40%)"}} />
+        <div className="glass relative rounded-3xl p-8 max-w-4xl mx-auto">
+          <div className="absolute -inset-1 bg-white border-2 rounded-3xl border-blue-200 bg-blue-50 shadow-lg shadow-blue-200/50" />
           <div className="relative flex flex-col md:flex-row items-center gap-8">
             <div className="flex-shrink-0">
               <img 
@@ -54,7 +54,7 @@ export default function UpgradesSection({ upgrades, selectedUpgrade, setSelected
               setSelectedUpgrade(index);
               setAutoPlay(false);
             }}
-            className={`group relative overflow-hidden rounded-2xl border-2 transition-all duration-300 hover:scale-105 ${
+            className={`group relative overflow-hidden rounded-2xl border-2 bg-white transition-all duration-300 hover:scale-105 ${
               selectedUpgrade === index 
                 ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-200/50' 
                 : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'

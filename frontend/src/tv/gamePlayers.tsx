@@ -39,7 +39,7 @@ const GamePlayers = ({ gameInstanceId, startGame, gamePin, stopGame}: GamePlayer
 
   return (
     <Wrapper>
-      <LeftSide>
+      <LeftSide className="bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover">
           <ContentLeft>
             <TavlLogoWhite src={whiteLogo} />
             <QR>
