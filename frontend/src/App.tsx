@@ -18,6 +18,7 @@ import UpdateGame from './admin/updateGameName';
 import Discover from './admin/discover';
 import ProfilePage from './admin/profilePage';
 import TVGamePlayView from './tv/game';
+import { TVGameProvider } from './tv/TVGameContext';
 import UpgradesPage from './admin/upgradesPage';
 import GamePublic from './admin/gamePublic';
 import CreatorPublic from './admin/creatorPublic';
@@ -209,7 +210,9 @@ const App = () => {
       </Route>
       <Route path="host/:gameId/instance/:gameInstanceId/pin/:gamePin" element={
         <RequireAuth>
-          <TVGamePlayView stopGame={() => navigate('/home')}/>
+          <TVGameProvider>
+            <TVGamePlayView stopGame={() => navigate('/home')}/>
+          </TVGameProvider>
         </RequireAuth>
       } />
       <Route

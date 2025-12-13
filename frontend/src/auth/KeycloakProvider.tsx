@@ -123,7 +123,13 @@ export const KeycloakProvider = ({ children }: { children: ReactNode }) => {
         setProfileLoading(false);
       };
       memoKeycloak
-        .init({ onLoad: 'check-sso', pkceMethod: 'S256' })
+        .init({
+          onLoad: 'check-sso',
+          pkceMethod: 'S256',
+          // Use the silent SSO redirect page so Keycloak can refresh without reloading the SPA
+          silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+          checkLoginIframe: false, // avoid hidden iframe churn that can trigger reloads on some browsers
+        })
         .then((authenticated: boolean) => {
           setIsAuthenticated(authenticated);
           if (authenticated && memoKeycloak.token) {

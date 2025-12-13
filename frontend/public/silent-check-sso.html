@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Silent SSO</title>
+  </head>
+  <body>
+    <script>
+      // Let Keycloak silently check SSO status without reloading the app
+      parent.postMessage(location.href, location.origin);
+    </script>
+  </body>
+</html>

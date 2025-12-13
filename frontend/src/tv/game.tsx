@@ -13,6 +13,7 @@ import GlobalStyles from "../components/landing/GlobalStyles";
 import AnimatedGradientBackgroundLight from "../components/landing/AnimatedGradientBackground-light";
 import Tutorial from "./tutorial";
 import Countdown from "./countdown";
+import { useTVGame } from "./TVGameContext";
 
 interface TvViewProps {
   stopGame: () => void;
@@ -45,16 +46,17 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   const { gamePin, gameInstanceId, gameId } = useParams<{ gamePin: string; gameInstanceId: string; gameId: string }>();
   const { socket } = useSocket();
 
-  const [questions, setQuestions] = useState<Array<Question>>([]);
-  const [currentQ, setCurrentQ] = useState(0); 
-  
-  const [loading, setLoading] = useState(false);
-  
-  const [started, setStarted] = useState(false);
-  const [showScoreBoard, setShowScoreBoard] = useState(false);
+  const { state, setState, clearState } = useTVGame();
+  const { questions, currentQ, started, showScoreBoard, showTutorial, preCountdown, loading } = state;
   const [powerupBanners, setPowerupBanners] = useState<Array<{ id: string, text: string }>>([]);
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [preCountdown, setPreCountdown] = useState(false);
+
+  const setQuestions = (qs: Array<Question>) => setState(prev => ({ ...prev, questions: qs }));
+  const setCurrentQ = (q: number) => setState(prev => ({ ...prev, currentQ: q }));
+  const setStarted = (v: boolean) => setState(prev => ({ ...prev, started: v }));
+  const setShowScoreBoard = (v: boolean) => setState(prev => ({ ...prev, showScoreBoard: v }));
+  const setShowTutorial = (v: boolean) => setState(prev => ({ ...prev, showTutorial: v }));
+  const setPreCountdown = (v: boolean) => setState(prev => ({ ...prev, preCountdown: v }));
+  const setLoading = (v: boolean) => setState(prev => ({ ...prev, loading: v }));
     
   // Get all questions for the current game Id
   const getQuestionsForGameId = (id?: string) => {
@@ -71,8 +73,9 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
 
   // Next question
   const next = () => {
-    showQuestion(currentQ +1);
-    setCurrentQ(currentQ +1);
+    const nextQ = currentQ + 1;
+    showQuestion(nextQ);
+    setCurrentQ(nextQ);
     // set timestamp for next q start
     
     setShowScoreBoard(false);
@@ -104,6 +107,7 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   const onStopGame = () => {
     setGameStatus("finished");
     setStarted(false);
+    clearState();
     stopGame();
   }
 
@@ -147,7 +151,7 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
 
     if (questions.length > q) {
       // After 3s countdown, schedule starttime (+1s) and show question text for 1s
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         // Now we mark question as started in 1s to keep phones in sync
         setGameQuestion(q, moment().add(3, 'seconds').format('HH:mm:ss'))
         setPreCountdown(false);
@@ -156,6 +160,7 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
           setLoading(false);
           clearTimeout(holla);
         }, 3000);
+        clearTimeout(timer);
       }, 3000);
     }
 
@@ -165,8 +170,10 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   useEffect(() => {
     if (gameInstanceId) socket.emit('join_game', String(gameInstanceId));
     getQuestionsForGameId(gameId);
-    setGameStatus("created");
-  }, [gameId, gameInstanceId, setGameStatus, socket]);
+    if (!started) {
+      setGameStatus("created");
+    }
+  }, [gameId, gameInstanceId, setGameStatus, socket, started]);
 
   // Listen for powerups and show transient overlay
   useEffect(() => {
