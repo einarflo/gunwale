@@ -135,7 +135,7 @@ const Waiting = ({ points, setPoints, gameStarted, gamepin, colorForUser, setCol
     if (gameInstanceId) {
       socket.emit('join_game', String(gameInstanceId));
       const onStatus = (payload: { gameId?: string; status?: string }) => {
-        if (payload?.gameId === String(gameInstanceId) && payload?.status && payload.status !== 'created') {
+        if (payload?.gameId === String(gameInstanceId) && payload?.status === 'started') {
           gameStarted();
         }
       };

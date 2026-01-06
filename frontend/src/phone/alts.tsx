@@ -233,16 +233,6 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
         <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
         <TopRightPoints points={points} color={selectableColors[color]} textColor={textColors[color]} animate={animatedColorIndices.has(color)} multicolor={color === MULTICOLOR_INDEX}/>
       </MobileNav>
-      {hasShield && <ShieldAura />}
-      {(hasShield || multiplier > 1) && (
-        <StatusBar>
-          {hasShield && <StatusChip style={{ background: '#dcfce7', borderColor: '#86efac', color: '#166534' }}>Shield</StatusChip>}
-          {multiplier > 1 && <StatusChip style={{ background: '#f3e8ff', borderColor: '#e9d5ff', color: '#6b21a8' }}>Gear x{multiplier}</StatusChip>}
-        </StatusBar>
-      )}
-      {hasShield && (
-        <ShieldBadge>Shield</ShieldBadge>
-      )}
       {eyeSummary && (
         <EyeOverlay>
           <div className="title">Live answers</div>
@@ -269,10 +259,11 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
       <PowerUpContainer>
         <PowerUpIcon src={one} has={fif} onClick={() => usfif()}/>
         <PowerUpIcon src={two} has={stop} onClick={() => usStop()}/>
-        <PowerUpIcon src={three} has={multiplier > 1} onClick={() => {}}/>
+        <PowerUpIcon src={three} has={multiplier > 1} checked={multiplier > 1} onClick={() => {}}/>
         <PowerUpIcon
           src={four}
           has={hasEye}
+          checked={eyeActive}
           onClick={() => {
             if (!hasEye) return;
             const next = !eyeActive;
@@ -282,7 +273,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
             }
           }}
         />
-        <PowerUpIcon src={five} has={hasShield} onClick={() => {}}/>
+        <PowerUpIcon src={five} has={hasShield} checked={hasShield} onClick={() => {}}/>
         <PowerUpIcon src={six} has={hasSlow} onClick={() => {}}/>
         <PowerUpIcon src={seven} has={hasEndOpponent} onClick={() => {}}/>
         <PowerUpIcon src={eight} has={hasNuke} onClick={() => {}}/>
@@ -303,19 +294,38 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
   )
 }
 
-export const PowerUpIcon = styled.img.attrs((props: {has: boolean}) => props)`
-  width: 56px;
-  height: 56px;
-  flex: 0 0 auto;
-  margin: 8px;
-  padding: 8px;
+type PowerUpIconProps = { has: boolean; checked?: boolean; src: string };
+
+export const PowerUpIcon = styled.div<PowerUpIconProps>`
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   border-radius: 14px;
-  background: #ffffff;
+  background-color: #ffffff;
+  background-image: url(${props => props.src});
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 75%;
   border: 2px solid #e5e7eb;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   cursor: pointer;
   opacity: ${props => props.has ? '100%' : '35%'};
   touch-action: manipulation;
+
+  &::after {
+    content: '✓';
+    position: absolute;
+    inset: 4px;
+    display: ${props => props.checked ? 'flex' : 'none'};
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(34,197,94,0.9);
+    color: #fff;
+    font-weight: 900;
+    font-size: 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  }
 `;
 
 export const PowerUp = styled.div.attrs((props: {has: boolean}) => props)`
@@ -337,18 +347,16 @@ export const PowerUp = styled.div.attrs((props: {has: boolean}) => props)`
 `;
 
 export const PowerUpContainer = styled.div`
- display: flex;
- align-items: center;
- gap: 4px;
- background: white;
- margin: 10px;
- padding: 4px;
- border-radius: 15px;
- overflow-x: auto;
- -webkit-overflow-scrolling: touch;
- scrollbar-width: none;
- &::-webkit-scrollbar { display: none; }
- justify-content: flex-start;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  background: white;
+  margin: 10px;
+  padding: 8px;
+  border-radius: 15px;
+  width: calc(100% - 20px);
+  max-width: 520px;
+  align-self: center;
 `;
 
 const AltsContainer = styled.div`

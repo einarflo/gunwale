@@ -26,18 +26,11 @@ const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
   useEffect(() => {
     if (!gameInstanceId) return;
     setLoading(true);
-    const fetchPlayers = () => {
-      socket.emit('get_players', { gameInstanceId: String(gameInstanceId) }, (resp: any) => {
-        if (resp?.ok && Array.isArray(resp.players)) setPlayers(resp.players);
-        setLoading(false);
-      });
-    };
-    fetchPlayers();
+    socket.emit('get_players', { gameInstanceId: String(gameInstanceId) }, (resp: any) => {
+      if (resp?.ok && Array.isArray(resp.players)) setPlayers(resp.players);
+      setLoading(false);
+    });
     socket.emit('join_game', String(gameInstanceId));
-    // Optional: keep podium reactive if scores change before finish
-    const onPlayerUpdate = (data: any) => { if (data?.gameId === String(gameInstanceId)) fetchPlayers(); };
-    socket.on('player_update', onPlayerUpdate);
-    return () => { socket.off('player_update', onPlayerUpdate); };
   }, [socket, gameInstanceId])
 
   // Announce game finished when podium opens

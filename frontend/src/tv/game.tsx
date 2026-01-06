@@ -94,7 +94,6 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   const startGame = () => {
     setStarted(true);
     setShowTutorial(true);
-    setGameStatus("started");
   }
 
   const beginAfterTutorial = () => {
