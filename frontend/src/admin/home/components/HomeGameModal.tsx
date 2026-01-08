@@ -1,7 +1,7 @@
 import Modal from "react-modal";
 import { Game } from "../../../tv/selectGame";
-import { Translate } from "../types";
 import placeholderImg from "../../../images/tavl-placeholder.jpg";
+import { useI18n } from "../../../i18n/I18nProvider";
 
 type HomeGameModalProps = {
   isOpen: boolean;
@@ -13,7 +13,6 @@ type HomeGameModalProps = {
   onEditGame: () => void;
   onCopyPin: () => void;
   onCopyLink: () => void;
-  t: Translate;
 };
 
 // --- helpers ---
@@ -47,10 +46,10 @@ const HomeGameModal = ({
   onEditGame,
   onCopyPin,
   onCopyLink,
-  t,
 }: HomeGameModalProps) => {
   const hasGame = Boolean(selectedGame);
   const extras = hasGame ? getGameExtra(selectedGame) : null;
+  const { t } = useI18n();
 
   return (
     <Modal

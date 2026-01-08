@@ -1,36 +1,72 @@
-import { Spinner } from "../../../tv/selectGame";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import GameCard from "../../components/GameCard";
-import { Translate } from "../types";
 import { buildGameCardLabels } from "../../utils/gameCardLabels";
 import { toGameCardGame } from "../../utils/toGameCardGame";
 import { useKeycloak } from "../../../auth/KeycloakProvider";
+import { get } from "../../../api";
+import LogoLoader from "../../../components/utils/LogoLoader";
+import ErrorNotice from "./ErrorNotice";
+import { useI18n } from "../../../i18n/I18nProvider";
 
 type FavoritesTabProps = {
-  isLoading: boolean;
-  favorites: any[];
-  t: Translate;
-  onDiscover: () => void;
-  onOpenGame: (id: string) => void;
-  onEditGame: (id: string) => void;
-  onViewCreator: (creatorUserId: string) => void;
+  active: boolean;
+  onOpenGame: (game: any) => void;
+  onCountChange?: (count: number) => void;
 };
 
 const FavoritesTab = ({
-  isLoading,
-  favorites,
-  t,
-  onDiscover,
+  active,
   onOpenGame,
-  onEditGame,
-  onViewCreator,
+  onCountChange,
 }: FavoritesTabProps) => {
   const { userId: currentUserId } = useKeycloak();
+  const navigate = useNavigate();
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const { t } = useI18n();
+
+  const loadFavorites = () => {
+    if (!currentUserId) return;
+    setIsLoading(true);
+    setError(false);
+    get("/favorites/details")
+      .then((res) => {
+        const list = Array.isArray(res.data) ? res.data : [];
+        setFavorites(list);
+        onCountChange?.(list.length);
+      })
+      .catch(() => {
+        setFavorites([]);
+        setError(true);
+        onCountChange?.(0);
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    if (!active || !currentUserId) return;
+    loadFavorites();
+  }, [active, currentUserId]);
 
   if (isLoading) {
     return (
-      <div className="mt-6 flex items-center justify-center">
-        <Spinner />
+      <div className="flex justify-center items-center h-32 pt-16">
+        <LogoLoader />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorNotice
+        lead={t("common.errorLead") || "Uff da …"}
+        title={t("home.favorites.errorTitle") || "Kunne ikke laste favoritter"}
+        description={t("home.favorites.errorBody") || "Prøv igjen, så henter vi listen på nytt."}
+        actionLabel={t("common.retry") || "Prøv igjen"}
+        onRetry={loadFavorites}
+      />
     );
   }
 
@@ -46,7 +82,7 @@ const FavoritesTab = ({
             "Mark quizzes as favorites or browse Discover to find something new."}
         </div>
         <button
-          onClick={onDiscover}
+          onClick={() => navigate("/discover")}
           className="rounded-full bg-gradient-to-r from-[#6a71fa] to-[#9c8afa] px-4 py-2 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition"
         >
           {t("home.favorites.goDiscover") || "Go to Discover"}
@@ -59,9 +95,7 @@ const FavoritesTab = ({
 
   return (
     <>
-      <div className="text-xl font-semibold text-slate-900 mb-2 mt-4">
-        {t("home.favorites") || "Favorites"}
-      </div>
+      <div className="text-xl font-semibold text-slate-900 pt-8"></div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         {favorites.map((raw: any) => {
           const ownerId =
@@ -107,11 +141,11 @@ const FavoritesTab = ({
               key={cardGame.id}
               game={cardGame}
               labels={labels}
-              onClick={(gameCard) => onOpenGame(gameCard.id)}
-              onEdit={(gameCard) => onEditGame(gameCard.id)}
+              onClick={() => onOpenGame(raw)}
+              onEdit={() => navigate(`/home/edit/${cardGame.id}`)}
               onCreatorClick={(gameCard) => {
                 if (gameCard.creatorUserId) {
-                  onViewCreator(gameCard.creatorUserId);
+                  navigate(`/creator/${encodeURIComponent(gameCard.creatorUserId)}`);
                 }
               }}
             />

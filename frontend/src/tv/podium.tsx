@@ -19,6 +19,7 @@ interface PodiumProps {
 const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
   const [players, setPlayers] = useState<Array<Player>>([]);
   const [loading, setLoading] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const { socket } = useSocket();
   const { t } = useI18n();
 
@@ -128,9 +129,38 @@ const Podium = ({ gameInstanceId, finish }: PodiumProps) => {
               return rows;
             })()
           )}
+        {players.length > 5 ? (
+          <SeeAllButton onClick={() => setShowAll(true)}>
+            {t('tv.podium.seeAll') || 'Se alle deltakere'}
+          </SeeAllButton>
+        ) : null}
       </ContentPlayers>
       <Start onClick={finish}>{t('common.finish') || 'Finish'}</Start>
       <BottomLogo src={logo} alt="Tavl" />
+
+      {showAll && (
+        <Overlay>
+          <OverlayCard>
+            <OverlayHeader>
+              <span>{t('tv.podium.allPlayers') || 'Alle deltakere'}</span>
+              <CloseButton onClick={() => setShowAll(false)}>✕</CloseButton>
+            </OverlayHeader>
+            <AllList>
+              {sorted.map((p, idx) => {
+                const cIdx = Number(p.colour)||0;
+                return (
+                  <AllRow key={`${p.username}-${idx}`}>
+                    <span className="pos">#{idx+1}</span>
+                    <span className="name">{p.username}</span>
+                    <span className="score">{p.score}</span>
+                    <ColorSwatch style={{ background: selectableColors[cIdx], color: textColors[cIdx] }}>{cIdx+1}</ColorSwatch>
+                  </AllRow>
+                );
+              })}
+            </AllList>
+          </OverlayCard>
+        </Overlay>
+      )}
     </Tvrapper>
   )
 }
@@ -213,6 +243,91 @@ const Header = styled.div`
     margin: auto;
     margin-bottom: 30px;
     font-family: "Coll";
+`;
+
+const SeeAllButton = styled.button`
+  margin: 16px auto 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.12);
+  color: #0f172a;
+  font-weight: 800;
+  cursor: pointer;
+  display: block;
+`;
+
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+`;
+
+const OverlayCard = styled.div`
+  width: min(900px, 95vw);
+  max-height: 80vh;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 18px 48px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+`;
+
+const OverlayHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  font-weight: 800;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #e5e7eb;
+`;
+
+const CloseButton = styled.button`
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #111827;
+`;
+
+const AllList = styled.div`
+  overflow-y: auto;
+  padding: 10px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const AllRow = styled.div`
+  display: grid;
+  grid-template-columns: 70px 1fr 100px 40px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-weight: 700;
+  color: #0f172a;
+  .pos { color: #64748b; }
+  .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score { text-align: right; }
+`;
+
+const ColorSwatch = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  width: 28px;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 0.9rem;
 `;
 
 export default Podium;

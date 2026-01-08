@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import randomstring from "randomstring";
 import { Game } from "../tv/selectGame";
-import { get, post, put } from "../api";
+import { post } from "../api";
 import GlobalStyles from "../components/landing/GlobalStyles";
 import ParallaxOrbs from "../components/ParallaxOrbs";
 import ParallaxScroll from "../components/ParallaxScroll";
@@ -27,54 +27,18 @@ const Home = () => {
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string>();
+  const [selectedGame, setSelectedGame] = useState<Game | (Game & Record<string, any>)>();
 
   const [watingForCreateGame, setWaitingForCreateGame] = useState(false);
   const [newGamePin, setNewGamePin] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-
-  const [games, setGames] = useState<Array<Game>>();
-  const [deletedGames, setDeletedGames] = useState<Array<Game>>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-
-  const [favoriteGames, setFavoriteGames] = useState<any[]>([]);
-  const [favoritesLoading, setFavoritesLoading] = useState(false);
-  const [playedGames, setPlayedGames] = useState<any[]>([]);
-  const [playedLoading, setPlayedLoading] = useState(false);
-  const filteredGames = games?.filter((game) =>
-    game.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
   const [activeTab, setActiveTab] = useState<HomeTabKey>("mine");
-  const totalPlays = (games || []).reduce(
-    (acc: number, g: any) => acc + (g.plays ?? g.playthroughs ?? 0),
-    0,
-  );
 
-  const getGamesForUserId = (id: string) => {
-    get(`/games/`)
-      .then((res) => {
-        setLoading(false);
-        if (res.data) {
-          setGames(res.data);
-        } else {
-          setError(true);
-        }
-      })
-      .catch(() => {
-        console.log("Error when getting games for user");
-        setLoading(false);
-        setError(true);
-      });
-  };
-
-  useEffect(() => {
-    if (userId) {
-      getGamesForUserId(userId);
-    }
-  }, [userId]);
+  const [gameCount, setGameCount] = useState(0);
+  const [totalPlays, setTotalPlays] = useState(0);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [refreshMyGamesKey, setRefreshMyGamesKey] = useState(0);
 
   const createNewGameInstance = (gameId: string, gamePin: string) => {
     setWaitingForCreateGame(true);
@@ -93,50 +57,14 @@ const Home = () => {
       });
   };
 
-  const loadDeletedGames = () => {
-    get(`/games/trash`)
-      .then((res) => setDeletedGames(res.data || []))
-      .catch(() => setDeletedGames([]));
-  };
-
-  const restoreGame = (selector: string) => {
-    put(`/games/${selector}/restore`).then(() => {
-      loadDeletedGames();
-      if (userId) {
-        getGamesForUserId(userId);
-      }
-    });
-  };
-
-  useEffect(() => {
-    if (activeTab === "trash") {
-      loadDeletedGames();
-    }
-    if (activeTab === "favorites" && userId) {
-      setFavoritesLoading(true);
-      get("/favorites/details")
-        .then((res) => {
-          setFavoriteGames(Array.isArray(res.data) ? res.data : []);
-        })
-        .catch(() => setFavoriteGames([]))
-        .finally(() => setFavoritesLoading(false));
-    }
-    if (activeTab === "played" && userId) {
-      setPlayedLoading(true);
-      get("/games/recent-played")
-        .then((res) => {
-          setPlayedGames(Array.isArray(res.data) ? res.data : []);
-        })
-        .catch(() => setPlayedGames([]))
-        .finally(() => setPlayedLoading(false));
-    }
-  }, [activeTab, userId]);
-
-  const openGameModal = (gameId?: string | null) => {
-    if (!gameId) {
+  const openGameModal = (game?: Game | (Game & Record<string, any>) | null) => {
+    if (!game) {
       return;
     }
-    setSelectedGameId(String(gameId));
+    const gameId = String((game as any).uuid ?? (game as any).id ?? (game as any).game_id ?? "");
+    if (!gameId) return;
+    setSelectedGame(game);
+    setSelectedGameId(gameId);
     setNewGamePin(
       randomstring.generate({
         charset: ["numeric"],
@@ -147,15 +75,12 @@ const Home = () => {
     setModalIsOpen(true);
   };
 
-  const selectedGame = games?.find(
-    (game) => String((game as any).uuid ?? (game as any).id) === String(selectedGameId),
-  );
-
   const handleStartSelectedGame = () => {
-    if (!selectedGameId) {
+    const gameId = selectedGameId || String((selectedGame as any)?.uuid ?? (selectedGame as any)?.id);
+    if (!gameId) {
       return;
     }
-    createNewGameInstance(selectedGameId, newGamePin);
+    createNewGameInstance(gameId, newGamePin);
   };
 
   const handleEditSelectedGame = () => {
@@ -169,15 +94,7 @@ const Home = () => {
   const handleCopyLink = () =>
     navigator.clipboard?.writeText(`${window.location.origin}/join/${newGamePin}`);
 
-  const handleCreateGame = () => navigate("/home/create");
-  const handleDiscover = () => navigate("/discover");
-  const handleBilling = () => navigate("/billing");
-  const handleUpgrade = () => navigate("/purchase");
-  const handleViewCreator = (creatorUserId: string) =>
-    navigate(`/creator/${encodeURIComponent(creatorUserId)}`);
-  const handleOpenTrash = () => setActiveTab("trash");
-  const handleOpenGameFromList = (gameId: string) => openGameModal(gameId);
-  const handleEditGame = (gameId: string) => navigate("edit/" + gameId);
+  const handleOpenGameFromList = (game: any) => openGameModal(game);
 
   return (
     <>
@@ -197,18 +114,13 @@ const Home = () => {
         <OverviewSection
           username={username}
           isPremium={!!isPremium}
-          gameCount={games?.length ?? 0}
-          favoriteCount={favoriteGames?.length ?? 0}
+          gameCount={gameCount}
+          favoriteCount={favoriteCount}
           totalPlays={totalPlays}
-          onUpgrade={handleUpgrade}
-          onCreate={handleCreateGame}
-          onDiscover={handleDiscover}
-          onBilling={handleBilling}
-          onShowTrash={handleOpenTrash}
           t={t}
         />
 
-        {isPremium && <PremiumBanner t={t} onUpgrade={handleUpgrade} />}
+        {isPremium && <PremiumBanner t={t} />}
 
         <div className="mx-auto max-w-6xl px-6 py-8">
           <div className="">
@@ -224,44 +136,36 @@ const Home = () => {
 
             {activeTab === "favorites" && (
               <FavoritesTab
-                isLoading={favoritesLoading}
-                favorites={favoriteGames}
-                t={t}
-                onDiscover={handleDiscover}
+                active={activeTab === "favorites"}
                 onOpenGame={handleOpenGameFromList}
-                onEditGame={handleEditGame}
-                onViewCreator={handleViewCreator}
+                onCountChange={setFavoriteCount}
               />
             )}
 
             {activeTab === "played" && (
               <PlayedTab
-                isLoading={playedLoading}
-                playedGames={playedGames}
-                t={t}
+                active={activeTab === "played"}
                 onOpenGame={handleOpenGameFromList}
-                onEditGame={handleEditGame}
-                onViewCreator={handleViewCreator}
               />
             )}
 
             {activeTab === "trash" && (
-              <TrashTab deletedGames={deletedGames} onRestore={restoreGame} t={t} />
+              <TrashTab
+                active={activeTab === "trash"}
+                onRestored={() => setRefreshMyGamesKey((k) => k + 1)}
+              />
             )}
 
             {activeTab === "mine" && (
               <MyGamesTab
-                loading={loading}
-                error={error}
-                games={games}
-                filteredGames={filteredGames}
-                viewMode={viewMode}
                 searchTerm={searchTerm}
-                t={t}
+                viewMode={viewMode}
                 onOpenGame={handleOpenGameFromList}
-                onEditGame={handleEditGame}
-                onCreateGame={handleCreateGame}
-                onDiscover={handleDiscover}
+                onStatsChange={({ gameCount, totalPlays }) => {
+                  setGameCount(gameCount);
+                  setTotalPlays(totalPlays);
+                }}
+                refreshKey={refreshMyGamesKey}
               />
             )}
           </div>
@@ -277,7 +181,6 @@ const Home = () => {
           onEditGame={handleEditSelectedGame}
           onCopyPin={handleCopyPin}
           onCopyLink={handleCopyLink}
-          t={t}
         />
 
         <Footer />

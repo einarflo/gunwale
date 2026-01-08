@@ -6,11 +6,10 @@ import GameForm from './components/GameForm';
 import GlobalStyles from '../components/landing/GlobalStyles';
 import ParallaxOrbs from '../components/ParallaxOrbs';
 import ParallaxScroll from '../components/ParallaxScroll';
-import Header from '../components/landing/Header';
 import Footer from '../components/Footer';
 
 const CreateGame = () => {
-    const { isPremium, userId } = useKeycloak();
+    const { userId } = useKeycloak();
 
     const navigate = useNavigate();
 
@@ -47,12 +46,10 @@ const CreateGame = () => {
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(106,113,250,0.05)_0%,transparent_70%)] animate-pulse-slow" />
           <ParallaxOrbs />
           <ParallaxScroll />
-          <div className="mx-auto max-w-6xl px-6 pt-24 pb-12">
-            <div className="mb-6">
-              <div className="text-2xl sm:text-3xl font-bold text-slate-900 drop-shadow">Ny quiz</div>
-              <div className="text-slate-600">Gi quizen et navn, beskrivelse og tags.</div>
-            </div>
-            <div className="rounded-3xl p-6 sm:p-8 shadow-xl bg-white backdrop-blur-md border border-slate-100">
+          <div className="mx-auto max-w-6xl px-6 pt-36 pb-8">
+            <div className="rounded-3xl p-6 sm:p-8 shadow-xl bg-white backdrop-blur-md border border-slate-100 overflow-hidden relative">
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
+              <div className="absolute -right-10 -top-16 h-60 w-60 rounded-full bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
               <GameForm
                 title="Quiznavn og beskrivelse"
                 showImageUpload

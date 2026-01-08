@@ -7,11 +7,6 @@ type OverviewSectionProps = {
   gameCount: number;
   favoriteCount: number;
   totalPlays: number;
-  onUpgrade: () => void;
-  onCreate: () => void;
-  onDiscover: () => void;
-  onBilling: () => void;
-  onShowTrash: () => void;
   t: Translate;
 };
 
@@ -21,78 +16,36 @@ const OverviewSection = ({
   gameCount,
   favoriteCount,
   totalPlays,
-  onUpgrade,
-  onCreate,
-  onDiscover,
-  onBilling,
-  onShowTrash,
   t,
 }: OverviewSectionProps) => {
   const navigate = useNavigate();
   return (
-  <div className="mx-auto max-w-6xl px-6 mt-10">
-    <div className="grid gap-6 md:grid-cols-3">
-      <div className="relative rounded-3xl border border-slate-200/80 bg-white/60 shadow-xl shadow-indigo-200/40 overflow-hidden p-5 sm:p-6">
-              <div className="absolute inset-0 bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
-              <div className="absolute -right-10 -top-16 h-60 w-60 rounded-full bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
-              <div className="relative space-y-3">
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  <div className="space-y-2">
-                    <div className="text-xl sm:text-xl font-bold text-white">{t('landing.discover.title')}</div>
-                    <p className="text-sm text-white/80 max-w-sm">
-                      {t('landing.discover.body')}
-                    </p>
-                    {/*}
-                    <div className="flex flex-wrap gap-2 text-xs font-semibold text-indigo-700">
-                      <span className="px-3 py-1 rounded-full bg-white/80 border border-indigo-100">{t('tags.geography')}</span>
-                      <span className="px-3 py-1 rounded-full bg-white/80 border border-indigo-100">{t('tags.filmTv')}</span>
-                      <span className="px-3 py-1 rounded-full bg-white/80 border border-indigo-100">{t('tags.music')}</span>
-                      <span className="px-3 py-1 rounded-full bg-white/80 border border-indigo-100">{t('tags.sports')}</span>
-                    </div>
-                    */}
-                  </div>
-                </div>
-                <button
-                  onClick={() => navigate('/discover')}
-                  className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-full bg-white text-[#6A71FA] px-5 py-3 text-sm font-semibold hover:bg-[#6A71FA] hover:text-white transition-colors shadow-lg shadow-indigo-200/50"
-                >
-                  {t('landing.discover.cta')}
-                  <span aria-hidden className="text-lg leading-none">→</span>
-                </button>
+    <div className="mx-auto max-w-6xl px-6 mt-10">
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="relative rounded-3xl shadow-xl shadow-indigo-200/40 overflow-hidden p-5 sm:p-6">
+          <div className="absolute inset-0 bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
+          <div className="absolute -right-10 -top-16 h-60 w-60 rounded-full bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
+          <div className="relative space-y-3">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="space-y-2">
+                <div className="text-xl sm:text-xl font-bold text-white">{t('landing.discover.title')}</div>
+                <p className="text-sm text-white/80 max-w-sm">
+                  {t('landing.discover.body')}
+                </p>
               </div>
             </div>
-      {/*
-      <div className="rounded-2xl bg-[#101827] border border-[#101827] p-6 shadow">
-        <div className="text-xl font-bold mb-1 text-[#ffffff]">
-          {t("home.welcome", { username: username || "" }) || `Velkommen, ${username}!`}
-        </div>
-        <div className="text-[#ffffff] mb-4">{isPremium ? "Premium" : "Standard"}</div>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <div className="rounded-xl bg-[#5DB868] border border-[#5DB868] p-3">
-            <div className="text-2xl font-extrabold text-[#ffffff]">{gameCount}</div>
-            <div className="text-xs text-[#ffffff]">Quizer</div>
-          </div>
-          <div className="rounded-xl bg-[#F97474] border border-[#F97474] p-3">
-            <div className="text-2xl font-extrabold text-[#ffffff]">{favoriteCount}</div>
-            <div className="text-xs text-[#ffffff]">Favoritter</div>
-          </div>
-          <div className="rounded-xl bg-[#9C8AFA] border border-[#9C8AFA] p-3">
-            <div className="text-2xl font-extrabold text-[#ffffff]">{totalPlays}</div>
-            <div className="text-xs text-[#ffffff]">Spillinger</div>
+            <button
+              onClick={() => navigate('/discover')}
+              className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-full bg-white text-[#6A71FA] px-5 py-3 text-sm font-semibold hover:bg-[#6A71FA] hover:text-white transition-colors shadow-lg shadow-indigo-200/50"
+            >
+              {t('landing.discover.cta')}
+              <span aria-hidden className="text-lg leading-none">→</span>
+            </button>
           </div>
         </div>
-        {!isPremium && (
-          <button
-            onClick={onUpgrade}
-            className="mt-4 w-full rounded-full bg-gradient-to-r from-[#6a71fa] to-[#9c8afa] px-4 py-2 text-white font-semibold shadow hover:shadow-lg active:scale-95 transition"
-          >
-            Oppgrader til Premium
-          </button>
-        )}
-      </div>
-      */}
-      <div className="md:col-span-2">
-        <div className="space-y-5 mt-4">
+
+        <div className="md:col-span-2">
+          <div className="space-y-5 mt-4">
             <h1 className="text-4xl sm:text-4xl font-extrabold text-slate-900 mb-1 text-center md:text-left">
               <span>Hello </span><span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">{username}</span>!
             </h1>
@@ -101,44 +54,11 @@ const OverviewSection = ({
               <span className="font-extrabold">{favoriteCount}</span> favorites, and racked up a total of{" "}
               <span className="font-extrabold">{totalPlays}</span> plays! Ready to create more excitement?
             </p>
+          </div>
         </div>
       </div>
     </div>
-
-        {/*}
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <button
-            onClick={onCreate}
-            className="rounded-xl h-32 font-bold bg-[#5DB868] border border-[#5DB868] px-3 py-3 text-lg text-white hover:brightness-95 transition"
-          >
-            Lag ny
-          </button>
-          <button
-            onClick={onDiscover}
-            className="rounded-xl h-32 font-bold bg-[#101827] border border-[#101827] px-3 py-3 text-lg text-white hover:brightness-110 transition"
-          >
-            Oppdag
-          </button>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 mt-6">
-          <button
-            onClick={onBilling}
-            className="rounded-xl h-32 font-bold bg-[#9C8AFA] border border-[#9C8AFA] px-3 py-3 text-lg text-white hover:brightness-105 transition"
-          >
-            Abonnement
-          </button>
-          <button
-            onClick={onShowTrash}
-            className="rounded-xl h-32 font-bold bg-[#F97474] border border-[#F97474] px-3 py-3 text-lg text-white hover:brightness-105 transition"
-          >
-            Papirkurv
-          </button>
-        </div>
-        </div>
-      </div>*/}
-
-    </div>
-)};
+  )
+};
 
 export default OverviewSection;
