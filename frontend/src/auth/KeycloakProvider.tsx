@@ -25,7 +25,7 @@ export interface TavlUserProfile {
 interface KeycloakContextProps {
   keycloak: typeof keycloak | undefined;
   initialized: boolean;
-  login: () => void;
+  login: (returnTo?: string) => void;
   logout: () => void;
   isPremium: boolean;
   userId: string;
@@ -78,10 +78,15 @@ export const KeycloakProvider = ({ children }: { children: ReactNode }) => {
   }, [memoKeycloak]);
 
   // Memoize login/logout callbacks
-  const loginCallback = useCallback(() => {
+  const loginCallback = useCallback((returnTo?: string) => {
     if (isInitialized && typeof memoKeycloak.login === 'function') {
-      console.log("Logging in with Keycloak redirect", `${window.location.origin}/tv`);
-      memoKeycloak.login({ redirectUri: `${window.location.origin}/authorizing` });
+      const base = `${window.location.origin}/authorizing`;
+      const safeReturnTo = returnTo?.startsWith('/') ? returnTo : '';
+      const redirectUri = safeReturnTo
+        ? `${base}?returnTo=${encodeURIComponent(safeReturnTo)}`
+        : base;
+      console.log("Logging in with Keycloak redirect", redirectUri);
+      memoKeycloak.login({ redirectUri });
     } else {
       console.warn('Keycloak is not initialized yet.');
     }

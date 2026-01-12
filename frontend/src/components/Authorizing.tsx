@@ -12,8 +12,11 @@ export default function Authorizing() {
   useEffect(() => {
     // Wait for keycloak state to update
     const timer = setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = params.get('returnTo');
+      const safeReturnTo = returnTo && returnTo.startsWith('/') ? returnTo : null;
       if (keycloak?.authenticated) {
-        navigate("/home", { replace: true });
+        navigate(safeReturnTo || "/home", { replace: true });
       } else {
         navigate("/", { replace: true });
       }

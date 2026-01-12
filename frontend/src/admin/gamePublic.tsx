@@ -44,7 +44,11 @@ export default function GamePublic() {
   const qcount = useMemo(() => questions.length, [questions]);
 
   const startGame = async () => {
-    if (!isAuthenticated) { try { login(); } catch(_) {}; return; }
+    if (!isAuthenticated) {
+      const returnTo = window.location.pathname + window.location.search + window.location.hash;
+      try { login(returnTo); } catch(_) {};
+      return;
+    }
     if (!game?.uuid) return;
     setStarting(true);
     try {

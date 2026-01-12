@@ -114,7 +114,7 @@ export default function Header({ white }: HeaderProps) {
           </button>
           {!isAuthenticated && (
             <button
-              onClick={login}
+              onClick={() => login()}
               className={["inline-flex items-center gap-3 rounded-full px-5 py-2 text-sm transition-colors duration-200", white ? "bg-white border border-[#6A71FA] text-[#6A71FA] hover:bg-[#6A71FA] hover:text-white" : "bg-white/10 border border-white/10 text-white hover:bg-white/20 "].join(' ')}
               aria-label={t('header.signin')}
             >
