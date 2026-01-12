@@ -12,4 +12,5 @@ export const buildGameCardLabels = (t: Translate): GameCardLabels => ({
   viewCreator: t("home.viewCreator") || "View creator",
   public: t("home.public") || "Public",
   private: t("home.private") || "Private",
+  edit: t("common.edit") || "Edit",
 });

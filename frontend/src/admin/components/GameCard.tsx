@@ -13,6 +13,7 @@ export type GameCardLabels = {
   viewCreator: string;
   public: string;
   private: string;
+  edit: string;
 };
 
 export type GameCardAction = {
@@ -382,7 +383,7 @@ const GameCard = ({
               type="button"
               onClick={handleEditClick}
               className="shrink-0 rounded-full bg-white border border-[#DADFFF] p-2 text-[#4B4D99] hover:bg-[#F4F3FF] transition"
-              aria-label="Rediger"
+              aria-label={labels.edit}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM21.41 6.34a1.25 1.25 0 000-1.77l-1.98-1.98a1.25 1.25 0 00-1.77 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />

@@ -12,6 +12,8 @@ import randomstring from 'randomstring';
 import { useKeycloak } from '../auth/KeycloakProvider';
 import type { Question } from '../tv/game';
 import GameCard from './components/GameCard';
+import DiscoverSearchFilters from './components/DiscoverSearchFilters';
+import TopCreatorsSection from './components/TopCreatorsSection';
 import { buildGameCardLabels } from './utils/gameCardLabels';
 import { toGameCardGame } from './utils/toGameCardGame';
 
@@ -70,6 +72,9 @@ const Discover = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [tagModeAll, setTagModeAll] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'favourites' | 'questions'>('popular');
+  const [topCreators, setTopCreators] = useState<
+    Array<{ userId: string; username: string; heartCount: number; createdQuizCount: number; level?: number | null }>
+  >([]);
 
   // Modal state for details + start
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -164,6 +169,9 @@ const Discover = () => {
 
   useEffect(() => {
     get('/tags').then(res => setAllTags(Array.isArray(res.data) ? res.data : [])).catch(() => setAllTags([]));
+    get('/users/top-creators?limit=5')
+      .then(res => setTopCreators(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setTopCreators([]));
     if (isAuthenticated) {
       get('/favorites/').then(res => { const ids: string[] = res.data?.gameIds || []; setFavorites(new Set(ids.map(String))); }).catch(() => { });
     } else {
@@ -248,6 +256,15 @@ const Discover = () => {
     }
   };
 
+  const clearSearch = () => {
+    setTerm('');
+    if (appliedTerm === '') {
+      setSearchNonce(n => n + 1);
+    } else {
+      setAppliedTerm('');
+    }
+  };
+
   const toggleFavorite = async (gameId: string) => {
     if (!isAuthenticated) {
       try { login(); } catch (_) { }
@@ -313,16 +330,6 @@ const Discover = () => {
 
   const cardLabels = buildGameCardLabels(t);
 
-  const gradientForTag = (slug: string) => {
-    let h = 0;
-    const key = slug || '';
-    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-    const h1 = h % 360;
-    const h2 = (h1 + 35) % 360;
-    // Softer, glassy gradient with lower alpha
-    return `linear-gradient(135deg, hsl(${h1} 80% 60% / 0.45) 0%, hsl(${h2} 78% 58% / 0.45) 100%)`;
-  };
-
   return (
     <>
       <div className="relative min-h-screen text-white overflow-hidden" style={{ fontFamily: 'Inter, \"Plus Jakarta Sans\", Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' }}>
@@ -337,113 +344,53 @@ const Discover = () => {
           <div className="relative before:absolute before:inset-0 before:content-[''] before:bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.15),transparent_70%)] before:-z-10">
 
 
-            {/* Search + sort */}
-            <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10  p-3 md:p-4 shadow-sm mb-3">
-              <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                <div className="relative flex-1">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/60">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 20l-5.6-5.6a7 7 0 10-1.4 1.4L20 21l1-1zM10 16a6 6 0 110-12 6 6 0 010 12z" /></svg>
-                  </span>
-                  <input
-                    value={term}
-                    onChange={e => setTerm(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') executeSearch(); }}
-                    placeholder={t('home.searchPlaceholder') || 'Search for quizzes...'}
-                    className="w-full pl-10 pr-10 py-2 rounded-lg border border-white/10 bg-white/10 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/30 text-sm md:text-base"
-                  />
-                  {!!term && (
-                    <button
-                      onClick={() => {
-                        setTerm('');
-                        if (appliedTerm === '') {
-                          setSearchNonce(n => n + 1);
-                        } else {
-                          setAppliedTerm('');
-                        }
-                      }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6L6 18M6 6l12 12" /></svg>
-                    </button>
-                  )}
-                </div>
-                <div className="shrink-0 flex items-center gap-2">
-                  <label className="text-sm text-white/80">Sort</label>
-                  <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="rounded-md border border-white/10 px-2 py-2 text-sm bg-white/10 text-white">
-                    <option value="popular">Most plays</option>
-                    <option value="recent">Recently updated</option>
-                    <option value="favourites">Most favourites</option>
-                    <option value="questions">Most questions</option>
-                  </select>
-                  <button onClick={executeSearch} className="rounded-md bg-gradient-to-r from-indigo-500 to-pink-500 text-white text-sm font-semibold px-3 py-2 shadow hover:shadow-lg transition">Search</button>
-                </div>
-              </div>
-              {/* Selected tags chips */}
-              {selected.size > 0 && (
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {Array.from(selected).map(slug => {
-                    const name = allTags.find(tg => tg.slug === slug)?.name || slug;
-                    return (
-                      <span key={slug} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-white/10 text-white border border-white/10">
-                        {t('tags.' + slug) || name}
-                        <button onClick={() => toggleTag(slug)} className="text-white/80 hover:text-white">×</button>
-                      </span>
-                    );
-                  })}
-                  <button onClick={() => { setSelected(new Set()); setTagModeAll(false); }} className="text-xs text-white/70 underline">Clear</button>
-                </div>
-              )}
-            </div>
+            <DiscoverSearchFilters
+              term={term}
+              onTermChange={setTerm}
+              onExecuteSearch={executeSearch}
+              onClearSearch={clearSearch}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              selected={selected}
+              allTags={allTags}
+              tagModeAll={tagModeAll}
+              onToggleTagMode={() => setTagModeAll(prev => !prev)}
+              onToggleTag={toggleTag}
+              onClearTags={() => { setSelected(new Set()); setTagModeAll(false); }}
+              t={t}
+            />
 
-            {/* Tag filters as gradient cards row */}
-            <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-3 md:p-4 shadow-sm mb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                <div className="text-sm font-semibold text-white/80">Browse tags</div>
-                {selected.size > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setTagModeAll(prev => !prev)}
-                    className={`text-xs px-3 py-1 rounded-full border transition ${tagModeAll ? 'bg-white/20 border-white/40 text-white' : 'bg-white/5 border-white/10 text-white/80'} hover:bg-white/20`}
-                  >
-                    {tagModeAll ? 'Match all selected' : 'Match any selected'}
-                  </button>
-                )}
-              </div>
-              <div className="overflow-x-auto no-scrollbar -mx-2 px-2">
-                <div className="flex items-stretch gap-3 py-1">
-                  {allTags.map(tag => {
-                    const active = selected.has(tag.slug);
-                    return (
-                      <button
-                        key={tag.slug}
-                        onClick={() => toggleTag(tag.slug)}
-                        className={`relative min-w-[150px] h-[96px] rounded-2xl px-4 py-3 text-left text-white/95 backdrop-blur-xl border transition active:scale-95 shadow-[0_10px_40px_rgba(0,0,0,0.16)] hover:shadow-[0_16px_60px_rgba(0,0,0,0.22)] hover:brightness-[1.03] ${active ? 'ring-2 ring-white/60 border-white/30' : 'ring-0 border-white/20'}`}
-                        style={{ backgroundImage: gradientForTag(tag.slug), backgroundColor: 'rgba(255,255,255,0.08)' }}
-                        title={t('tags.' + tag.slug) || tag.name}
-                      >
-                        <div className="font-semibold drop-shadow-sm truncate">{t('tags.' + tag.slug) || tag.name}</div>
-                        <div className="pointer-events-none absolute inset-0 rounded-2xl" style={{ background: 'radial-gradient(120% 100% at 0% 0%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 60%)' }} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+            <div className="mt-4 mb-4">
+              <TopCreatorsSection
+                creators={topCreators}
+                onCreatorClick={(creatorId) => openCreatorProfile(creatorId)}
+                t={t}
+              />
             </div>
 
             {loading && <div className="text-white/70">Loading…</div>}
             {error && <div className="text-red-300">{error}</div>}
 
-            {!loading && !error && (
-              <div className="mb-2 text-sm text-white/70">{filtered.length} results</div>
-            )}
-
             {/* Empty state */}
             {!loading && !error && filtered.length === 0 && (
-              <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
-                <div className="text-3xl mb-2">😕</div>
-                <div className="text-white font-medium mb-1">Fant ingen quizer som matcher søket ditt</div>
-                <div className="text-white/70 mb-4">Prøv å fjerne noen filtre eller opprett en ny quiz!</div>
-                <button onClick={() => navigate('/home')} className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition">Lag ny quiz</button>
+              <div className="relative mt-6 overflow-hidden rounded-3xl border border-white/20 bg-white/10 p-6 text-center shadow-xl shadow-indigo-200/30">
+                <div className="absolute inset-0 bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)]" />
+                <div className="absolute -right-10 -top-16 h-60 w-60 rounded-full bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover opacity-90" />
+                <div className="relative">
+                  <div className="text-3xl mb-2">😕</div>
+                  <div className="text-white font-semibold mb-1">
+                    {t("discover.empty.title") || "No quizzes matched your search"}
+                  </div>
+                  <div className="text-white/80 mb-4">
+                    {t("discover.empty.subtitle") || "Try clearing some filters or create a new quiz!"}
+                  </div>
+                  <button
+                    onClick={() => navigate('/home')}
+                    className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#6A71FA] shadow-lg shadow-indigo-200/50 transition-colors hover:bg-[#6A71FA] hover:text-white"
+                  >
+                    {t("discover.empty.cta") || "Create new quiz"}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -515,10 +462,23 @@ const Discover = () => {
 
             {/* Create new quiz CTA after grid */}
             {!loading && !error && filtered.length > 0 && (
-              <div className="rounded-2xl p-6 text-center bg-white/5 mt-10 border border-white/10">
-                <h3 className="text-lg text-white font-medium mb-2">Ikke funnet noe du liker?</h3>
-                <p className="text-white/60 mb-4">Lag din egen quiz og del den med venner!</p>
-                <button onClick={() => navigate('/home')} className="rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 px-4 py-2 text-white text-sm font-semibold shadow hover:shadow-lg active:scale-95 transition">Lag ny quiz</button>
+              <div className="relative mt-10 overflow-hidden rounded-3xl border border-white/20 bg-white/10 p-6 text-center shadow-xl shadow-indigo-200/30">
+                <div className="absolute inset-0 bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)]" />
+                <div className="absolute -right-10 -top-16 h-60 w-60 rounded-full bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover opacity-90" />
+                <div className="relative">
+                  <h3 className="text-lg text-white font-semibold mb-2">
+                    {t("discover.cta.title") || "Not finding what you like?"}
+                  </h3>
+                  <p className="text-white/80 mb-4">
+                    {t("discover.cta.subtitle") || "Create your own quiz and share it with friends!"}
+                  </p>
+                  <button
+                    onClick={() => navigate('/home')}
+                    className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#6A71FA] shadow-lg shadow-indigo-200/50 transition-colors hover:bg-[#6A71FA] hover:text-white"
+                  >
+                    {t("discover.cta.button") || "Create new quiz"}
+                  </button>
+                </div>
               </div>
             )}
           </div>

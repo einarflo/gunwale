@@ -117,8 +117,8 @@ const ProfilePage = () => {
       }}
     >
       <GlobalStyles />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_30%,rgba(106,113,250,0.2)_0%,transparent_60%),radial-gradient(circle_at_80%_70%,rgba(156,138,250,0.18)_0%,transparent_60%),linear-gradient(to_bottom_right,rgba(106,113,250,0.12),rgba(156,138,250,0.08),transparent)]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(106,113,250,0.05)_0%,transparent_70%)] animate-pulse-slow" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_28%,rgba(93,184,104,0.18)_0%,transparent_58%),radial-gradient(circle_at_82%_32%,rgba(249,116,116,0.18)_0%,transparent_58%),radial-gradient(circle_at_50%_12%,rgba(156,138,250,0.22)_0%,transparent_60%),linear-gradient(to_bottom_right,rgba(16,24,39,0.08),rgba(156,138,250,0.08),transparent)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(156,138,250,0.06)_0%,transparent_72%),radial-gradient(circle_at_70%_80%,rgba(93,184,104,0.12)_0%,transparent_60%)] animate-pulse-slow" />
       <ParallaxOrbs />
       <ParallaxScroll />
 
@@ -238,8 +238,9 @@ const ProfilePage = () => {
               </div>
             </section>
 
-            <section className="relative overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-indigo-500/25 via-purple-500/25 to-pink-500/25 p-6 sm:p-8 shadow-[0_18px_60px_rgba(76,29,149,0.35)] backdrop-blur-xl">
-              <div className="absolute inset-0 pointer-events-none opacity-70 bg-[radial-gradient(circle_at_20%_-10%,rgba(255,255,255,0.35)_0%,transparent_55%)]" />
+            <section className="relative overflow-hidden rounded-3xl shadow-xl shadow-indigo-200/40 p-6 sm:p-8">
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
+              <div className="absolute -right-10 -top-16 h-60 w-60 rounded-full bg-[linear-gradient(120deg,#6A71FA,#9C8AFA,#6A71FA)] bg-cover" />
               <div className="relative flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-white">{t("profile.subscription")}</h2>
@@ -255,7 +256,7 @@ const ProfilePage = () => {
                   {!isPremium && (
                     <button
                       onClick={() => navigate("/purchase")}
-                      className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-900/30 transition hover:-translate-y-0.5 hover:shadow-purple-900/40"
+                      className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#6A71FA] shadow-lg shadow-indigo-200/40 transition hover:bg-[#6A71FA] hover:text-white"
                     >
                       {t("profile.subscription.startPremium")}
                     </button>
@@ -292,16 +293,16 @@ const ProfilePage = () => {
             </section>
           </div>
 
-          <section className="rounded-3xl border border-white/10 bg-white/6 p-6 sm:p-8 shadow-[0_18px_60px_rgba(15,23,42,0.32)] backdrop-blur-xl">
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-[0_18px_60px_rgba(0,0,0,0.08)]">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-white">{t("profile.details.title")}</h2>
-                <p className="text-sm text-white/60">
+                <h2 className="text-2xl font-bold text-slate-900">{t("profile.details.title")}</h2>
+                <p className="text-sm text-slate-600">
                   {t("profile.details.subtitle") ||
                     "Tekniske detaljer fra Keycloak for støtte og feilsøking."}
                 </p>
               </div>
-              <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+              <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                 {t("profile.userId")}: {tokenProfile.sub || "—"}
               </div>
             </div>
@@ -310,19 +311,19 @@ const ProfilePage = () => {
               {detailItems.map(({ label, value }) => (
                 <div
                   key={label as string}
-                  className="rounded-2xl border border-white/10 bg-white/8 p-4 text-sm text-white/80 shadow-inner shadow-indigo-900/15 backdrop-blur"
+                  className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm"
                 >
-                  <dt className="text-[11px] uppercase tracking-[0.2em] text-white/50">{label}</dt>
-                  <dd className="mt-2 break-words text-white">{value}</dd>
+                  <dt className="text-[11px] uppercase tracking-[0.2em] text-slate-400">{label}</dt>
+                  <dd className="mt-2 break-words text-slate-900">{value}</dd>
                 </div>
               ))}
             </dl>
 
             <div className="mt-6">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
                 {t("profile.details.resourceRoles")}
               </p>
-              <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-white/10 bg-black/30 p-4 text-xs text-emerald-100 shadow-inner shadow-black/40 backdrop-blur">
+              <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-slate-200 bg-slate-900 p-4 text-xs text-emerald-100 shadow-inner">
                 {JSON.stringify(tokenProfile.resourceRoles || {}, null, 2)}
               </pre>
             </div>

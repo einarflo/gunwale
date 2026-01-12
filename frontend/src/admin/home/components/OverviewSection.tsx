@@ -47,12 +47,11 @@ const OverviewSection = ({
         <div className="md:col-span-2">
           <div className="space-y-5 mt-4">
             <h1 className="text-4xl sm:text-4xl font-extrabold text-slate-900 mb-1 text-center md:text-left">
-              <span>Hello </span><span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">{username}</span>!
+              <span>{t('overview.greeting')} </span>
+              <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">{username}</span>!
             </h1>
             <p className="text-slate-600 text-base sm:text-lg mb-2 max-w-2xl text-center md:text-left mx-auto md:mx-0">
-              You've conquered <span className="font-extrabold">{gameCount}</span> quizzes, bookmarked{" "}
-              <span className="font-extrabold">{favoriteCount}</span> favorites, and racked up a total of{" "}
-              <span className="font-extrabold">{totalPlays}</span> plays! Ready to create more excitement?
+              {t('overview.stats', { gameCount, favoriteCount, totalPlays })}
             </p>
           </div>
         </div>

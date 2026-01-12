@@ -42,6 +42,70 @@ usersRouter.get('/me', requireAuth(), async (req: Request, res: Response) => {
   }
 });
 
+usersRouter.get('/top-creators', async (req: Request, res: Response) => {
+  const limitParam = Number.parseInt(String(req.query.limit ?? ''), 10);
+  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 20) : 10;
+  try {
+    const query = `
+      SELECT
+        g.created_by AS userId,
+        COALESCE(u.username, MAX(g.created_by_name), g.created_by) AS username,
+        SUM(COALESCE(fg.favCount, 0)) AS heartCount,
+        COUNT(DISTINCT g.uuid) AS createdQuizCount,
+        MAX(u.level) AS level,
+        MAX(u.xp) AS xp,
+        MAX(u.total_points) AS totalPoints,
+        MAX(u.premium_since) AS premiumSince,
+        MAX(u.member_since) AS memberSince
+      FROM game g
+      LEFT JOIN (
+        SELECT game_id, COUNT(*) AS favCount
+        FROM favourite_games
+        GROUP BY game_id
+      ) fg ON fg.game_id = g.uuid
+      LEFT JOIN users u ON u.user_id = g.created_by
+      WHERE g.isPublic = 1
+        AND (g.deleted IS NULL OR g.deleted <> '1')
+        AND g.created_by IS NOT NULL
+        AND g.created_by <> ''
+      GROUP BY g.created_by, u.user_id, u.username
+      ORDER BY heartCount DESC, createdQuizCount DESC, g.created_by ASC
+      LIMIT ?
+    `;
+
+    const rows = await prisma.$queryRawUnsafe<
+      Array<{
+        userId: string;
+        username: string;
+        heartCount: number | bigint | null;
+        createdQuizCount: number | bigint | null;
+        level: number | bigint | null;
+        xp: number | bigint | null;
+        totalPoints: number | bigint | null;
+        premiumSince: Date | null;
+        memberSince: Date | null;
+      }>
+    >(query, limit);
+
+    const payload = rows.map((row) => ({
+      userId: row.userId,
+      username: row.username,
+      heartCount: toNumber(row.heartCount),
+      createdQuizCount: toNumber(row.createdQuizCount),
+      level: row.level == null ? null : toNumber(row.level),
+      xp: row.xp == null ? null : toNumber(row.xp),
+      totalPoints: row.totalPoints == null ? null : toNumber(row.totalPoints),
+      premiumSince: row.premiumSince ?? null,
+      memberSince: row.memberSince ?? null,
+    }));
+
+    res.json(payload);
+  } catch (err: any) {
+    logger.error('Failed to load top creators', { error: err?.message || err });
+    res.status(500).json({ message: 'Failed to load top creators', error: err?.message || String(err) });
+  }
+});
+
 usersRouter.get('/:userId/public-games', async (req: Request, res: Response) => {
   const userId = String(req.params.userId || '').trim();
   if (!userId) {

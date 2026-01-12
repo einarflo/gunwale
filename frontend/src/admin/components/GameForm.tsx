@@ -46,6 +46,7 @@ export default function GameForm({
   const [allTags, setAllTags] = useState<Array<{ id: number; name: string; slug: string }>>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set(initialTags.map(s => s.toLowerCase())));
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const didInitTagsRef = useRef(false);
 
   // Load available tags
   useEffect(() => {
@@ -53,6 +54,12 @@ export default function GameForm({
     fetchTags().then(list => { if (mounted) setAllTags(list); }).catch(() => setAllTags([]));
     return () => { mounted = false };
   }, []);
+
+  useEffect(() => {
+    if (didInitTagsRef.current) return;
+    setSelected(new Set(initialTags.map(s => s.toLowerCase())));
+    didInitTagsRef.current = true;
+  }, [initialTags]);
 
   const fetchTags = async () => {
     try { const res = await get('/tags'); return Array.isArray(res.data) ? res.data : []; } catch(_) { return []; }
@@ -78,8 +85,8 @@ export default function GameForm({
   const handleSubmit = async () => {
     const nameValid = name.trim().length >= 3;
     const imageReady = !showImageUpload || imageMode === 'none' || (imageMode === 'upload' && headerImage);
-    if (!nameValid) { setError('Navn må være minst 3 tegn'); return; }
-    if (!imageReady) { setError('Velg om du vil bruke bilde, eller last opp et bilde.'); return; }
+    if (!nameValid) { setError(t('gameForm.error.nameMin')); return; }
+    if (!imageReady) { setError(t('gameForm.error.imageChoice')); return; }
     setSubmitting(true);
     setError(null);
     try {
@@ -103,125 +110,125 @@ export default function GameForm({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div className="flex flex-col gap-8">
-        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-6">
-          <div className="font-bold text-lg text-white mb-3">{title}</div>
-          <label className="block font-semibold text-white/90 mb-1">Navn på quiz</label>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="font-bold text-lg text-slate-900 mb-3">{title}</div>
+          <label className="block font-semibold text-slate-700 mb-1">{t('gameForm.nameLabel')}</label>
           <div className="relative">
             <input
               className={`w-full mb-3 px-5 py-3 rounded-xl border text-lg shadow transition focus:outline-none focus:ring-2 ${
                 nameValid
-                  ? 'border-emerald-400/70 bg-emerald-500/10 text-white focus:ring-emerald-400/40'
-                  : 'border-white/10 bg-white/10 text-white placeholder-white/60 focus:ring-white/30'
+                  ? 'border-emerald-300 bg-emerald-50 text-slate-900 focus:ring-emerald-200'
+                  : 'border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:ring-[#6A71FA]/20'
               }`}
-              placeholder="Skriv inn et navn..."
+              placeholder={t('gameForm.namePlaceholder')}
               value={name}
               onChange={e => setName(e.target.value)}
             />
-            {nameValid && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-300" size={18} />}
+            {nameValid && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" size={18} />}
           </div>
-          <label className="block font-semibold text-white/90 mb-1">Beskrivelse</label>
+          <label className="block font-semibold text-slate-700 mb-1">{t('gameForm.descriptionLabel')}</label>
           <div className="relative">
             <input
               className={`w-full mb-1 px-5 py-3 rounded-xl border text-lg shadow transition focus:outline-none focus:ring-2 ${
                 descriptionFilled
-                  ? 'border-indigo-400/60 bg-indigo-500/10 text-white focus:ring-indigo-400/40'
-                  : 'border-white/10 bg-white/10 text-white placeholder-white/60 focus:ring-white/30'
+                  ? 'border-indigo-300 bg-indigo-50 text-slate-900 focus:ring-indigo-200'
+                  : 'border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:ring-[#6A71FA]/20'
               }`}
-              placeholder="Kort beskrivelse (valgfritt)"
+              placeholder={t('gameForm.descriptionPlaceholder')}
               value={description}
               onChange={e => setDescription(e.target.value)}
             />
-            {descriptionFilled && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300" size={18} />}
+            {descriptionFilled && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-500" size={18} />}
           </div>
-          <div className="text-xs text-white/60 mt-1">Navn og beskrivelse vises til spillerne.</div>
+          <div className="text-xs text-slate-500 mt-1">{t('gameForm.descriptionHint')}</div>
         </div>
-        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-6 space-y-4">
-          <div className="font-bold text-lg text-white">Synlighet</div>
-          <div className="inline-flex rounded-full border border-white/15 bg-white/5 p-1">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
+          <div className="font-bold text-lg text-slate-900">{t('gameForm.visibilityTitle')}</div>
+          <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
             <button
               type="button"
               onClick={() => setIsPublic(true)}
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                 isPublic
-                  ? 'bg-gradient-to-r from-emerald-400/40 to-teal-400/40 text-white border border-emerald-300/60 shadow-[0_12px_30px_rgba(16,185,129,0.35)]'
-                  : 'text-white/70 hover:text-white'
+                  ? 'bg-[#6A71FA] text-white shadow-lg shadow-indigo-200/40'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Globe2 size={16} />
-              Offentlig
+              {t('gameForm.visibilityPublic')}
             </button>
             <button
               type="button"
               onClick={() => setIsPublic(false)}
               className={`ml-1 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                 !isPublic
-                  ? 'bg-gradient-to-r from-purple-500/40 to-pink-500/40 text-white border border-pink-300/60 shadow-[0_12px_30px_rgba(244,114,182,0.28)]'
-                  : 'text-white/70 hover:text-white'
+                  ? 'bg-[#6A71FA] text-white shadow-lg shadow-indigo-200/40'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Lock size={16} />
-              Privat
+              {t('gameForm.visibilityPrivate')}
             </button>
           </div>
-          <div className="text-xs text-white/70">
-            {isPublic ? 'Quizen blir synlig for andre lærere og elever.' : 'Kun du og inviterte får tilgang til quizen.'}
+          <div className="text-xs text-slate-600">
+            {isPublic ? t('gameForm.visibilityPublicHint') : t('gameForm.visibilityPrivateHint')}
           </div>
         </div>
       </div>
       <div className="flex flex-col gap-8 h-full justify-between">
         {showImageUpload && (
-          <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-6 space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="font-bold text-lg text-white">Forsidebilde</div>
-              <div className="inline-flex rounded-full border border-white/15 bg-white/5 p-1">
+              <div className="font-bold text-lg text-slate-900">{t('gameForm.imageTitle')}</div>
+              <div className="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1">
                 <button
                   type="button"
                   onClick={() => setImageMode('upload')}
                   className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                     imageMode === 'upload'
-                      ? 'bg-gradient-to-r from-indigo-400/50 to-pink-400/50 text-white border border-white/20'
-                      : 'text-white/70 hover:text-white'
+                      ? 'bg-[#6A71FA] text-white shadow-lg shadow-indigo-200/40'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   <ImageIcon size={15} />
-                  Bruk bilde
+                  {t('gameForm.imageUse')}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setImageMode('none'); setHeaderImage(null); }}
                   className={`ml-1 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                     imageMode === 'none'
-                      ? 'bg-gradient-to-r from-amber-400/40 to-orange-400/40 text-white border border-white/20'
-                      : 'text-white/70 hover:text-white'
+                      ? 'bg-[#6A71FA] text-white shadow-lg shadow-indigo-200/40'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   <ImageOff size={15} />
-                  Ingen bilde
+                  {t('gameForm.imageNone')}
                 </button>
               </div>
             </div>
             {imageMode === 'upload' ? (
-              <div className="rounded-xl border border-dashed border-white/25 bg-white/5 p-4 text-sm text-white/75">
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex items-center gap-2 text-white/80">
+                  <div className="flex items-center gap-2 text-slate-600">
                     <Upload size={18} />
-                    <span>Dra inn et bilde eller velg fra enhet</span>
+                    <span>{t('gameForm.imageDrop')}</span>
                   </div>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:bg-white/18"
+                      className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
-                      Velg fil
+                      {t('gameForm.imagePick')}
                     </button>
                     {headerImage && (
                       <button
                         type="button"
                         onClick={() => setHeaderImage(null)}
-                        className="rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/70 hover:text-white transition"
+                        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition"
                       >
-                        Fjern
+                        {t('gameForm.imageRemove')}
                       </button>
                     )}
                   </div>
@@ -234,22 +241,22 @@ export default function GameForm({
                   className="hidden"
                 />
                 {headerImage && <img src={headerImage} alt="Header" className="mt-3 rounded-xl w-full max-h-40 object-cover" />}
-                {!headerImage && <div className="mt-3 text-xs text-white/60">Anbefalt størrelse 1600x900. PNG eller JPG.</div>}
+                {!headerImage && <div className="mt-3 text-xs text-slate-500">{t('gameForm.imageHint')}</div>}
               </div>
             ) : (
-              <div className="rounded-xl border border-white/15 bg-white/5 p-4 text-sm text-white/70">
-                Du har valgt å ikke bruke forsidebilde. Du kan alltid legge til et senere.
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                {t('gameForm.imageNoneHint')}
               </div>
             )}
-            <div className="text-xs text-white/65">Bilde gir quizen en tydelig identitet på landingssiden.</div>
+            <div className="text-xs text-slate-500">{t('gameForm.imageFooter')}</div>
           </div>
         )}
         {/* Tag selector */}
-        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-6">
-          <div className="font-bold text-lg text-white mb-2">Tags</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="font-bold text-lg text-slate-900 mb-2">{t('gameForm.tagsTitle')}</div>
           <div className="flex flex-wrap gap-2">
             {allTags.length === 0 ? (
-              <div className="text-white/70 text-sm">Laster…</div>
+              <div className="text-slate-500 text-sm">{t('gameForm.tagsLoading')}</div>
             ) : (
               allTags.map(tag => {
                 const active = selected.has(tag.slug.toLowerCase());
@@ -262,8 +269,8 @@ export default function GameForm({
                     onClick={() => toggleTag(tag.slug)}
                     className={`px-3 py-1 rounded-full text-sm font-semibold border transition active:scale-95 ${
                       active
-                        ? 'text-white border-transparent shadow-[0_12px_30px_rgba(78,67,255,0.35)]'
-                        : 'text-white/75 border-white/15 hover:text-white hover:border-white/25 hover:bg-white/10'
+                        ? 'text-white border-transparent shadow-[0_12px_30px_rgba(78,67,255,0.25)]'
+                        : 'text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                     style={
                       active
@@ -281,14 +288,14 @@ export default function GameForm({
             )}
           </div>
         </div>
-        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 p-6 flex gap-4 items-center justify-between">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 flex gap-4 items-center justify-between shadow-sm">
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
             className={`relative overflow-hidden rounded-xl px-8 py-3 text-lg font-bold shadow-lg active:scale-95 transition-all focus:ring-4 ${
               canSubmit
-                ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:shadow-2xl focus:ring-pink-500/30'
-                : 'bg-white/10 text-white/40 border border-white/10 cursor-not-allowed'
+                ? 'bg-[#6A71FA] text-white hover:shadow-2xl focus:ring-[#6A71FA]/20'
+                : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
             }`}
           >
             {submitText}
@@ -301,11 +308,11 @@ export default function GameForm({
           </button>
           <button
             onClick={onCancel}
-            className="rounded-xl bg-white/10 px-8 py-3 text-lg text-white font-bold shadow border border-white/10 hover:bg-white/20 transition-all"
+            className="rounded-xl bg-white px-8 py-3 text-lg text-slate-700 font-bold shadow border border-slate-200 hover:bg-slate-50 transition-all"
           >
             {cancelText}
           </button>
-          {error && <div className="text-rose-300 font-semibold ml-4">{error}</div>}
+          {error && <div className="text-rose-600 font-semibold ml-4">{error}</div>}
         </div>
       </div>
     </div>
