@@ -109,7 +109,11 @@ favoritesRouter.get('/details', requireAuth(), async (req: Request, res: Respons
         let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
         try {
           qcount = await prisma.game_question.count({
-            where: { game_id: g.uuid, OR: [{ deleted: null }, { NOT: { deleted: '1' } }] },
+            where: {
+              game_id: g.uuid,
+              OR: [{ deleted: null }, { NOT: { deleted: '1' } }],
+              AND: [{ OR: [{ type: null }, { type: { not: 'slide' } }] }],
+            },
           });
         } catch (_) {}
         try {

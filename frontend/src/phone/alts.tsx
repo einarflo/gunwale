@@ -19,6 +19,7 @@ import six from '../images/upgrades/6.png';
 import seven from '../images/upgrades/7.png';
 import eight from '../images/upgrades/8.png';
 import logo from '../images/tavl-logo.png';
+import { getPlayableQuestionType } from "../utils/questionTypes";
 // All interactions moved to WebSocket
 
 interface AltsProps {
@@ -172,11 +173,13 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
     }
   }
 
-  const getRadomOption = () => {
-    return options.filter(option => !(option === question?.correct))[Number((Math.random() * 3).toFixed(0))];
-  }
+  const playableType = getPlayableQuestionType(question);
+  const options = playableType === 'boolean' ? ["1", "2"] : ["1", "2", "3", "4"];
 
-  const options = ["1", "2", "3", "4"];
+  const getRadomOption = () => {
+    const choices = options.filter(option => !(option === question?.correct));
+    return choices[Math.floor(Math.random() * Math.max(1, choices.length))];
+  }
   
   // User clicks alternative
   const selectOption = (answer: string) => {
@@ -237,7 +240,7 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
         <EyeOverlay>
           <div className="title">Live answers</div>
           <Bars>
-            {(['1','2','3','4'] as const).map((k, idx) => {
+            {(options as Array<'1'|'2'|'3'|'4'>).map((k, idx) => {
               const c = eyeSummary.counts[k] || 0;
               const total = Math.max(eyeSummary.totalPlayers, 1);
               const pct = Math.round((c / total) * 100);
@@ -284,10 +287,12 @@ const Alts = ({ points, setPoints, answered, question, fif, buyfif, stop, buySto
         <OptionButton hide={hide.includes("1")} description={(question?.alt1 ?? '') as string} select={() => selectOption('1')} colour={selectableColors[0]} />
         <OptionButton hide={hide.includes("2")} description={(question?.alt2 ?? '') as string} select={() => selectOption('2')} colour={selectableColors[1]} />
       </Top>
-      <Bot>
-        <OptionButton hide={hide.includes("3")} description={(question?.alt3 ?? '') as string} select={() => selectOption('3')} colour={selectableColors[2]} />
-        <OptionButton hide={hide.includes("4")} description={(question?.alt4 ?? '') as string} select={() => selectOption('4')} colour={selectableColors[3]} />
+      {options.length > 2 && (
+        <Bot>
+          <OptionButton hide={hide.includes("3")} description={(question?.alt3 ?? '') as string} select={() => selectOption('3')} colour={selectableColors[2]} />
+          <OptionButton hide={hide.includes("4")} description={(question?.alt4 ?? '') as string} select={() => selectOption('4')} colour={selectableColors[3]} />
         </Bot>
+      )}
       </AltsContainer>
 
     </GameWrapper>

@@ -36,7 +36,11 @@ gamesRouter.get('/', requireAuth(), async (req: Request, res: Response) => {
         let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
         try {
           qcount = await prisma.game_question.count({
-            where: { game_id: g.uuid, OR: [{ deleted: null }, { NOT: { deleted: '1' } }] },
+            where: {
+              game_id: g.uuid,
+              OR: [{ deleted: null }, { NOT: { deleted: '1' } }],
+              AND: [{ OR: [{ type: null }, { type: { not: 'slide' } }] }],
+            },
           });
         } catch (e) {
           // ignore count failure; default 0
@@ -89,7 +93,15 @@ gamesRouter.get('/trash', requireAuth(), async (req: Request, res: Response) => 
     const enriched = await Promise.all(
       games.map(async (g) => ({
         ...g,
-        qcount: await prisma.game_question.count({ where: { game_id: g.uuid, deleted: '1' } }).catch(() => 0),
+        qcount: await prisma.game_question
+          .count({
+            where: {
+              game_id: g.uuid,
+              deleted: '1',
+              OR: [{ type: null }, { type: { not: 'slide' } }],
+            },
+          })
+          .catch(() => 0),
         username: g.created_by || null,
       }))
     );
@@ -205,7 +217,7 @@ gamesRouter.get('/public', async (req: Request, res: Response) => {
         g.updated_at,
         g.cover_image_url,
         ${tagIds.length ? 'COALESCE(mtc.match_count, 0)' : '0'} AS match_count,
-        (SELECT COUNT(*) FROM game_question gq WHERE gq.game_id = g.uuid AND (gq.deleted IS NULL OR gq.deleted <> '1')) AS qcount,
+        (SELECT COUNT(*) FROM game_question gq WHERE gq.game_id = g.uuid AND (gq.deleted IS NULL OR gq.deleted <> '1') AND (gq.type IS NULL OR gq.type <> 'slide')) AS qcount,
         (SELECT COUNT(*) FROM favourite_games fg WHERE fg.game_id = g.uuid) AS favCount,
         (SELECT COUNT(*) FROM game_instance gi WHERE gi.game_id = g.uuid AND (gi.is_deleted IS NULL OR gi.is_deleted <> '1')) AS plays
       FROM game g
@@ -434,7 +446,11 @@ gamesRouter.get('/recent-played', requireAuth(), async (req: Request, res: Respo
         let plays = 0;
         try {
           qcount = await prisma.game_question.count({
-            where: { game_id: g.uuid, OR: [{ deleted: null }, { NOT: { deleted: '1' } }] },
+            where: {
+              game_id: g.uuid,
+              OR: [{ deleted: null }, { NOT: { deleted: '1' } }],
+              AND: [{ OR: [{ type: null }, { type: { not: 'slide' } }] }],
+            },
           });
         } catch (_) {}
         try {

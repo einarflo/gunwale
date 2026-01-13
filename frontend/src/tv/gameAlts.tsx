@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import TopLeftLogo from "../components/TopLeftLogo";
 import { selectableColors } from "../phone/waiting";
 import { useSocket } from "../context/SocketContext";
+import { getPlayableQuestionType } from "../utils/questionTypes";
 
 interface AlternativesProps {
   question: Question;
@@ -65,6 +66,9 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
       }
     }
   }
+
+  const playableType = getPlayableQuestionType(question);
+  const optionKeys = playableType === 'boolean' ? (['1', '2'] as const) : (['1', '2', '3', '4'] as const);
 
   useEffect(() => {
     setAltTimeLeft(Number(question?.time ?? 20));
@@ -153,7 +157,7 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
   return (
     <Tvrapper>
       <TopLeftLogo/>
-      <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>
+      {currentQuestionCount && <CurrentQuestionCount>{currentQuestionCount}</CurrentQuestionCount>}
       {
         !showDistribution ?
           <ContentQuestions>
@@ -161,10 +165,16 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
           </ContentQuestions>
           :
           <Distribution>
-            <Column height={(((counts['1']||0)/Math.max(1, answeredCount))*100) + '%'} color={selectableColors[0]}>{ counts['1']||0 }</Column>
-            <Column height={(((counts['2']||0)/Math.max(1, answeredCount))*100) + '%'} color={selectableColors[1]}>{ counts['2']||0 }</Column>
-            <Column height={(((counts['3']||0)/Math.max(1, answeredCount))*100) + '%'} color={selectableColors[2]}>{ counts['3']||0 }</Column>
-            <Column height={(((counts['4']||0)/Math.max(1, answeredCount))*100) + '%'} color={selectableColors[3]}>{ counts['4']||0 }</Column>
+            {optionKeys.map((key, idx) => (
+              <Column
+                key={key}
+                height={(((counts[key] || 0) / Math.max(1, answeredCount)) * 100) + '%'}
+                width={`${100 / optionKeys.length}%`}
+                color={selectableColors[idx]}
+              >
+                {counts[key] || 0}
+              </Column>
+            ))}
           </Distribution>
       }
       
@@ -178,10 +188,12 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
           <Q>{option(question?.alt1, 1, selectableColors[0], showAnswers && question?.correct === '1')}</Q>
           <Q>{option(question?.alt2, 2, selectableColors[1], showAnswers && question?.correct === '2')}</Q>
         </Top>
-        <Bot>
-          <Q>{option(question?.alt3, 3, selectableColors[2], showAnswers && question?.correct === '3')}</Q>
-          <Q>{option(question?.alt4, 4, selectableColors[3], showAnswers && question?.correct === '4')}</Q>
-        </Bot>
+        {optionKeys.length > 2 && (
+          <Bot>
+            <Q>{option(question?.alt3, 3, selectableColors[2], showAnswers && question?.correct === '3')}</Q>
+            <Q>{option(question?.alt4, 4, selectableColors[3], showAnswers && question?.correct === '4')}</Q>
+          </Bot>
+        )}
         </AltsContainer>
       </Alts>
       <Start onClick={next}>Next</Start>
@@ -190,11 +202,11 @@ const Alternatives = ({ question, currentQuestionCount, nextQuestion, stopGame, 
   )
 }
 
-const Column = styled.div.attrs((props: {height: any}) => props)`
+const Column = styled.div.attrs((props: {height: any; width?: string}) => props)`
   color: white;
   display: flex;
   background: ${props => (props.color)};
-  width: 25%;
+  width: ${props => props.width || '25%'};
   justify-content: center;
   margin: 10px;
   border-radius: 15px;

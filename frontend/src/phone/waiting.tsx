@@ -15,6 +15,7 @@ interface WaitingProps {
   gamepin: string | undefined;
   setColorForUser: (no: number) => void;
   colorForUser: number;
+  mode?: 'lobby' | 'slide';
 }
 
 export const selectableColors = [
@@ -124,11 +125,12 @@ const colorCosts: Record<number, number> = {
   23: 100,
 };
 
-const Waiting = ({ points, setPoints, gameStarted, gamepin, colorForUser, setColorForUser }: WaitingProps) => {
+const Waiting = ({ points, setPoints, gameStarted, gamepin, colorForUser, setColorForUser, mode = 'lobby' }: WaitingProps) => {
   const { gameInstancePlayerId, gameInstanceId } = useContext(GameContext);
   const { socket, connected } = useSocket();
   const { t } = useI18n();
   const [tick, setTick] = useState(0);
+  const isSlideMode = mode === 'slide';
 
   useEffect(() => {
     // Prefer WebSocket event for status changes
@@ -148,9 +150,10 @@ const Waiting = ({ points, setPoints, gameStarted, gamepin, colorForUser, setCol
 
   // Rotate available upgrades while waiting
   useEffect(() => {
+    if (isSlideMode) return;
     const id = setInterval(() => setTick(t => (t + 1) % upgrades.length), 3500);
     return () => clearInterval(id);
-  }, []);
+  }, [isSlideMode]);
 
 
   const setColor = (number: number) => {
@@ -180,36 +183,45 @@ const Waiting = ({ points, setPoints, gameStarted, gamepin, colorForUser, setCol
         <img alt="Tavl logo" className="h-10 mt-5 ml-4" src={logo} />
         <TopRightPoints points={points} color={selectableColors[colorForUser]} textColor={textColors[colorForUser]} animate={animatedColorIndices.has(colorForUser)} multicolor={colorForUser === MULTICOLOR_INDEX}/>
       </MobileNav>
-      <BlueWrapper>
-        <Ticker>
-          <TickImage src={upgrades[tick].image} alt={upgrades[tick].header} />
-          <TickText>
-            <TickTitle>{upgrades[tick].header}</TickTitle>
-            <TickDesc>{upgrades[tick].description}</TickDesc>
-            <TickPrice>{upgrades[tick].price}</TickPrice>
-          </TickText>
-        </Ticker>
-      </BlueWrapper>
-      <HeaderMobile>{t('waiting.selectColor')}</HeaderMobile>
-      <ColorGrid>
-        {(() => {
-          const order = selectableColors.map((_, i) => i).sort((a, b) => ((colorCosts[a] || 0) - (colorCosts[b] || 0)) || (a - b));
-          return order.map((i) => (
-          <ColorCircle
-            key={i}
-            hex={selectableColors[i]}
-            animated={animatedColorIndices.has(i)}
-            multicolor={i === MULTICOLOR_INDEX}
-            idx={i}
-            selected={i === colorForUser}
-            onClick={() => setColor(i)}
-            aria-label={`Color ${i+1}`}
-          >
-            {colorCosts[i] ? <CostBadge>{colorCosts[i]}</CostBadge> : null}
-          </ColorCircle>
-          ));
-        })()}
-      </ColorGrid>
+      {isSlideMode ? (
+        <SlideNotice>
+          <SlideTitle>{t('waiting.slideTitle') || 'Info slide'}</SlideTitle>
+          <SlideSubtitle>{t('waiting.slideSubtitle') || 'Hold on while the host shows a slide.'}</SlideSubtitle>
+        </SlideNotice>
+      ) : (
+        <>
+          <BlueWrapper>
+            <Ticker>
+              <TickImage src={upgrades[tick].image} alt={upgrades[tick].header} />
+              <TickText>
+                <TickTitle>{upgrades[tick].header}</TickTitle>
+                <TickDesc>{upgrades[tick].description}</TickDesc>
+                <TickPrice>{upgrades[tick].price}</TickPrice>
+              </TickText>
+            </Ticker>
+          </BlueWrapper>
+          <HeaderMobile>{t('waiting.selectColor')}</HeaderMobile>
+          <ColorGrid>
+            {(() => {
+              const order = selectableColors.map((_, i) => i).sort((a, b) => ((colorCosts[a] || 0) - (colorCosts[b] || 0)) || (a - b));
+              return order.map((i) => (
+              <ColorCircle
+                key={i}
+                hex={selectableColors[i]}
+                animated={animatedColorIndices.has(i)}
+                multicolor={i === MULTICOLOR_INDEX}
+                idx={i}
+                selected={i === colorForUser}
+                onClick={() => setColor(i)}
+                aria-label={`Color ${i+1}`}
+              >
+                {colorCosts[i] ? <CostBadge>{colorCosts[i]}</CostBadge> : null}
+              </ColorCircle>
+              ));
+            })()}
+          </ColorGrid>
+        </>
+      )}
     </MobileGameWrapper>
   );
     
@@ -236,6 +248,28 @@ const Spin = keyframes`
 const HueRotate = keyframes`
   0% { filter: hue-rotate(0deg); }
   100% { filter: hue-rotate(360deg); }
+`;
+
+const SlideNotice = styled.div`
+  margin: 24px auto 0;
+  width: min(88vw, 520px);
+  text-align: center;
+  padding: 24px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+`;
+
+const SlideTitle = styled.div`
+  font-weight: 900;
+  font-size: 1.4rem;
+  color: #1f2937;
+`;
+
+const SlideSubtitle = styled.div`
+  margin-top: 8px;
+  font-size: 1rem;
+  color: #475569;
 `;
 
 const ShimmerDiag = keyframes`

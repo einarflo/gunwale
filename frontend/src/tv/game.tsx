@@ -14,6 +14,8 @@ import AnimatedGradientBackgroundLight from "../components/landing/AnimatedGradi
 import Tutorial from "./tutorial";
 import Countdown from "./countdown";
 import { useTVGame } from "./TVGameContext";
+import { getPlayableQuestionType, isSlideQuestion } from "../utils/questionTypes";
+import Slide from "./slide";
 
 interface TvViewProps {
   stopGame: () => void;
@@ -23,16 +25,21 @@ export interface Question {
   uuid: string;
   id?: string; // legacy numeric id; prefer uuid
   game_id: string;
+  type?: string | null;
+  question_type?: string | null;
+  questionType?: string | null;
   number_in_line?: string | null;
   alt1?: string | null;
   alt2?: string | null;
   alt3?: string | null;
   alt4?: string | null;
   text?: string | null;
+  description?: string | null;
   correct?: string | null;
   status?: string | null;
   score?: string | null;
   time?: string | number | null;
+  image_url?: string | null;
 }
 
 export interface Player {
@@ -74,15 +81,20 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   // Next question
   const next = () => {
     const nextQ = currentQ + 1;
+    if (nextQ >= questions.length) {
+      setCurrentQ(nextQ);
+      setShowScoreBoard(false);
+      setPreCountdown(false);
+      setLoading(false);
+      setGameStatus("finished");
+      return;
+    }
+
     showQuestion(nextQ);
     setCurrentQ(nextQ);
     // set timestamp for next q start
-    
-    setShowScoreBoard(false);
 
-    if (currentQ === questions.length) {
-      setGameStatus("finished");
-    }
+    setShowScoreBoard(false);
   }
 
   // Show score board
@@ -145,6 +157,15 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   }
 
   const showQuestion = (q: number) => {
+    const target = questions[q];
+    const type = getPlayableQuestionType(target);
+    if (type === 'slide') {
+      setPreCountdown(false);
+      setLoading(false);
+      setGameQuestion(q, moment().format('HH:mm:ss'));
+      return;
+    }
+
     // Pre-countdown (3s) BEFORE starting question -> then question text (1s)
     setPreCountdown(true);
 
@@ -194,6 +215,12 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   }, [socket, gameInstanceId]);
 
   let content: JSX.Element;
+  const currentQuestion = questions[currentQ];
+  const currentType = getPlayableQuestionType(currentQuestion);
+  const totalPlayable = questions.filter((q) => !isSlideQuestion(q)).length;
+  const currentPlayable = questions.slice(0, currentQ + 1).filter((q) => !isSlideQuestion(q)).length;
+  const currentQuestionCount = totalPlayable > 0 ? `${currentPlayable}/${totalPlayable}` : '';
+
   if (!started) {
     content = (<GamePlayers startGame={startGame} stopGame={onStopGame}  gameInstanceId={gameInstanceId} gamePin={gamePin} />);
   } else if (showTutorial) {
@@ -212,11 +239,13 @@ const TVGamePlayView = ({ stopGame }: TvViewProps) => {
   } else if (preCountdown) {
     content = (<Countdown />);
   } else if (loading && questions.length > currentQ) {
-    content = (<QuestionText question={questions[currentQ]?.text} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>);
+    content = (<QuestionText question={questions[currentQ]?.text} currentQuestionCount={currentQuestionCount}/>);
   } else if (showScoreBoard && questions.length > currentQ+1) {
-    content = (<CurrentScores gameInstanceId={gameInstanceId} next={next} stop={stopGame} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>);
+    content = (<CurrentScores gameInstanceId={gameInstanceId} next={next} stop={stopGame} currentQuestionCount={currentQuestionCount}/>);
+  } else if (!showScoreBoard && questions.length > currentQ && currentType === 'slide') {
+    content = (<Slide question={currentQuestion} next={next} stopGame={onStopGame} />);
   } else if (!showScoreBoard && questions.length > currentQ) {
-    content = (<Alternatives gameInstanceId={gameInstanceId} question={questions[currentQ]} stopGame={onStopGame} nextQuestion={showCurrentScores} currentQuestionCount={`${currentQ+1}/${questions.length}`}/>);
+    content = (<Alternatives gameInstanceId={gameInstanceId} question={currentQuestion} stopGame={onStopGame} nextQuestion={showCurrentScores} currentQuestionCount={currentQuestionCount}/>);
   } else {
     content = (<Podium finish={onStopGame} gameInstanceId={gameInstanceId}/>);
   }

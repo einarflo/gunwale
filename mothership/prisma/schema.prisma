@@ -88,6 +88,7 @@ model game_question {
   deleted        String? @db.VarChar(100)
   uuid           String? @db.VarChar(255)
   image_url      String? @db.VarChar(2048)
+  type           String? @db.VarChar(25)
 }
 
 model favourite_games {

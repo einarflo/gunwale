@@ -13,6 +13,7 @@ import Footer from "../components/Footer";
 import { useI18n } from "../i18n/I18nProvider";
 import { useAiLoadingProgress } from "./utils/aiLoadingProgress";
 import HomeGameModal from "./home/components/HomeGameModal";
+import { KnownQuestionType, getPlayableQuestionType, isSlideQuestion } from "../utils/questionTypes";
 
 export interface GameItem {
   name: String;
@@ -84,6 +85,7 @@ const EditGame = () => {
   const advancedModel = 'llama3.1:8b-instruct-q4_K_M';
   const [startModalOpen, setStartModalOpen] = useState(false);
   const [startPin, setStartPin] = useState('');
+  const [newQuestionType, setNewQuestionType] = useState<KnownQuestionType>('multi');
 
   const difficultyLabel = (value?: string) => {
     switch ((value || '').toLowerCase()) {
@@ -101,20 +103,24 @@ const EditGame = () => {
     }
   };
 
-  const newQuestion = (draft?: Partial<Record<'text' | 'description' | 'score' | 'time' | 'alt1' | 'alt2' | 'alt3' | 'alt4' | 'correct', string>>) => {
+  const newQuestion = (draft?: Partial<Record<'text' | 'description' | 'score' | 'time' | 'alt1' | 'alt2' | 'alt3' | 'alt4' | 'correct' | 'type', string>>) => {
+    const type = (draft?.type as KnownQuestionType) || newQuestionType;
+    const isSlide = type === 'slide';
+    const isBoolean = type === 'boolean';
     return post(`/game_question/`, {
       text: draft?.text ?? "",
       game_id: gameId,
-      score: draft?.score ?? "1000",
+      score: isSlide ? "" : (draft?.score ?? "1000"),
       description: draft?.description ?? "",
       number_in_line: questions.length + 1,
       status: "created",
-      time: draft?.time ?? "10",
-      correct: draft?.correct ?? "1",
-      alt1: draft?.alt1 ?? "",
-      alt2: draft?.alt2 ?? "",
-      alt3: draft?.alt3 ?? "",
-      alt4: draft?.alt4 ?? ""
+      time: isSlide ? "" : (draft?.time ?? "10"),
+      correct: isSlide ? "" : (draft?.correct ?? "1"),
+      alt1: isSlide ? "" : (draft?.alt1 ?? ""),
+      alt2: isSlide ? "" : (draft?.alt2 ?? ""),
+      alt3: isSlide || isBoolean ? "" : (draft?.alt3 ?? ""),
+      alt4: isSlide || isBoolean ? "" : (draft?.alt4 ?? ""),
+      type,
     })
       .then((res) => {
         navigate('/home/edit/' + gameId + '/question/' + res.data);
@@ -252,9 +258,10 @@ const EditGame = () => {
   };
 
   const stats = useMemo(() => {
-    const totalQuestions = questions.length;
-    const totalScore = questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0);
-    const totalTime = questions.reduce((sum, q) => sum + (Number(q.time) || 0), 0);
+    const playable = questions.filter((q) => !isSlideQuestion(q));
+    const totalQuestions = playable.length;
+    const totalScore = playable.reduce((sum, q) => sum + (Number(q.score) || 0), 0);
+    const totalTime = playable.reduce((sum, q) => sum + (Number(q.time) || 0), 0);
     return { totalQuestions, totalScore, totalTime };
   }, [questions]);
   const coverImage = (game as any)?.cover_image_url || (game as any)?.coverImageUrl || placeholderImg;
@@ -430,6 +437,7 @@ const EditGame = () => {
 
   const createFromSuggestion = (sug: AiSuggestion, index: number) => {
     newQuestion({
+      type: 'multi',
       text: sug.text,
       description: sug.topic || '',
       time: sug.time ? String(Math.max(5, Math.min(120, Math.round(sug.time)))) : undefined,
@@ -597,12 +605,23 @@ const EditGame = () => {
                     onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <button
-                  onClick={() => newQuestion()}
-                  className="inline-flex items-center justify-center rounded-full bg-[#6A71FA] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200/50 transition hover:bg-[#555ef6]"
-                >
-                  {t('editGame.questions.new') || 'New question'}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={newQuestionType}
+                    onChange={(e) => setNewQuestionType(e.target.value as KnownQuestionType)}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  >
+                    <option value="multi">{t('editQuestion.type.multi') || '4 options'}</option>
+                    <option value="boolean">{t('editQuestion.type.boolean') || '2 options'}</option>
+                    <option value="slide">{t('editQuestion.type.slide') || 'Slide'}</option>
+                  </select>
+                  <button
+                    onClick={() => newQuestion()}
+                    className="inline-flex items-center justify-center rounded-full bg-[#6A71FA] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200/50 transition hover:bg-[#555ef6]"
+                  >
+                    {t('editGame.questions.new') || 'New question'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -621,18 +640,22 @@ const EditGame = () => {
                     const image = q.image_url || q.imageUrl || placeholderImg;
                     const secondsShort = t('editGame.secondsShort') || 'sec';
                     const pointsShort = t('editGame.pointsShort') || 'points';
+                    const type = getPlayableQuestionType(q);
                     const timeLabel = q.time ? `${q.time} ${secondsShort}` : `— ${secondsShort}`;
                     const scoreLabel = q.score ? `${q.score} ${pointsShort}` : `— ${pointsShort}`;
                     const correctIndex = Number(q.correct);
-                    const correctLabel = Number.isFinite(correctIndex) && correctIndex >= 1 && correctIndex <= 4
+                    const maxOptions = type === 'boolean' ? 2 : 4;
+                    const correctLabel = Number.isFinite(correctIndex) && correctIndex >= 1 && correctIndex <= maxOptions
                       ? String.fromCharCode(64 + correctIndex)
                       : null;
-                    const altData = (['alt1', 'alt2', 'alt3', 'alt4'] as const).map((field, choiceIdx) => ({
-                      key: field,
-                      label: String.fromCharCode(65 + choiceIdx),
-                      text: q[field] || '',
-                      isCorrect: String(q.correct) === String(choiceIdx + 1),
-                    }));
+                    const altData = (['alt1', 'alt2', 'alt3', 'alt4'] as const)
+                      .slice(0, type === 'boolean' ? 2 : 4)
+                      .map((field, choiceIdx) => ({
+                        key: field,
+                        label: String.fromCharCode(65 + choiceIdx),
+                        text: q[field] || '',
+                        isCorrect: String(q.correct) === String(choiceIdx + 1),
+                      }));
 
                     return (
                       <div
@@ -654,15 +677,22 @@ const EditGame = () => {
                                 #{idx + 1}
                               </span>
                               <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1">
-                                {t('editGame.questions.time') || 'Time'}: {timeLabel}
+                                {t('editQuestion.form.typeLabel') || 'Question type'}: {t(`editQuestion.type.${type}`) || type}
                               </span>
-                              <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1">
-                                {t('editGame.questions.score') || 'Score'}: {scoreLabel}
-                              </span>
-                              {correctLabel && (
-                                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
-                                  {t('editGame.questions.correct') || 'Correct'}: {correctLabel}
-                                </span>
+                              {type !== 'slide' && (
+                                <>
+                                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1">
+                                    {t('editGame.questions.time') || 'Time'}: {timeLabel}
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1">
+                                    {t('editGame.questions.score') || 'Score'}: {scoreLabel}
+                                  </span>
+                                  {correctLabel && (
+                                    <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
+                                      {t('editGame.questions.correct') || 'Correct'}: {correctLabel}
+                                    </span>
+                                  )}
+                                </>
                               )}
                             </div>
                             <button
@@ -691,21 +721,27 @@ const EditGame = () => {
 
                             <div className="flex-1 flex flex-col gap-3 lg:min-h-[260px]">
                               <div className="grid gap-2 text-sm font-medium">
-                                {altData.map(({ key, label, text, isCorrect }) => (
-                                  <div
-                                    key={key}
-                                    className={`relative overflow-hidden rounded-2xl border px-3 py-2 ${
-                                      isCorrect
-                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_8px_24px_rgba(16,185,129,0.18)]'
-                                        : 'border-slate-200 bg-slate-50 text-slate-700'
-                                    }`}
-                                  >
-                                    <span className="mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700">
-                                      {label}
-                                    </span>
-                                    <span>{text?.trim() ? text : (t('editGame.questions.emptyOption') || '—')}</span>
+                                {type === 'slide' ? (
+                                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-slate-600">
+                                    {t('editQuestion.preview.slideHint') || 'Slides show info only, no alternatives.'}
                                   </div>
-                                ))}
+                                ) : (
+                                  altData.map(({ key, label, text, isCorrect }) => (
+                                    <div
+                                      key={key}
+                                      className={`relative overflow-hidden rounded-2xl border px-3 py-2 ${
+                                        isCorrect
+                                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_8px_24px_rgba(16,185,129,0.18)]'
+                                          : 'border-slate-200 bg-slate-50 text-slate-700'
+                                      }`}
+                                    >
+                                      <span className="mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700">
+                                        {label}
+                                      </span>
+                                      <span>{text?.trim() ? text : (t('editGame.questions.emptyOption') || '—')}</span>
+                                    </div>
+                                  ))
+                                )}
                               </div>
 
                               <div className="flex items-center justify-between text-xs text-slate-500 lg:mt-auto">

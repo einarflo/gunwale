@@ -83,6 +83,7 @@ gameQuestionsRouter.post('/', requireAuth(), async (req: Request, res: Response)
       alt4,
       correct,
       time,
+      type,
     } = req.body || {};
 
     if (!game_id) return res.status(400).json({ message: 'Field "game_id" is required' });
@@ -111,6 +112,7 @@ gameQuestionsRouter.post('/', requireAuth(), async (req: Request, res: Response)
         alt4: alt4 ?? null,
         correct: correct ?? null,
         time: String(time ?? ''),
+        type: type ?? null,
       },
       select: { id: true, uuid: true },
     });
@@ -153,6 +155,7 @@ gameQuestionsRouter.put('/:selector', requireAuth(), async (req: Request, res: R
       'time',
       'deleted',
       'image_url',
+      'type',
     ] as const;
     const data: any = {};
     for (const key of allowedKeys) {

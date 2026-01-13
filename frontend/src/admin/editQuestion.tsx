@@ -7,6 +7,7 @@ import ParallaxScroll from "../components/ParallaxScroll";
 import placeholderImg from "../images/tavl-placeholder.jpg";
 import { useAiLoadingProgress } from "./utils/aiLoadingProgress";
 import { useI18n } from "../i18n/I18nProvider";
+import { KnownQuestionType, normalizeQuestionType } from "../utils/questionTypes";
 
 const clamp = (value: number, min: number, max: number) => {
   if (!Number.isFinite(value)) return min;
@@ -23,6 +24,7 @@ const EditQuestion = () => {
   const [text, setText] = useState("");
   const [description, setDescription] = useState("");
   const [alternatives, setAlternatives] = useState(["", "", "", ""]);
+  const [questionType, setQuestionType] = useState<KnownQuestionType>('multi');
   const [correctAlternative, setCorrectAlternative] = useState<string>("");
   const [time, setTime] = useState<string>("10");
   const [score, setScore] = useState<string>("1000");
@@ -45,22 +47,45 @@ const EditQuestion = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionId]);
 
+  useEffect(() => {
+    if (questionType === 'slide') {
+      setCorrectAlternative('');
+      return;
+    }
+    if (questionType === 'boolean' && !['1', '2'].includes(correctAlternative)) {
+      setCorrectAlternative('1');
+    }
+  }, [questionType, correctAlternative]);
+
   const updateQuestion = () => {
     // Simple validation
     if (!text.trim()) { setError(true); return; }
-    if (!correctAlternative) { setError(true); return; }
-    put(`/game_question/${questionId}/`, {
+    if (questionType !== 'slide') {
+      if (!correctAlternative) { setError(true); return; }
+      if (questionType === 'boolean' && !['1', '2'].includes(correctAlternative)) { setError(true); return; }
+    }
+    const payload: any = {
       text,
-      score,
       description,
-      time,
       image_url: imageUrl,
-      correct: correctAlternative,
-      alt1: alternatives[0],
-      alt2: alternatives[1],
-      alt3: alternatives[2],
-      alt4: alternatives[3]
-    })
+      type: questionType,
+    };
+    if (questionType !== 'slide') {
+      payload.score = score;
+      payload.time = time;
+      payload.correct = correctAlternative;
+      payload.alt1 = alternatives[0];
+      payload.alt2 = alternatives[1];
+      payload.alt3 = questionType === 'multi' ? alternatives[2] : "";
+      payload.alt4 = questionType === 'multi' ? alternatives[3] : "";
+    } else {
+      payload.correct = "";
+      payload.alt1 = "";
+      payload.alt2 = "";
+      payload.alt3 = "";
+      payload.alt4 = "";
+    }
+    put(`/game_question/${questionId}/`, payload)
       .then((res) => {
         navigate('/home/edit/' + gameId);
       })
@@ -88,6 +113,9 @@ const EditQuestion = () => {
           setTime(res.data.time || "10");
           setScore(res.data.score || "1000");
           setImageUrl(res.data.image_url || null);
+          const rawType = res.data.type ?? res.data.question_type ?? res.data.questionType;
+          const normalized = normalizeQuestionType(rawType);
+          setQuestionType(normalized === 'unknown' ? 'multi' : normalized);
         }
         setLoading(false);
       })
@@ -111,25 +139,27 @@ const EditQuestion = () => {
     return idx >= 0 && idx < alternatives.length ? (alternatives[idx] || "") : "";
   }, [correctAlternative, alternatives]);
 
-  const filledAlternatives = useMemo(() => alternatives.filter((alt) => alt && alt.trim().length > 0).length, [alternatives]);
+  const optionCount = questionType === 'boolean' ? 2 : questionType === 'slide' ? 0 : 4;
+  const visibleAlternatives = useMemo(() => alternatives.slice(0, optionCount), [alternatives, optionCount]);
+  const filledAlternatives = useMemo(() => visibleAlternatives.filter((alt) => alt && alt.trim().length > 0).length, [visibleAlternatives]);
   const correctLabel = useMemo(() => {
     const idx = Number(correctAlternative);
-    if (idx >= 1 && idx <= alternatives.length) {
+    if (idx >= 1 && idx <= optionCount) {
       return String.fromCharCode(64 + idx);
     }
     return null;
-  }, [correctAlternative, alternatives.length]);
+  }, [correctAlternative, optionCount]);
 
   const timeValue = clamp(Number(time), TIME_MIN, TIME_MAX);
   const scoreValue = clamp(Number(score), SCORE_MIN, SCORE_MAX);
   const previewImage = imageUrl || placeholderImg;
   const previewAlternatives = useMemo(() => {
-    return alternatives.map((alt, idx) => ({
+    return visibleAlternatives.map((alt, idx) => ({
       label: String.fromCharCode(65 + idx),
       text: alt,
       isCorrect: String(idx + 1) === correctAlternative,
     }));
-  }, [alternatives, correctAlternative]);
+  }, [visibleAlternatives, correctAlternative]);
 
   function stripThinkBlocks(s: string) {
     try { return s.replace(/<think>[\s\S]*?<\/think>/g, ""); } catch { return s; }
@@ -295,17 +325,24 @@ const EditQuestion = () => {
                 )}
                 <div className="flex flex-wrap items-center gap-2 pt-2">
                   <span className="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white/85">
-                    {t('editQuestion.summary.options') || 'Options'}: {filledAlternatives}/4
+                    {t('editQuestion.form.typeLabel') || 'Question type'}: {t(`editQuestion.type.${questionType}`) || questionType}
                   </span>
-                  <span className="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white/85">
-                    {t('editQuestion.summary.time') || 'Time'}: {time || '—'} {t('editQuestion.secondsShort') || 'sec'}
-                  </span>
-                  <span className="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white/85">
-                    {score || '—'} {t('editQuestion.pointsShort') || 'points'}
-                  </span>
-                  <span className="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white/85">
-                    {t('editQuestion.summary.correct') || 'Correct'}: {correctLabel ? `${t('editQuestion.optionLabel') || 'Option'} ${correctLabel}` : (t('editQuestion.summary.notSelected') || 'Not selected')}
-                  </span>
+                  {questionType !== 'slide' && (
+                    <>
+                      <span className="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white/85">
+                        {t('editQuestion.summary.options') || 'Options'}: {filledAlternatives}/{optionCount}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white/85">
+                        {t('editQuestion.summary.time') || 'Time'}: {time || '—'} {t('editQuestion.secondsShort') || 'sec'}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white/85">
+                        {score || '—'} {t('editQuestion.pointsShort') || 'points'}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white/85">
+                        {t('editQuestion.summary.correct') || 'Correct'}: {correctLabel ? `${t('editQuestion.optionLabel') || 'Option'} ${correctLabel}` : (t('editQuestion.summary.notSelected') || 'Not selected')}
+                      </span>
+                    </>
+                  )}
                   <span className={`inline-flex items-center rounded-full border ${hasImage ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-white/20 bg-white/15 text-white/85'} px-3 py-1 text-xs font-semibold`}>
                     {hasImage ? (t('editQuestion.summary.imageAdded') || 'Image added') : (t('editQuestion.summary.noImage') || 'No image')}
                   </span>
@@ -348,6 +385,18 @@ const EditQuestion = () => {
                   <div className="space-y-6">
                     <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
                       <label className="block text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        {t('editQuestion.form.typeLabel') || 'Question type'}
+                      </label>
+                      <select
+                        value={questionType}
+                        onChange={(e) => setQuestionType(e.target.value as KnownQuestionType)}
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm sm:text-base text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#6A71FA]/20"
+                      >
+                        <option value="multi">{t('editQuestion.type.multi') || '4 options'}</option>
+                        <option value="boolean">{t('editQuestion.type.boolean') || '2 options'}</option>
+                        <option value="slide">{t('editQuestion.type.slide') || 'Slide'}</option>
+                      </select>
+                      <label className="block text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
                         {t('editQuestion.form.questionText') || 'Question text'}
                       </label>
                       <textarea
@@ -368,67 +417,72 @@ const EditQuestion = () => {
                       />
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <h3 className="text-lg font-semibold text-slate-900">{t('editQuestion.form.optionsTitle') || 'Options'}</h3>
-                        <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                          {t('editQuestion.form.correctHint') || 'Pick the correct option with the radio button'}
-                        </span>
-                      </div>
-                      <div className="mt-4 space-y-3">
-                        {alternatives.map((alternative, index) => {
-                          const isCorrect = String(index + 1) === correctAlternative;
-                          return (
-                            <div
-                              key={index}
-                              onDrop={(e) => onAlternativeDrop(e, index)}
-                              onDragOver={onAlternativeDragOver}
-                              className={`group rounded-2xl border px-4 py-3 transition ${
-                                isCorrect
-                                  ? 'border-emerald-200 bg-emerald-50 shadow-[0_8px_24px_rgba(16,185,129,0.18)]'
-                                  : 'border-slate-200 bg-slate-50 hover:border-slate-300'
-                              }`}
-                            >
-                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-                                <input
-                                  type="radio"
-                                  name="correctAlternative"
-                                  checked={isCorrect}
-                                  onChange={() => handleCorrectAlternativeChange(index + 1)}
-                                  className="h-4 w-4 shrink-0 accent-[#6A71FA]"
-                                />
-                                <div className="flex-1 space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                                      {String.fromCharCode(65 + index)}
-                                    </span>
-                                    {isCorrect && (
-                                      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                                        {t('editQuestion.form.correctBadge') || 'Correct'}
-                                      </span>
-                                    )}
-                                  </div>
+                    {questionType !== 'slide' && (
+                      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <h3 className="text-lg font-semibold text-slate-900">{t('editQuestion.form.optionsTitle') || 'Options'}</h3>
+                          <span className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                            {t('editQuestion.form.correctHint') || 'Pick the correct option with the radio button'}
+                          </span>
+                        </div>
+                        <div className="mt-4 space-y-3">
+                          {visibleAlternatives.map((alternative, index) => {
+                            const isCorrect = String(index + 1) === correctAlternative;
+                            return (
+                              <div
+                                key={index}
+                                onDrop={(e) => onAlternativeDrop(e, index)}
+                                onDragOver={onAlternativeDragOver}
+                                className={`group rounded-2xl border px-4 py-3 transition ${
+                                  isCorrect
+                                    ? 'border-emerald-200 bg-emerald-50 shadow-[0_8px_24px_rgba(16,185,129,0.18)]'
+                                    : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                                }`}
+                              >
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
                                   <input
-                                    className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#6A71FA]/20"
-                                    type="text"
-                                    placeholder={`${t('editQuestion.optionLabel') || 'Option'} ${index + 1}`}
-                                    value={alternative || ''}
-                                    onChange={(e) => handleAlternativeChange(index, e.target.value)}
+                                    type="radio"
+                                    name="correctAlternative"
+                                    checked={isCorrect}
+                                    onChange={() => handleCorrectAlternativeChange(index + 1)}
+                                    className="h-4 w-4 shrink-0 accent-[#6A71FA]"
                                   />
+                                  <div className="flex-1 space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                                        {String.fromCharCode(65 + index)}
+                                      </span>
+                                      {isCorrect && (
+                                        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                                          {t('editQuestion.form.correctBadge') || 'Correct'}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <input
+                                      className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#6A71FA]/20"
+                                      type="text"
+                                      placeholder={`${t('editQuestion.optionLabel') || 'Option'} ${index + 1}`}
+                                      value={alternative || ''}
+                                      onChange={(e) => handleAlternativeChange(index, e.target.value)}
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
+                        {questionType === 'multi' && (
+                          <p className="mt-3 text-xs text-slate-500">
+                            {t('editQuestion.form.dragTip') || 'Tip: Drag suggestions from the AI panel into the fields, or type manually.'}
+                          </p>
+                        )}
                       </div>
-                      <p className="mt-3 text-xs text-slate-500">
-                        {t('editQuestion.form.dragTip') || 'Tip: Drag suggestions from the AI panel into the fields, or type manually.'}
-                      </p>
-                    </div>
+                    )}
                   </div>
 
                   <div className="space-y-6">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+                    {questionType !== 'slide' && (
+                      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
                       <div className="space-y-3">
                         <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-500">
                           <span>{t('editQuestion.form.timeLabel') || 'Time (sec)'}</span>
@@ -483,6 +537,7 @@ const EditQuestion = () => {
                         {t('editQuestion.form.balanceHint') || 'Stick to consistent points and time ranges for more balanced quizzes.'}
                       </p>
                     </div>
+                    )}
 
                     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
                       <div className="flex items-center justify-between gap-3">
@@ -515,7 +570,8 @@ const EditQuestion = () => {
                 </div>
               </section>
 
-              <section className="relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl shadow-emerald-200/40">
+              {questionType === 'multi' && (
+                <section className="relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl shadow-emerald-200/40">
                 <div className="absolute inset-0 bg-[linear-gradient(120deg,#45CC70,#0B6B3A)] bg-cover" />
                 <div className="absolute -right-10 -top-16 h-60 w-60 rounded-full bg-[linear-gradient(120deg,#45CC70,#0B6B3A)] bg-cover opacity-90" />
                 <div className="relative">
@@ -622,25 +678,28 @@ const EditQuestion = () => {
                 </p>
                 </div>
               </section>
+              )}
 
               <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-[0_18px_60px_rgba(0,0,0,0.08)]">
                 <div className="flex flex-col gap-6 lg:flex-row">
                   <div className="relative w-full overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 lg:w-1/2">
                     <img src={previewImage} alt={t('editQuestion.preview.alt') || 'Preview'} className="h-full w-full object-cover" />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-                    <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-full border border-white/20 bg-black/45 px-3 py-1 text-xs font-semibold text-white">
-                        {timeValue} {t('editQuestion.secondsShort') || 'sec'}
-                      </span>
-                      <span className="inline-flex items-center rounded-full border border-white/20 bg-black/45 px-3 py-1 text-xs font-semibold text-white">
-                        {scoreValue.toLocaleString('no-NB')} {t('editQuestion.pointsShort') || 'points'}
-                      </span>
-                      {correctLabel && (
-                        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-500/50 px-3 py-1 text-xs font-semibold text-white">
-                          {t('editQuestion.summary.correct') || 'Correct'}: {correctLabel}
+                    {questionType !== 'slide' && (
+                      <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center rounded-full border border-white/20 bg-black/45 px-3 py-1 text-xs font-semibold text-white">
+                          {timeValue} {t('editQuestion.secondsShort') || 'sec'}
                         </span>
-                      )}
-                    </div>
+                        <span className="inline-flex items-center rounded-full border border-white/20 bg-black/45 px-3 py-1 text-xs font-semibold text-white">
+                          {scoreValue.toLocaleString('no-NB')} {t('editQuestion.pointsShort') || 'points'}
+                        </span>
+                        {correctLabel && (
+                          <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-500/50 px-3 py-1 text-xs font-semibold text-white">
+                            {t('editQuestion.summary.correct') || 'Correct'}: {correctLabel}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="absolute bottom-4 left-4 right-4">
                       <h2 className="text-2xl font-bold text-white drop-shadow-lg">{questionPreview}</h2>
                       {description && (
@@ -664,38 +723,44 @@ const EditQuestion = () => {
                       </button>
                     </div>
                     <div className="grid gap-3">
-                      {previewAlternatives.map(({ label, text, isCorrect }) => (
-                        <div
-                          key={label}
-                          className={`relative overflow-hidden rounded-2xl border px-4 py-3 text-sm font-medium transition ${
-                            isCorrect
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_8px_24px_rgba(16,185,129,0.18)]'
-                              : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
-                          }`}
-                        >
-                          <span className="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700">
-                            {label}
-                          </span>
-                          <span>{text?.trim() ? text : (t('editQuestion.questions.emptyOption') || '—')}</span>
-                          {isCorrect && (
-                            <span className="absolute inset-y-0 right-4 inline-flex items-center">
-                              <svg
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-emerald-600"
-                              >
-                                <path d="M20 6L9 17l-5-5" />
-                              </svg>
-                            </span>
-                          )}
+                      {questionType === 'slide' ? (
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-700">
+                          {t('editQuestion.preview.slideHint') || 'Slides show info only, no alternatives.'}
                         </div>
-                      ))}
+                      ) : (
+                        previewAlternatives.map(({ label, text, isCorrect }) => (
+                          <div
+                            key={label}
+                            className={`relative overflow-hidden rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                              isCorrect
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_8px_24px_rgba(16,185,129,0.18)]'
+                                : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
+                            }`}
+                          >
+                            <span className="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700">
+                              {label}
+                            </span>
+                            <span>{text?.trim() ? text : (t('editQuestion.questions.emptyOption') || '—')}</span>
+                            {isCorrect && (
+                              <span className="absolute inset-y-0 right-4 inline-flex items-center">
+                                <svg
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="text-emerald-600"
+                                >
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                              </span>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>

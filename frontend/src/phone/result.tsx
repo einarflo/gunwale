@@ -22,6 +22,8 @@ interface ResultProps {
   points: number
   nextQuestionStarted: () => void
   gameFinished: () => void
+  pendingStart?: { index: number; starttime?: string | null } | null
+  onConsumePendingStart?: (index: number) => void
   fif: boolean;
   buyfif: () => void
   setPoints: (points: number) => void
@@ -43,7 +45,7 @@ interface ResultProps {
   hasNuke?: boolean;
 }
 
-const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyfif, setPoints, buyStop, stop, color, hasNext, buyMultiplier, buyEye, buyShield, buySlow, buyEndOpponent, buyNuke, hasMultiplier, hasEye, hasShield, hasSlow, hasEndOpponent, hasNuke }: ResultProps) => {
+const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, pendingStart, onConsumePendingStart, fif, buyfif, setPoints, buyStop, stop, color, hasNext, buyMultiplier, buyEye, buyShield, buySlow, buyEndOpponent, buyNuke, hasMultiplier, hasEye, hasShield, hasSlow, hasEndOpponent, hasNuke }: ResultProps) => {
   const { gamePin, gameInstanceId, gameInstancePlayerId } = useContext(GameContext);
   const { socket } = useSocket();
   
@@ -163,25 +165,16 @@ const Result = ({ currentQ, points, nextQuestionStarted, gameFinished, fif, buyf
   }
 
   useEffect(() => {
-    if (!gameInstanceId) return;
-    socket.emit('join_game', String(gameInstanceId));
-    const onStatus = (payload: { gameId?: string; status?: string; index?: number; starttime?: string }) => {
-      if (payload?.gameId !== String(gameInstanceId)) return;
-      if (payload?.status === 'started' && String(payload?.index ?? '') === String(currentQ)) {
-        if (payload?.starttime) {
-          countdown(payload.starttime);
-          setGetReady(true);
-        }
-      }
-      if (payload?.status === 'finished') {
-        gameFinished();
-      }
-    };
-    socket.on('game_status', onStatus);
-    return () => {
-      socket.off('game_status', onStatus);
-    };
-  }, [socket, gameInstanceId, currentQ, countdown, gameFinished]);
+    if (!pendingStart) return;
+    if (Number(pendingStart.index) !== Number(currentQ)) return;
+    if (pendingStart.starttime) {
+      countdown(pendingStart.starttime);
+      setGetReady(true);
+    } else {
+      nextQuestionStarted();
+    }
+    if (onConsumePendingStart) onConsumePendingStart(pendingStart.index);
+  }, [pendingStart, currentQ, countdown, nextQuestionStarted, onConsumePendingStart]);
 
 
 

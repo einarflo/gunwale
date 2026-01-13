@@ -17,6 +17,7 @@ import { useWakeLock } from 'react-screen-wake-lock';
 import { useSocket } from "../context/SocketContext";
 import { useI18n } from "../i18n/I18nProvider";
 import { useNavigate } from "react-router-dom";
+import { getPlayableQuestionType } from "../utils/questionTypes";
 
 const PhoneGameView = () => {
   const { gameId, gamePin, gameInstanceId, gameInstancePlayerId, exitGame } = useContext(GameContext);
@@ -32,6 +33,7 @@ const PhoneGameView = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [answered, setAnswered] = useState(true);
   const [questions, setQuestions] = useState<Array<Question>>([]);
+  const [pendingStart, setPendingStart] = useState<{ index: number; starttime?: string | null } | null>(null);
   //const [userId, setUserId] = useState('');
 
   const [fiftyfifty, setFiftyfifty] = useState(false);
@@ -78,12 +80,19 @@ const PhoneGameView = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
 
-  // Listen for finished status to end game and compute placement
+  // Listen for started/finished status to sync flow + end game
   useEffect(() => {
     if (!gameInstanceId) return;
-    const onStatus = (payload: { gameId?: string; status?: string }) => {
-      if (payload?.gameId === String(gameInstanceId) && payload?.status === 'finished') {
+    const onStatus = (payload: { gameId?: string; status?: string; index?: number; starttime?: string | null }) => {
+      if (payload?.gameId !== String(gameInstanceId)) return;
+      if (payload?.status === 'finished') {
         setGameEnded(true);
+      }
+      if (payload?.status === 'started' && payload?.index !== undefined && payload?.index !== null) {
+        const idx = Number(payload.index);
+        if (Number.isFinite(idx)) {
+          setPendingStart({ index: idx, starttime: payload.starttime ?? null });
+        }
       }
     };
     socket.emit('join_game', String(gameInstanceId));
@@ -131,6 +140,19 @@ const PhoneGameView = () => {
     setCurrentQ(currentQ + 1)
   }
 
+  const consumePendingStart = (index: number) => {
+    setPendingStart((prev) => (prev && prev.index === index ? null : prev));
+  };
+
+  useEffect(() => {
+    if (!pendingStart) return;
+    if (!Number.isFinite(pendingStart.index)) return;
+    if (pendingStart.index !== currentQ) {
+      setCurrentQ(pendingStart.index);
+      setAnswered(true);
+    }
+  }, [pendingStart, currentQ]);
+
 
     /// Implementere 50 / 50 feature 
 
@@ -168,6 +190,21 @@ const PhoneGameView = () => {
 
   // Show the questions alternatives and if the answer is correct
   if (!answered && !gameEnded) {
+    const currentQuestion = questions[currentQ];
+    const currentType = getPlayableQuestionType(currentQuestion);
+    if (currentType === 'slide') {
+      return (
+        <Waiting
+          mode="slide"
+          points={points}
+          setPoints={setPoints}
+          gameStarted={() => {}}
+          gamepin={gamePin}
+          colorForUser={colorForUser}
+          setColorForUser={setColorForUser}
+        />
+      );
+    }
     return <Alts
       question={questions[currentQ]}
       points={points}
@@ -192,6 +229,8 @@ const PhoneGameView = () => {
     return <Result
       nextQuestionStarted={() => setAnswered(false)}
       currentQ={currentQ}
+      pendingStart={pendingStart}
+      onConsumePendingStart={consumePendingStart}
       points={points}
       setPoints={(p) => setPoints(p)}
       gameFinished={() => {setGameEnded(true); release()}}
