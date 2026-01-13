@@ -5,7 +5,7 @@ import placeholderImg from "../../../images/tavl-placeholder.jpg";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { upgrades } from "../../../data/upgrades";
 import { useKeycloak } from "../../../auth/KeycloakProvider";
-import { Check, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 
 type HomeGameModalProps = {
   isOpen: boolean;
@@ -14,9 +14,10 @@ type HomeGameModalProps = {
   newGamePin: string;
   isStarting: boolean;
   onStartGame: () => void;
-  onEditGame: () => void;
+  onEditGame?: () => void;
   onCopyPin: () => void;
   onCopyLink: () => void;
+  showEditButton?: boolean;
 };
 
 // --- helpers ---
@@ -52,6 +53,7 @@ const HomeGameModal = ({
   onEditGame,
   onCopyPin,
   onCopyLink,
+  showEditButton = true,
 }: HomeGameModalProps) => {
   const hasGame = Boolean(selectedGame);
   const extras = hasGame ? getGameExtra(selectedGame) : null;
@@ -64,29 +66,31 @@ const HomeGameModal = ({
   const [preset, setPreset] = useState<UpgradePreset>(
     isPremium ? "premium" : "free"
   );
-  const [customSelected, setCustomSelected] = useState<Set<string>>(new Set());
-
-  const selectedUpgrades = useMemo(() => {
-    if (preset === "classic") return [];
-    if (preset === "free") return freeUpgrades;
-    if (preset === "premium") return upgrades;
-    return upgrades.filter((upgrade) => customSelected.has(upgrade.header));
-  }, [customSelected, freeUpgrades, preset]);
+  const [selectedHeaders, setSelectedHeaders] = useState<Set<string>>(
+    new Set(isPremium ? upgrades.map((upgrade) => upgrade.header) : freeUpgrades.map((upgrade) => upgrade.header))
+  );
 
   const availableUpgrades = isPremium ? upgrades : freeUpgrades;
 
   const handlePresetChange = (next: UpgradePreset) => {
     if (next === "premium" && !isPremium) return;
-    if (next === "custom") {
-      if (customSelected.size === 0) {
-        setCustomSelected(new Set(selectedUpgrades.map((upgrade) => upgrade.header)));
-      }
-    }
     setPreset(next);
+    if (next === "classic") {
+      setSelectedHeaders(new Set());
+      return;
+    }
+    if (next === "free") {
+      setSelectedHeaders(new Set(freeUpgrades.map((upgrade) => upgrade.header)));
+      return;
+    }
+    if (next === "premium") {
+      setSelectedHeaders(new Set(upgrades.map((upgrade) => upgrade.header)));
+    }
   };
 
-  const toggleCustomUpgrade = (header: string) => {
-    setCustomSelected((prev) => {
+  const handleUpgradeToggle = (header: string) => {
+    if (preset !== "custom") setPreset("custom");
+    setSelectedHeaders((prev) => {
       const next = new Set(prev);
       if (next.has(header)) {
         next.delete(header);
@@ -95,13 +99,6 @@ const HomeGameModal = ({
       }
       return next;
     });
-  };
-
-  const handleUpgradeToggle = (header: string) => {
-    if (preset !== "custom") {
-      setPreset("custom");
-    }
-    toggleCustomUpgrade(header);
   };
 
   return (
@@ -228,7 +225,7 @@ const HomeGameModal = ({
                   {
                     key: "free",
                     label: t("home.modal.preset.free") || "Free",
-                    hint: t("home.modal.preset.freeHint") || "First upgrades",
+                    hint: t("home.modal.preset.freeHint") || "Free upgrades",
                     count: freeUpgrades.length,
                     locked: false,
                   },
@@ -243,7 +240,7 @@ const HomeGameModal = ({
                     key: "custom",
                     label: t("home.modal.preset.custom") || "Custom",
                     hint: t("home.modal.preset.customHint") || "Pick your own",
-                    count: selectedUpgrades.length,
+                    count: selectedHeaders.size,
                     locked: false,
                   },
                 ] as const).map((option) => {
@@ -270,7 +267,7 @@ const HomeGameModal = ({
                 {preset === "classic" &&
                   (t("home.modal.preset.classicHint") || "No upgrades")}
                 {preset === "free" &&
-                  (t("home.modal.preset.freeHint") || "First upgrades")}
+                  (t("home.modal.preset.freeHint") || "Free upgrades")}
                 {preset === "premium" &&
                   (t("home.modal.preset.premiumHint") || "All upgrades")}
                 {preset === "custom" &&
@@ -290,12 +287,7 @@ const HomeGameModal = ({
               <div className="mt-3 grid grid-cols-4 gap-2">
                 {upgrades.map((upgrade) => {
                   const locked = upgrade.premium && !isPremium;
-                  const active =
-                    preset === "custom"
-                      ? customSelected.has(upgrade.header)
-                      : selectedUpgrades.some(
-                          (selected) => selected.header === upgrade.header
-                        );
+                  const active = selectedHeaders.has(upgrade.header);
                   return (
                     <button
                       key={upgrade.header}
@@ -326,9 +318,9 @@ const HomeGameModal = ({
                 })}
               </div>
               <div className="mt-3 text-xs text-slate-500">
-                {t("home.modal.upgradesHint", {
-                  count: selectedUpgrades.length,
-                }) || `${selectedUpgrades.length} selected`}
+              {t("home.modal.upgradesHint", {
+                count: selectedHeaders.size,
+              }) || `${selectedHeaders.size} selected`}
               </div>
             </div>
 
@@ -376,12 +368,14 @@ const HomeGameModal = ({
                   }}
                 />
               </button>
-              <button
-                className="rounded-xl bg-white px-4 py-3 text-slate-800 font-semibold shadow border border-slate-200 hover:bg-slate-50 transition md:px-3 md:py-2 md:text-sm"
-                onClick={onEditGame}
-              >
-                {t("home.edit") || "Edit"}
-              </button>
+              {showEditButton && onEditGame && (
+                <button
+                  className="rounded-xl bg-white px-4 py-3 text-slate-800 font-semibold shadow border border-slate-200 hover:bg-slate-50 transition md:px-3 md:py-2 md:text-sm"
+                  onClick={onEditGame}
+                >
+                  {t("home.edit") || "Edit"}
+                </button>
+              )}
               <button
                 className="rounded-xl bg-white px-4 py-3 text-slate-800 font-semibold shadow border border-slate-200 hover:bg-slate-50 transition md:px-3 md:py-2 md:text-sm"
                 onClick={onClose}

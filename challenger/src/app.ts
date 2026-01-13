@@ -7,6 +7,7 @@ import { router as generateRouter } from './routes/generate.js';
 import { router as optionsRouter } from './routes/options.js';
 import { router as cacheRouter } from './routes/cache.js';
 import { router as questionsRouter } from './routes/questions.js';
+import { router as streamRouter } from './routes/stream.js';
 
 export function createApp() {
   const app = express();
@@ -47,12 +48,13 @@ export function createApp() {
   app.options('*', cors(corsOptions));
   app.use(morgan('tiny'));
 
-  app.get('/', (_req, res) => res.send({ service: 'challenger', endpoints: ['/health', '/v1/generate', '/v1/options', '/v1/questions', '/v1/cache/:id/feedback'] }));
+  app.get('/', (_req, res) => res.send({ service: 'challenger', endpoints: ['/health', '/v1/generate', '/v1/options', '/v1/questions', '/v1/stream', '/v1/cache/:id/feedback'] }));
 
   app.use(healthRouter);
   app.use(generateRouter);
   app.use(optionsRouter);
   app.use(questionsRouter);
+  app.use(streamRouter);
   app.use(cacheRouter);
 
   return app;

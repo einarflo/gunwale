@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { Readable } from 'stream';
 import os from 'os';
 import { logDebug, logError, logInfo } from '../utils/logger.js';
 
@@ -22,6 +23,48 @@ export async function ollamaGenerate({ model, prompt, format = 'json', options =
   } catch (e: any) {
     const ms = Date.now() - started;
     logError('ollama.generate.error', { model, ms, message: e?.message, code: e?.code, status: e?.response?.status });
+    throw e;
+  }
+}
+
+export async function ollamaGenerateStream({ model, prompt, format, options = {}, timeoutMs = DEFAULT_TIMEOUT }: { model: string; prompt: string; format?: 'json' | Record<string, any>; options?: any; timeoutMs?: number; }): Promise<Readable> {
+  const started = Date.now();
+  const opts = { num_thread: DEFAULT_THREADS, ...(options || {}) };
+  logDebug('ollama.generate.stream.request', { model, format, promptLen: prompt?.length ?? 0, timeoutMs, num_thread: opts.num_thread });
+  try {
+    const body: Record<string, any> = { model, prompt, stream: true, options: opts };
+    if (format) body.format = format;
+    const { data } = await axios.post(
+      `${OLLAMA_BASE_URL}/api/generate`,
+      body,
+      { timeout: timeoutMs, responseType: 'stream' }
+    );
+    const ms = Date.now() - started;
+    logInfo('ollama.generate.stream.ok', { model, ms });
+    return data as Readable;
+  } catch (e: any) {
+    const ms = Date.now() - started;
+    logError('ollama.generate.stream.error', { model, ms, message: e?.message, code: e?.code, status: e?.response?.status });
+    throw e;
+  }
+}
+
+export async function ollamaChatStream({ model, prompt, options = {}, timeoutMs = DEFAULT_TIMEOUT }: { model: string; prompt: string; options?: any; timeoutMs?: number; }): Promise<Readable> {
+  const started = Date.now();
+  const opts = { num_thread: DEFAULT_THREADS, ...(options || {}) };
+  logDebug('ollama.chat.stream.request', { model, promptLen: prompt?.length ?? 0, timeoutMs, num_thread: opts.num_thread });
+  try {
+    const { data } = await axios.post(
+      `${OLLAMA_BASE_URL}/api/chat`,
+      { model, messages: [{ role: 'user', content: prompt }], stream: true, options: opts },
+      { timeout: timeoutMs, responseType: 'stream' }
+    );
+    const ms = Date.now() - started;
+    logInfo('ollama.chat.stream.ok', { model, ms });
+    return data as Readable;
+  } catch (e: any) {
+    const ms = Date.now() - started;
+    logError('ollama.chat.stream.error', { model, ms, message: e?.message, code: e?.code, status: e?.response?.status });
     throw e;
   }
 }

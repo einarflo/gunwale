@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import randomstring from 'randomstring';
 import { useNavigate, useParams } from 'react-router-dom';
 import { get, post } from '../api';
 import Header from '../components/landing/Header';
@@ -8,6 +9,7 @@ import ParallaxOrbs from '../components/ParallaxOrbs';
 import ParallaxScroll from '../components/ParallaxScroll';
 import GlobalStyles from '../components/landing/GlobalStyles';
 import Footer from '../components/Footer';
+import HomeGameModal from './home/components/HomeGameModal';
 import mockup from '../images/tavl-placeholder.jpg';
 import { ArrowLeft } from 'lucide-react';
 
@@ -24,6 +26,8 @@ export default function GamePublic() {
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [newGamePin, setNewGamePin] = useState('');
 
   useEffect(() => {
     if (!gameId) return;
@@ -43,16 +47,34 @@ export default function GamePublic() {
 
   const qcount = useMemo(() => questions.length, [questions]);
 
-  const startGame = async () => {
+  const openStartModal = () => {
     if (!isAuthenticated) {
       const returnTo = window.location.pathname + window.location.search + window.location.hash;
       try { login(returnTo); } catch(_) {};
       return;
     }
     if (!game?.uuid) return;
+    setNewGamePin(
+      randomstring.generate({
+        charset: ['numeric'],
+        readable: true,
+        length: 5,
+      }),
+    );
+    setModalOpen(true);
+  };
+
+  const startGame = async () => {
+    if (!isAuthenticated) {
+      const returnTo = window.location.pathname + window.location.search + window.location.hash;
+      setModalOpen(false);
+      try { login(returnTo); } catch(_) {};
+      return;
+    }
+    if (!game?.uuid) return;
     setStarting(true);
     try {
-      const pin = String(Math.floor(10000 + Math.random() * 89999));
+      const pin = newGamePin || String(Math.floor(10000 + Math.random() * 89999));
       const { data } = await post('/game_instance/', { game_id: game.uuid, game_pin: pin, status: 'created', created_by: userId });
       navigate(`/host/${game.uuid}/instance/${data}/pin/${pin}`);
     } catch (e) {
@@ -207,7 +229,7 @@ export default function GamePublic() {
                           </button>
                         )}
                       </div>
-                      <button onClick={startGame} className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-500 px-4 py-2 text-white text-sm font-semibold shadow-lg hover:shadow-xl border border-blue-200/70 active:scale-95 transition" disabled={starting}>{starting ? (t('home.starting') || 'Starting…') : (t('home.startGame') || 'Start game')}</button>
+                      <button onClick={openStartModal} className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-500 px-4 py-2 text-white text-sm font-semibold shadow-lg hover:shadow-xl border border-blue-200/70 active:scale-95 transition" disabled={starting}>{starting ? (t('home.starting') || 'Starting…') : (t('home.startGame') || 'Start game')}</button>
                     </div>
                   </div>
                 </div>
@@ -258,6 +280,19 @@ export default function GamePublic() {
         )}
       </div>
       <Footer />
+      <HomeGameModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        selectedGame={game}
+        newGamePin={newGamePin}
+        isStarting={starting}
+        onStartGame={startGame}
+        onCopyPin={() => navigator.clipboard?.writeText(newGamePin)}
+        onCopyLink={() =>
+          navigator.clipboard?.writeText(`${window.location.origin}/join/${newGamePin}`)
+        }
+        showEditButton={false}
+      />
     </div>
   );
 }

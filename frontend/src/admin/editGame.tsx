@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import randomstring from "randomstring";
 import { get, post, put } from "../api";
 import { Question } from "../tv/game";
 import { useParams } from "react-router-dom";
@@ -11,6 +12,7 @@ import { useKeycloak } from "../auth/KeycloakProvider";
 import Footer from "../components/Footer";
 import { useI18n } from "../i18n/I18nProvider";
 import { useAiLoadingProgress } from "./utils/aiLoadingProgress";
+import HomeGameModal from "./home/components/HomeGameModal";
 
 export interface GameItem {
   name: String;
@@ -29,6 +31,12 @@ type AiSuggestion = {
   topic?: string;
   time?: number;
   score?: number;
+};
+
+type AiChatMessage = {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
 };
 
 const EditGame = () => {
@@ -64,6 +72,18 @@ const EditGame = () => {
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
   const aiProgress = useAiLoadingProgress(aiLoading, aiModel);
+  const [aiMode, setAiMode] = useState<'basic' | 'advanced'>('basic');
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiChat, setAiChat] = useState<AiChatMessage[]>([]);
+  const [aiStreamLoading, setAiStreamLoading] = useState(false);
+  const [aiStreamError, setAiStreamError] = useState<string | null>(null);
+  const [aiStreamAbort, setAiStreamAbort] = useState<AbortController | null>(null);
+  const aiPromptRef = useRef<HTMLTextAreaElement | null>(null);
+  const aiChatScrollRef = useRef<HTMLDivElement | null>(null);
+  const [aiChatUserScrolled, setAiChatUserScrolled] = useState(false);
+  const advancedModel = 'llama3.1:8b-instruct-q4_K_M';
+  const [startModalOpen, setStartModalOpen] = useState(false);
+  const [startPin, setStartPin] = useState('');
 
   const difficultyLabel = (value?: string) => {
     switch ((value || '').toLowerCase()) {
@@ -240,9 +260,8 @@ const EditGame = () => {
   const coverImage = (game as any)?.cover_image_url || (game as any)?.coverImageUrl || placeholderImg;
   const gameUuid = (game as any)?.uuid || (game as any)?.id || gameId;
 
-  const startGameInstance = async () => {
+  const startGameInstance = async (pin: string) => {
     if (!gameUuid || !userId) return;
-    const pin = String(Math.floor(10000 + Math.random() * 90000));
     try {
       setStarting(true);
       const { data } = await post(`/game_instance/`, {
@@ -257,6 +276,27 @@ const EditGame = () => {
       setStarting(false);
     }
   };
+
+  const openStartGameModal = () => {
+    if (!gameUuid) return;
+    setStartPin(
+      randomstring.generate({
+        charset: ["numeric"],
+        readable: true,
+        length: 5,
+      }),
+    );
+    setStartModalOpen(true);
+  };
+
+  const handleStartGame = () => {
+    if (!startPin) return;
+    startGameInstance(startPin);
+  };
+
+  const handleCopyPin = () => navigator.clipboard?.writeText(startPin);
+  const handleCopyLink = () =>
+    navigator.clipboard?.writeText(`${window.location.origin}/join/${startPin}`);
 
   const fetchAiQuestions = async () => {
     if (!game?.name) {
@@ -300,6 +340,92 @@ const EditGame = () => {
     } finally {
       setAiLoading(false);
     }
+  };
+
+  const runAiStream = async () => {
+    const prompt = aiPrompt.trim();
+    if (!prompt) {
+      setAiStreamError(t('editGame.ai.missingPrompt') || 'Write a prompt to start.');
+      return;
+    }
+    const controller = new AbortController();
+    setAiStreamAbort(controller);
+    setAiStreamLoading(true);
+    setAiStreamError(null);
+    setAiPrompt('');
+    resizePrompt(aiPromptRef.current);
+    const userId = `user-${Date.now()}`;
+    const assistantId = `assistant-${Date.now()}`;
+    setAiChat(prev => ([
+      ...prev,
+      { id: userId, role: 'user', text: prompt },
+      { id: assistantId, role: 'assistant', text: '' },
+    ]));
+    try {
+      const resp = await fetch('https://ai.tavl.no/v1/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, model: advancedModel, mode: 'chat' }),
+        signal: controller.signal,
+      });
+      if (!resp.ok) throw new Error(`${t('editGame.ai.responseFailed') || 'AI response failed'}: ${resp.status}`);
+      if (!resp.body) throw new Error(t('editGame.ai.streamFailed') || 'Stream missing from response');
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          setAiChat(prev => prev.map(msg => (
+            msg.id === assistantId ? { ...msg, text: msg.text + chunk } : msg
+          )));
+        }
+      }
+    } catch (e: any) {
+      if (e?.name !== 'AbortError') {
+        setAiStreamError(e?.message || t('editGame.ai.fetchFailed') || 'Could not fetch response');
+      }
+    } finally {
+      setAiStreamLoading(false);
+      setAiStreamAbort(null);
+    }
+  };
+
+  const resizePrompt = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    const lineHeight = Number.parseFloat(window.getComputedStyle(el).lineHeight || '') || 20;
+    const maxHeight = lineHeight * 3;
+    const nextHeight = Math.min(el.scrollHeight, maxHeight);
+    el.style.height = `${nextHeight}px`;
+    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  };
+
+  useEffect(() => {
+    resizePrompt(aiPromptRef.current);
+  }, [aiPrompt]);
+
+  const promptSuggestions = useMemo(() => {
+    const quizName = String(game?.name || (t('editGame.ai.quizFallback') || 'this quiz'));
+    return [
+      t('editGame.ai.suggestion1', { title: quizName }),
+      t('editGame.ai.suggestion2', { title: quizName }),
+      t('editGame.ai.suggestion3', { title: quizName }),
+    ];
+  }, [game?.name, t]);
+
+  useEffect(() => {
+    const el = aiChatScrollRef.current;
+    if (!el || aiChatUserScrolled) return;
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }, [aiChat, aiChatUserScrolled, aiStreamLoading]);
+
+  const stopAiStream = () => {
+    if (aiStreamAbort) aiStreamAbort.abort();
+    setAiStreamLoading(false);
   };
 
   const createFromSuggestion = (sug: AiSuggestion, index: number) => {
@@ -398,7 +524,7 @@ const EditGame = () => {
 
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={startGameInstance}
+                      onClick={openStartGameModal}
                       disabled={starting || !userId}
                       className="inline-flex items-center rounded-full bg-[#6A71FA] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-200/50 transition hover:bg-[#555ef6] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -656,58 +782,167 @@ const EditGame = () => {
                   {t('editGame.ai.subtitle') || 'Let Tavl AI suggest questions based on your quiz. When you like a suggestion, create it and fine-tune in the editor.'}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-white/70">
-                <span>{t('editGame.ai.totalQuestions') || 'Questions total'}: {questions.length}</span>
-                {game?.name && <span>{t('editGame.ai.titleLabel') || 'Title'}: {game.name}</span>}
+              <div className="flex flex-wrap items-center gap-3 text-xs text-white/70">
+                <div className="flex items-center rounded-full border border-white/30 bg-white/15 p-1">
+                  <button
+                    onClick={() => setAiMode('basic')}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${aiMode === 'basic' ? 'bg-white text-[#2f2f55]' : 'text-white/80 hover:text-white'}`}
+                  >
+                    {t('editGame.ai.modeBasic') || 'Basic'}
+                  </button>
+                  <button
+                    onClick={() => setAiMode('advanced')}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${aiMode === 'advanced' ? 'bg-white text-[#2f2f55]' : 'text-white/80 hover:text-white'}`}
+                  >
+                    {t('editGame.ai.modeAdvanced') || 'Advanced'}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,220px),minmax(0,200px),minmax(0,120px),auto]">
-              <select
-                value={aiModel}
-                onChange={e => setAiModel(e.target.value)}
-                className="rounded-full border border-white/40 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="llama3.2:3b-instruct-q4_K_M">{t('editGame.ai.modelFast') || 'llama3.2 3B (fast)'}</option>
-                <option value="llama3.1:8b-instruct-q4_K_M">{t('editGame.ai.modelStandard') || 'llama3.1 8B'}</option>
-                <option value="deepseek-r1:14b">{t('editGame.ai.modelDeep') || 'deepseek-r1 14B (thorough)'}</option>
-              </select>
-              <select
-                value={aiDifficulty}
-                onChange={e => setAiDifficulty(e.target.value as typeof aiDifficulty)}
-                className="rounded-full border border-white/40 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="mixed">{t('editGame.ai.difficulty.mixed') || 'Mixed difficulty'}</option>
-                <option value="easy">{t('editGame.ai.difficulty.easy') || 'Easy'}</option>
-                <option value="medium">{t('editGame.ai.difficulty.medium') || 'Medium'}</option>
-                <option value="hard">{t('editGame.ai.difficulty.hard') || 'Hard'}</option>
-              </select>
-              <input
-                type="number"
-                min={1}
-                max={6}
-                value={aiCount}
-                onChange={e => setAiCount(Math.max(1, Math.min(6, Number(e.target.value) || 1)))}
-                className="rounded-full border border-white/40 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-white/30"
-              />
-              <div className="flex items-center justify-end">
-                <button
-                  onClick={fetchAiQuestions}
-                  disabled={aiLoading || !game?.name}
-                  className="inline-flex items-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#2f2f55] shadow-lg shadow-emerald-200/50 transition hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            {aiMode === 'basic' && (
+              <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,220px),minmax(0,200px),minmax(0,120px),auto]">
+                <select
+                  value={aiModel}
+                  onChange={e => setAiModel(e.target.value)}
+                  className="rounded-full border border-white/40 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
-                  {aiLoading ? (t('editGame.ai.generating') || 'Generating…') : (t('editGame.ai.fetch') || 'Fetch suggestions')}
-                </button>
+                  <option value="llama3.2:3b-instruct-q4_K_M">{t('editGame.ai.modelFast') || 'llama3.2 3B (fast)'}</option>
+                  <option value="llama3.1:8b-instruct-q4_K_M">{t('editGame.ai.modelStandard') || 'llama3.1 8B'}</option>
+                  <option value="deepseek-r1:14b">{t('editGame.ai.modelDeep') || 'deepseek-r1 14B (thorough)'}</option>
+                </select>
+                <select
+                  value={aiDifficulty}
+                  onChange={e => setAiDifficulty(e.target.value as typeof aiDifficulty)}
+                  className="rounded-full border border-white/40 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-white/30"
+                >
+                  <option value="mixed">{t('editGame.ai.difficulty.mixed') || 'Mixed difficulty'}</option>
+                  <option value="easy">{t('editGame.ai.difficulty.easy') || 'Easy'}</option>
+                  <option value="medium">{t('editGame.ai.difficulty.medium') || 'Medium'}</option>
+                  <option value="hard">{t('editGame.ai.difficulty.hard') || 'Hard'}</option>
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={aiCount}
+                  onChange={e => setAiCount(Math.max(1, Math.min(6, Number(e.target.value) || 1)))}
+                  className="rounded-full border border-white/40 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-white/30"
+                />
+                <div className="flex items-center justify-end">
+                  <button
+                    onClick={fetchAiQuestions}
+                    disabled={aiLoading || !game?.name}
+                    className="inline-flex items-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#2f2f55] shadow-lg shadow-emerald-200/50 transition hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {aiLoading ? (t('editGame.ai.generating') || 'Generating…') : (t('editGame.ai.fetch') || 'Fetch suggestions')}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
-            {aiError && (
+            {aiMode === 'advanced' && (
+              <div className="mt-4 space-y-3">
+                <div className={`rounded-2xl border border-white/30 bg-white/15 text-sm text-white/90 ${aiChat.length > 0 ? 'h-[380px]' : 'h-[240px]'} flex flex-col overflow-hidden`}>
+                  <div
+                    ref={aiChatScrollRef}
+                    onScroll={(e) => {
+                      const target = e.currentTarget;
+                      const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+                      setAiChatUserScrolled(distanceToBottom > 12);
+                    }}
+                    className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4"
+                  >
+                    <div className="min-h-full flex flex-col justify-end space-y-3">
+                    {aiChat.length === 0 && aiStreamLoading && (
+                      <div className="whitespace-pre-wrap text-white/70">
+                        {t('editGame.ai.streaming') || 'Streaming response…'}
+                      </div>
+                    )}
+                    {aiChat.map(msg => (
+                      <div
+                        key={msg.id}
+                        className={msg.role === 'user'
+                          ? 'ml-auto max-w-[85%] rounded-2xl bg-white/80 px-3 py-2 text-sm text-[#2f2f55] shadow'
+                          : 'mr-auto max-w-[85%] rounded-2xl border border-white/30 bg-white/20 px-3 py-2 text-sm text-white/95'}
+                      >
+                        <div className="whitespace-pre-wrap">{msg.text || (msg.role === 'assistant' ? '…' : '')}</div>
+                      </div>
+                    ))}
+                    </div>
+                  </div>
+                  <div className="border-t border-white/20 bg-white/10 p-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
+                      <textarea
+                        ref={aiPromptRef}
+                        value={aiPrompt}
+                        onChange={e => {
+                          setAiPrompt(e.target.value);
+                          resizePrompt(e.target);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                            e.preventDefault();
+                            if (!aiStreamLoading) runAiStream();
+                          }
+                        }}
+                        placeholder={t('editGame.ai.promptPlaceholder') || 'Write your prompt…'}
+                        rows={1}
+                        className="w-full rounded-2xl border border-white/20 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/40 resize-none"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        {aiStreamLoading && (
+                          <button
+                            onClick={stopAiStream}
+                            className="inline-flex items-center rounded-full border border-white/40 bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 transition hover:bg-white/20"
+                          >
+                            {t('editGame.ai.stop') || 'Stop'}
+                          </button>
+                        )}
+                        <button
+                          onClick={runAiStream}
+                          disabled={aiStreamLoading}
+                          className="inline-flex items-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#2f2f55] shadow-lg shadow-emerald-200/50 transition hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {aiStreamLoading ? (t('editGame.ai.generating') || 'Generating…') : (t('editGame.ai.send') || 'Send')}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {promptSuggestions.map((suggestion, index) => (
+                        <button
+                          key={`${suggestion}-${index}`}
+                          onClick={() => {
+                            setAiPrompt(suggestion);
+                            requestAnimationFrame(() => {
+                              resizePrompt(aiPromptRef.current);
+                              aiPromptRef.current?.focus();
+                            });
+                          }}
+                          disabled={aiStreamLoading}
+                          className="inline-flex items-center rounded-full border border-white/30 bg-white/80 px-3 py-1 text-xs font-semibold text-[#2f2f55] transition hover:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {aiStreamError && (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+                    {aiStreamError}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {aiMode === 'basic' && aiError && (
               <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
                 {aiError}
               </div>
             )}
 
-            {(aiLoading || (aiProgress > 0 && aiProgress < 100)) && (
+            {aiMode === 'basic' && (aiLoading || (aiProgress > 0 && aiProgress < 100)) && (
               <div className="mt-4 h-2 w-full overflow-hidden rounded-full border border-white/30 bg-black/20">
                 <div
                   className="h-full bg-white/80 transition-all duration-100"
@@ -716,7 +951,7 @@ const EditGame = () => {
               </div>
             )}
 
-            {aiSuggestions.length > 0 && (
+            {aiMode === 'basic' && aiSuggestions.length > 0 && (
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 {aiSuggestions.map((sug, index) => (
                   <div
@@ -765,7 +1000,7 @@ const EditGame = () => {
               </div>
             )}
 
-            {!aiLoading && aiSuggestions.length === 0 && !aiError && (
+            {!aiLoading && aiMode === 'basic' && aiSuggestions.length === 0 && !aiError && (
               <div className="mt-6 rounded-2xl border border-dashed border-white/40 bg-white/15 p-6 text-sm text-white/85">
                 {t('editGame.ai.empty') || 'No suggestions yet. Make sure the quiz has a title (and optionally a description), then click “Fetch suggestions”.'}
               </div>
@@ -820,6 +1055,17 @@ const EditGame = () => {
         </div>
         <Footer />
       </div>
+      <HomeGameModal
+        isOpen={startModalOpen}
+        onClose={() => setStartModalOpen(false)}
+        selectedGame={game as any}
+        newGamePin={startPin}
+        isStarting={starting}
+        onStartGame={handleStartGame}
+        onCopyPin={handleCopyPin}
+        onCopyLink={handleCopyLink}
+        showEditButton={false}
+      />
     </>
   );
 };
